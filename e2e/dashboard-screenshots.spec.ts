@@ -379,413 +379,132 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 3: HOOKS TAB
+  // SECTION 3: HOOK DATA IN AGENTS TAB
+  // (Hooks functionality is now integrated into Agents tab)
   // ============================================================
-  test.describe("3. Hooks Tab", () => {
-    test("30 - Hooks tab overview", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
+  test.describe("3. Hook Data in Agents Tab", () => {
+    test("30 - Agents with hook timeline section", async ({ page }) => {
+      await navigateToTab(page, TABS.AGENTS);
+      // Hook timeline is now shown below the agents table
       await screenshot(
         page,
-        "30-hooks-tab-overview",
-        "Hooks tab showing session activity"
+        "30-agents-hook-timeline",
+        "Agents tab with hook timeline section"
       );
     });
 
-    test("31 - Hooks activity feed", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      await screenshot(
-        page,
-        "31-hooks-activity-feed",
-        "Real-time activity feed"
-      );
-    });
-
-    test("32a - Hooks filter - All", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("All")')) {
+    test("31 - Hook timeline activity feed", async ({ page }) => {
+      await navigateToTab(page, TABS.AGENTS);
+      // Look for Hook Timeline section
+      if (await clickIfVisible(page, 'button:has-text("Hook Timeline")')) {
         await screenshot(
           page,
-          "32a-hooks-filter-all",
-          "Activity feed - All events"
+          "31-hook-timeline-feed",
+          "Hook timeline activity feed"
         );
       }
     });
 
-    test("32b - Hooks filter - Sessions", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("Sessions")')) {
+    test("32 - Hook enhancements section", async ({ page }) => {
+      await navigateToTab(page, TABS.AGENTS);
+      if (await clickIfVisible(page, 'button:has-text("Hook Enhancements")')) {
         await screenshot(
           page,
-          "32b-hooks-filter-sessions",
-          "Activity feed - Session events only"
+          "32-hook-enhancements",
+          "Hook enhancements feature grid"
         );
       }
     });
 
-    test("32c - Hooks filter - Tools", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("Tools")')) {
-        await screenshot(
-          page,
-          "32c-hooks-filter-tools",
-          "Activity feed - Tool events only"
-        );
-      }
-    });
-
-    test("32d - Hooks filter - User", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("User")')) {
-        await screenshot(
-          page,
-          "32d-hooks-filter-user",
-          "Activity feed - User events only"
-        );
-      }
-    });
-
-    test("32e - Hooks filter - Agent", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("Agent")')) {
-        await screenshot(
-          page,
-          "32e-hooks-filter-agent",
-          "Activity feed - Agent events only"
-        );
-      }
-    });
-
-    test("32f - Hooks filter - Notifications", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      if (await clickIfVisible(page, 'button:has-text("Notif")')) {
-        await screenshot(
-          page,
-          "32f-hooks-filter-notifications",
-          "Activity feed - Notification events"
-        );
-      }
-    });
-
-    test("33 - Hooks historical stats section", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      // Try to expand historical section
-      const histSelectors = [
-        'button:has-text("Historical")',
-        'summary:has-text("Historical")',
-        'details:has-text("Historical") summary',
-        '[class*="collapsible"]:has-text("Historical")'
-      ];
-      for (const sel of histSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "33-hooks-historical-expanded",
-            "Historical statistics section expanded"
-          );
-          break;
-        }
-      }
-    });
-
-    test("34 - Hooks 14-day activity chart", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      // Expand historical if needed
-      await clickIfVisible(page, 'button:has-text("Historical")');
-      await clickIfVisible(page, 'summary:has-text("Historical")');
-      await waitForStable(page);
-
-      const chart = page
-        .locator('.recharts-wrapper, [class*="chart"], svg:has(rect)')
-        .first();
-      if (await chart.isVisible()) {
-        await screenshot(
-          page,
-          "34-hooks-activity-chart",
-          "14-day activity chart"
-        );
-      }
-    });
-
-    test("35 - Hooks enhancements section", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      const enhSelectors = [
-        'button:has-text("Enhancement")',
-        'summary:has-text("Enhancement")',
-        'button:has-text("Features")'
-      ];
-      for (const sel of enhSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "35-hooks-enhancements",
-            "Hook enhancements feature grid"
-          );
-          break;
-        }
-      }
-    });
-
-    test("36 - Hooks token/cost summary", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      // Look for token or cost display
+    test("33 - Hook token/cost summary", async ({ page }) => {
+      await navigateToTab(page, TABS.AGENTS);
+      // Look for token or cost display in the hook timeline section
       const tokenDisplay = page
         .locator(':has-text("tokens"), :has-text("Token"), :has-text("cost")')
         .first();
       if (await tokenDisplay.isVisible()) {
         await screenshot(
           page,
-          "36-hooks-token-summary",
+          "33-hook-token-summary",
           "Token/cost usage summary"
-        );
-      }
-    });
-
-    test("37 - Hooks recent tool calls expanded", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      const recentSelectors = [
-        'button:has-text("Recent")',
-        'summary:has-text("Recent")',
-        'button:has-text("Tool Calls")'
-      ];
-      for (const sel of recentSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "37-hooks-recent-tools",
-            "Recent tool calls section expanded"
-          );
-          break;
-        }
-      }
-    });
-
-    test("38 - Hooks session details", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      // Click on a session item if visible
-      const sessionItem = page
-        .locator('[class*="session"], tr:has-text("sess_")')
-        .first();
-      if (await sessionItem.isVisible()) {
-        await sessionItem.click();
-        await waitForStable(page);
-        await screenshot(
-          page,
-          "38-hooks-session-detail",
-          "Session detail view"
-        );
-      }
-    });
-
-    test("39 - Hooks active session indicator", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      const activeSession = page
-        .locator(':has-text("active"), [class*="active"]')
-        .first();
-      if (await activeSession.isVisible()) {
-        await screenshot(
-          page,
-          "39-hooks-active-session",
-          "Active session indicator"
         );
       }
     });
   });
 
   // ============================================================
-  // SECTION 4: REPOS TAB
+  // SECTION 4: PROJECTS TAB (includes git status)
   // ============================================================
-  test.describe("4. Repos Tab", () => {
-    test("40 - Repos tab overview", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
+  test.describe("4. Projects Tab", () => {
+    test("40 - Projects tab overview", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
       await screenshot(
         page,
-        "40-repos-tab-overview",
-        "Repos tab showing repository status"
+        "40-projects-tab-overview",
+        "Projects tab showing project cards with git status"
       );
     });
 
-    test("41 - Repos table with columns", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
+    test("41 - Projects with git status", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
       await screenshot(
         page,
-        "41-repos-table",
-        "Repository status table with all columns"
+        "41-projects-git-status",
+        "Project cards with git status per path"
       );
     });
 
-    test("42 - Repos dirty indicator", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
+    test("42 - Project dirty repo indicator", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
       const dirtyRepo = page
         .locator(
-          'tr:has-text("dirty"), tr:has([class*="yellow"]), tr:has([class*="warning"])'
+          ':has-text("dirty"), :has-text("modified"), [class*="yellow"], [class*="warning"]'
         )
         .first();
       if (await dirtyRepo.isVisible()) {
         await dirtyRepo.hover();
         await screenshot(
           page,
-          "42-repos-dirty",
-          "Repository with uncommitted changes"
+          "42-project-dirty-repo",
+          "Project with dirty repository"
         );
       }
     });
 
-    test("43 - Repos ahead/behind indicator", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
-      const syncRepo = page
+    test("43 - Project sync status", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
+      const syncStatus = page
         .locator(
-          'tr:has-text("↑"), tr:has-text("↓"), tr:has-text("ahead"), tr:has-text("behind")'
+          ':has-text("↑"), :has-text("↓"), :has-text("ahead"), :has-text("behind")'
         )
         .first();
-      if (await syncRepo.isVisible()) {
-        await syncRepo.hover();
+      if (await syncStatus.isVisible()) {
+        await syncStatus.hover();
         await screenshot(
           page,
-          "43-repos-sync-status",
-          "Repository sync status (ahead/behind)"
+          "43-project-sync-status",
+          "Project git sync status (ahead/behind)"
         );
       }
     });
 
-    test("44 - Repos conflict state", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
-      const conflictRepo = page
-        .locator(
-          'tr:has-text("conflict"), tr:has-text("rebase"), tr:has([class*="red"])'
-        )
-        .first();
-      if (await conflictRepo.isVisible()) {
-        await conflictRepo.hover();
-        await screenshot(
-          page,
-          "44-repos-conflict",
-          "Repository in conflict/rebase state"
-        );
-      }
-    });
-
-    test("45 - Repos empty state", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
+    test("44 - Projects empty state", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
       const emptyState = page.locator(
-        ':has-text("No repos"), :has-text("no repositories"), :has-text("No dirty")'
+        ':has-text("No projects"), :has-text("no projects")'
       );
       if (await emptyState.first().isVisible()) {
-        await screenshot(page, "45-repos-empty", "Repos tab empty state");
+        await screenshot(page, "44-projects-empty", "Projects tab empty state");
       }
     });
   });
 
   // ============================================================
-  // SECTION 5: PORTS TAB
+  // SECTION 5: PORTS TAB (hidden by default, no keyboard shortcut)
+  // These tests are skipped since Ports tab must be enabled in Settings first
   // ============================================================
   test.describe("5. Ports Tab", () => {
-    test("50 - Ports tab overview", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      await screenshot(
-        page,
-        "50-ports-tab-overview",
-        "Ports tab showing listening ports"
-      );
-    });
-
-    test("51 - Ports agent-linked row", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      // Agent-linked ports typically have green background or agent label
-      const agentPort = page
-        .locator(
-          'tr[class*="green"], tr:has([class*="green"]), tr:has-text("Claude"), tr:has-text("agent")'
-        )
-        .first();
-      if (await agentPort.isVisible()) {
-        await agentPort.hover();
-        await screenshot(
-          page,
-          "51-ports-agent-linked",
-          "Port linked to agent (green highlight)"
-        );
-      }
-    });
-
-    test("52 - Ports hide button hover", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      const hideBtn = page
-        .locator(
-          'button:has-text("⊘"), button:has-text("Hide"), button[title*="hide" i]'
-        )
-        .first();
-      if (await hideBtn.isVisible()) {
-        await hideBtn.hover();
-        await screenshot(
-          page,
-          "52-ports-hide-button",
-          "Port hide button on hover"
-        );
-      }
-    });
-
-    test("53 - Ports after hiding one", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      const hideBtn = page
-        .locator('button:has-text("⊘"), button:has-text("Hide")')
-        .first();
-      if (await hideBtn.isVisible()) {
-        await hideBtn.click();
-        await waitForStable(page);
-        await screenshot(
-          page,
-          "53-ports-after-hide",
-          "Ports table after hiding a port"
-        );
-      }
-    });
-
-    test("54 - Ports hidden section expanded", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      const hiddenSelectors = [
-        'button:has-text("hidden")',
-        'summary:has-text("hidden")',
-        'details:has-text("hidden") summary'
-      ];
-      for (const sel of hiddenSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "54-ports-hidden-section",
-            "Hidden ports section expanded"
-          );
-          break;
-        }
-      }
-    });
-
-    test("55 - Ports unhide button", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      // Expand hidden section first
-      await clickIfVisible(page, 'button:has-text("hidden")');
-      await clickIfVisible(page, 'summary:has-text("hidden")');
-
-      const unhideBtn = page
-        .locator('button:has-text("Unhide"), button:has-text("Show")')
-        .first();
-      if (await unhideBtn.isVisible()) {
-        await unhideBtn.hover();
-        await screenshot(
-          page,
-          "55-ports-unhide-button",
-          "Unhide button in hidden ports section"
-        );
-      }
-    });
-
-    test("56 - Ports empty state", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      const emptyState = page.locator(
-        ':has-text("No ports"), :has-text("no listening")'
-      );
-      if (await emptyState.first().isVisible()) {
-        await screenshot(page, "56-ports-empty", "Ports tab empty state");
-      }
-    });
+    test.skip("Ports tab is hidden by default - enable in Settings to test");
   });
 
   // ============================================================
@@ -1008,81 +727,9 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 8: REFERENCE TAB
+  // SECTION 8: SETTINGS TAB (includes Activity section)
   // ============================================================
-  test.describe("8. Reference Tab", () => {
-    test("80 - Reference tab overview", async ({ page }) => {
-      await navigateToTab(page, TABS.REFERENCE);
-      await screenshot(
-        page,
-        "80-reference-tab-overview",
-        "External reference data"
-      );
-    });
-
-    test("81 - Reference Claude settings", async ({ page }) => {
-      await navigateToTab(page, TABS.REFERENCE);
-      const settingsSection = page.locator(
-        ':has-text("Claude"), :has-text("settings.json")'
-      );
-      if (await settingsSection.first().isVisible()) {
-        await screenshot(
-          page,
-          "81-reference-claude-settings",
-          "Claude settings.json reference"
-        );
-      }
-    });
-
-    test("82 - Reference Sandbox config", async ({ page }) => {
-      await navigateToTab(page, TABS.REFERENCE);
-      // Try to find and expand sandbox section
-      const sandboxSelectors = [
-        'button:has-text("Sandbox")',
-        'summary:has-text("Sandbox")',
-        ':has-text("sandbox") >> button'
-      ];
-      for (const sel of sandboxSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "82-reference-sandbox",
-            "Sandbox configuration reference"
-          );
-          break;
-        }
-      }
-    });
-
-    test("83 - Reference MCP config", async ({ page }) => {
-      await navigateToTab(page, TABS.REFERENCE);
-      const mcpSelectors = [
-        'button:has-text("MCP")',
-        'summary:has-text("MCP")',
-        ':has-text("mcp") >> button'
-      ];
-      for (const sel of mcpSelectors) {
-        if (await clickIfVisible(page, sel)) {
-          await screenshot(
-            page,
-            "83-reference-mcp",
-            "MCP configuration reference"
-          );
-          break;
-        }
-      }
-    });
-
-    test("84 - Reference full page", async ({ page }) => {
-      await navigateToTab(page, TABS.REFERENCE);
-      await fullPageScreenshot(page, "84-reference-full");
-    });
-  });
-
-  // ============================================================
-  // SECTION 9: SETTINGS TAB
-  // ============================================================
-  test.describe("9. Settings Tab", () => {
+  test.describe("8. Settings Tab", () => {
     test("90 - Settings tab overview", async ({ page }) => {
       await navigateToTab(page, TABS.SETTINGS);
       await screenshot(
@@ -1155,9 +802,9 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 10: STATES & INDICATORS
+  // SECTION 9: STATES & INDICATORS
   // ============================================================
-  test.describe("10. States & Indicators", () => {
+  test.describe("9. States & Indicators", () => {
     test("S1 - Paused indicator visible", async ({ page }) => {
       // Pause the dashboard
       await clickIfVisible(page, 'button:has-text("⏸")');
@@ -1197,19 +844,19 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 11: TAB TRANSITIONS
+  // SECTION 10: TAB TRANSITIONS
   // ============================================================
-  test.describe("11. Tab Transitions", () => {
+  test.describe("10. Tab Transitions", () => {
     test("T1 - All tabs via keyboard", async ({ page }) => {
+      // Updated tab names after consolidation (keys 1-7)
       const tabNames = [
-        "agents",
-        "hooks",
-        "repos",
-        "ports",
-        "contrib",
+        "agents", // includes hooks
+        "projects", // includes repos/git status
+        "conversations",
+        "analytics",
+        "share", // contrib
         "docs",
-        "reference",
-        "settings"
+        "settings" // includes activity
       ];
       for (let i = 0; i < tabNames.length; i++) {
         await page.keyboard.press(String(i + 1));
@@ -1223,10 +870,10 @@ test.describe("Dashboard Screenshots", () => {
     });
 
     test("T2 - Tab click navigation", async ({ page }) => {
-      // Click on each tab button
+      // Click on each tab button (7 tabs after consolidation)
       const tabs = page.locator('[role="tab"], button[class*="tab"]');
       const count = await tabs.count();
-      for (let i = 0; i < Math.min(count, 8); i++) {
+      for (let i = 0; i < Math.min(count, 7); i++) {
         await tabs.nth(i).click();
         await waitForStable(page);
       }
@@ -1239,9 +886,9 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 12: MODALS & OVERLAYS
+  // SECTION 11: MODALS & OVERLAYS
   // ============================================================
-  test.describe("12. Modals & Overlays", () => {
+  test.describe("11. Modals & Overlays", () => {
     test("M1 - Help modal", async ({ page }) => {
       await page.keyboard.press("?");
       await waitForStable(page);
@@ -1274,32 +921,32 @@ test.describe("Dashboard Screenshots", () => {
   });
 
   // ============================================================
-  // SECTION 13: FULL PAGE SCREENSHOTS
+  // SECTION 12: FULL PAGE SCREENSHOTS
   // ============================================================
-  test.describe("13. Full Page Screenshots", () => {
+  test.describe("12. Full Page Screenshots", () => {
     test("F1 - Agents full", async ({ page }) => {
       await navigateToTab(page, TABS.AGENTS);
       await fullPageScreenshot(page, "F1-agents-full");
     });
 
-    test("F2 - Hooks full", async ({ page }) => {
-      await navigateToTab(page, TABS.HOOKS);
-      await fullPageScreenshot(page, "F2-hooks-full");
+    test("F2 - Projects full", async ({ page }) => {
+      await navigateToTab(page, TABS.PROJECTS);
+      await fullPageScreenshot(page, "F2-projects-full");
     });
 
-    test("F3 - Repos full", async ({ page }) => {
-      await navigateToTab(page, TABS.REPOS);
-      await fullPageScreenshot(page, "F3-repos-full");
+    test("F3 - Analytics full", async ({ page }) => {
+      await navigateToTab(page, TABS.ANALYTICS);
+      await fullPageScreenshot(page, "F3-analytics-full");
     });
 
-    test("F4 - Ports full", async ({ page }) => {
-      await navigateToTab(page, TABS.PORTS);
-      await fullPageScreenshot(page, "F4-ports-full");
-    });
-
-    test("F5 - Contrib full", async ({ page }) => {
+    test("F4 - Contrib full", async ({ page }) => {
       await navigateToTab(page, TABS.CONTRIB);
-      await fullPageScreenshot(page, "F5-contrib-full");
+      await fullPageScreenshot(page, "F4-contrib-full");
+    });
+
+    test("F5 - Settings full", async ({ page }) => {
+      await navigateToTab(page, TABS.SETTINGS);
+      await fullPageScreenshot(page, "F5-settings-full");
     });
   });
 });

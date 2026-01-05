@@ -121,15 +121,16 @@ export async function waitForPagesReady(page: Page, timeout = 30000) {
 }
 
 // Tab navigation helpers
+// After consolidation: Hooks→Agents, Repos→Projects, Activity→Settings
+// Ports hidden by default (accessible via Settings)
 export const TABS = {
-  AGENTS: "1",
-  HOOKS: "2",
-  REPOS: "3",
-  PORTS: "4",
-  CONTRIB: "5",
+  AGENTS: "1", // includes hook timeline & enhancements
+  PROJECTS: "2", // includes git status per path
+  CONVERSATIONS: "3",
+  ANALYTICS: "4",
+  CONTRIB: "5", // Share tab
   DOCS: "6",
-  REFERENCE: "7",
-  SETTINGS: "8"
+  SETTINGS: "7" // includes Activity section
 } as const;
 
 export async function navigateToTab(page: Page, tabKey: string) {
