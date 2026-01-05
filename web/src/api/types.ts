@@ -1508,9 +1508,7 @@ export interface AuditLogResult {
 }
 
 export interface AuditCalculationsResult {
-
   quality_score: {
-
     description: string;
 
     dimension_weights: Record<string, number>;
@@ -1520,35 +1518,24 @@ export interface AuditCalculationsResult {
     scoring_rules: string[];
 
     penalties: string[];
-
   };
 
   cost_estimation: {
-
     description: string;
 
-    pricing_table: Record<string, { inputPerMillion: number; outputPerMillion: number }>;
+    pricing_table: Record<
+      string,
+      { inputPerMillion: number; outputPerMillion: number }
+    >;
 
     formulas: string[];
 
     disclaimer: string;
-
   };
-
 }
 
-
-
 export interface AuditCategoriesResult {
-
-  categories: Record<
-
-    string,
-
-    { description: string; actions: string[] }
-
-  >;
-
+  categories: Record<string, { description: string; actions: string[] }>;
 }
 
 export interface DataSourceFileInfo {

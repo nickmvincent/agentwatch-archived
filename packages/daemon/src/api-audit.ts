@@ -9,7 +9,7 @@ import { existsSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
 import { basename, join } from "path";
 import { MODEL_PRICING } from "@agentwatch/core";
-import { Hono } from "hono";
+import type { Hono } from "hono";
 import {
   type AuditAction,
   type AuditCategory,
@@ -21,10 +21,7 @@ import {
   logAuditEvent,
   readAuditLog
 } from "./audit-log";
-import {
-  DIMENSION_WEIGHTS,
-  SIGNAL_WEIGHTS
-} from "./enrichments/quality-score";
+import { DIMENSION_WEIGHTS, SIGNAL_WEIGHTS } from "./enrichments/quality-score";
 
 /**
  * Get file info safely.

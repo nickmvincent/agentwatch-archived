@@ -318,7 +318,8 @@ export function AuditLogPane() {
   const [edgeCases, setEdgeCases] = useState<EdgeCasesResult | null>(null);
 
   // Calculations state
-  const [calculations, setCalculations] = useState<AuditCalculationsResult | null>(null);
+  const [calculations, setCalculations] =
+    useState<AuditCalculationsResult | null>(null);
 
   useEffect(() => {
     loadData();
@@ -677,28 +678,44 @@ export function AuditLogPane() {
       {!loading && activeTab === "calculations" && calculations && (
         <div className="space-y-6">
           <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-white mb-2">Quality Score Logic</h3>
-            <p className="text-gray-400 text-sm mb-4">{calculations.quality_score.description}</p>
-            
+            <h3 className="text-lg font-bold text-white mb-2">
+              Quality Score Logic
+            </h3>
+            <p className="text-gray-400 text-sm mb-4">
+              {calculations.quality_score.description}
+            </p>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">Dimension Weights</h4>
+                <h4 className="font-medium text-gray-200 mb-2">
+                  Dimension Weights
+                </h4>
                 <div className="space-y-1 text-sm">
-                  {Object.entries(calculations.quality_score.dimension_weights).map(([dim, weight]) => (
+                  {Object.entries(
+                    calculations.quality_score.dimension_weights
+                  ).map(([dim, weight]) => (
                     <div key={dim} className="flex justify-between">
-                      <span className="text-gray-400 capitalize">{dim.replace(/([A-Z])/g, ' $1')}</span>
+                      <span className="text-gray-400 capitalize">
+                        {dim.replace(/([A-Z])/g, " $1")}
+                      </span>
                       <span className="text-white font-mono">{weight}%</span>
                     </div>
                   ))}
                 </div>
               </div>
-              
+
               <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">Signal Weights</h4>
+                <h4 className="font-medium text-gray-200 mb-2">
+                  Signal Weights
+                </h4>
                 <div className="space-y-1 text-sm">
-                  {Object.entries(calculations.quality_score.signal_weights).map(([signal, weight]) => (
+                  {Object.entries(
+                    calculations.quality_score.signal_weights
+                  ).map(([signal, weight]) => (
                     <div key={signal} className="flex justify-between">
-                      <span className="text-gray-400 capitalize">{signal.replace(/([A-Z])/g, ' $1')}</span>
+                      <span className="text-gray-400 capitalize">
+                        {signal.replace(/([A-Z])/g, " $1")}
+                      </span>
                       <span className="text-white font-mono">{weight}%</span>
                     </div>
                   ))}
@@ -708,7 +725,9 @@ export function AuditLogPane() {
 
             <div className="mt-4 grid md:grid-cols-2 gap-4">
               <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">Scoring Rules</h4>
+                <h4 className="font-medium text-gray-200 mb-2">
+                  Scoring Rules
+                </h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-gray-400">
                   {calculations.quality_score.scoring_rules.map((rule, i) => (
                     <li key={i}>{rule}</li>
@@ -728,11 +747,17 @@ export function AuditLogPane() {
           </div>
 
           <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-white mb-2">Cost Estimation Logic</h3>
-            <p className="text-gray-400 text-sm mb-4">{calculations.cost_estimation.description}</p>
-            
+            <h3 className="text-lg font-bold text-white mb-2">
+              Cost Estimation Logic
+            </h3>
+            <p className="text-gray-400 text-sm mb-4">
+              {calculations.cost_estimation.description}
+            </p>
+
             <div className="bg-gray-700 rounded p-3 mb-4">
-              <h4 className="font-medium text-gray-200 mb-2">Pricing Table (USD per Million Tokens)</h4>
+              <h4 className="font-medium text-gray-200 mb-2">
+                Pricing Table (USD per Million Tokens)
+              </h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-gray-500 border-b border-gray-600">
@@ -743,11 +768,17 @@ export function AuditLogPane() {
                     </tr>
                   </thead>
                   <tbody className="text-gray-300">
-                    {Object.entries(calculations.cost_estimation.pricing_table).map(([model, pricing]) => (
+                    {Object.entries(
+                      calculations.cost_estimation.pricing_table
+                    ).map(([model, pricing]) => (
                       <tr key={model} className="border-b border-gray-600/50">
                         <td className="py-1 font-mono">{model}</td>
-                        <td className="py-1 text-right">${pricing.inputPerMillion}</td>
-                        <td className="py-1 text-right">${pricing.outputPerMillion}</td>
+                        <td className="py-1 text-right">
+                          ${pricing.inputPerMillion}
+                        </td>
+                        <td className="py-1 text-right">
+                          ${pricing.outputPerMillion}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

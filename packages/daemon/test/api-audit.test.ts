@@ -667,7 +667,7 @@ describe("Audit API", () => {
       expect(data.quality_score).toBeDefined();
       expect(data.quality_score.dimension_weights).toBeDefined();
       expect(data.quality_score.scoring_rules).toBeDefined();
-      
+
       expect(data.cost_estimation).toBeDefined();
       expect(data.cost_estimation.pricing_table).toBeDefined();
       expect(data.cost_estimation.formulas).toBeDefined();
