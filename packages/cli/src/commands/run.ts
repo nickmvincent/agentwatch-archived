@@ -53,10 +53,14 @@ async function runTmuxCompare(
   const inTmux = !!process.env.TMUX;
   const escapedPrompt = prompt.replace(/'/g, "'\\''"); // Escape single quotes
   const windowName = "aw-compare";
+  const shell = process.env.SHELL || "/bin/bash";
 
-  // Build the pane commands
+  // Build the pane commands - use login shell to ensure PATH is set correctly
+  // Escape double quotes in prompt for the inner command
+  const escapedForShell = escapedPrompt.replace(/"/g, '\\"');
   const paneCommands = agents.map(
-    (agent) => `aw run '${escapedPrompt}' -a ${agent} -H ${host} --port ${port}`
+    (agent) =>
+      `${shell} -lc "aw run \\"${escapedForShell}\\" -a ${agent} -H ${host} --port ${port}"`
   );
 
   if (inTmux) {
