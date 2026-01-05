@@ -65,3 +65,7 @@ export type {
   SessionStatus,
   SessionChangeCallback as ManagedSessionChangeCallback
 } from "./session-store";
+
+// Prediction store (run predictions and calibration)
+export { PredictionStore } from "./prediction-store";
+export type { PredictionChangeCallback } from "./prediction-store";

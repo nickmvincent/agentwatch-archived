@@ -868,7 +868,7 @@ export function registerEnrichmentEndpoints(
 
     const { getAllEnrichments, getEnrichmentStats } =
       require("./enrichment-store") as typeof import("./enrichment-store");
-    const { discoverLocalTranscripts } =
+    const { discoverLocalTranscripts, readTranscriptByPath } =
       require("./local-logs") as typeof import("./local-logs");
 
     const cutoff = Date.now() - days * 86400 * 1000;
@@ -917,12 +917,22 @@ export function registerEnrichmentEndpoints(
     const recentTranscripts = localTranscripts.filter(
       (t) => t.modifiedAt >= cutoff
     );
+    const transcriptOnly = recentTranscripts.filter(
+      (t) => !hookSessionPaths.has(t.path)
+    );
 
-    for (const transcript of recentTranscripts) {
-      // Skip if already counted via hook session
-      if (hookSessionPaths.has(transcript.path)) continue;
-
+    for (const transcript of transcriptOnly) {
       totalSessions++;
+
+      const parsed = await readTranscriptByPath(
+        transcript.agent,
+        transcript.path
+      );
+      if (parsed) {
+        totalCostUsd += parsed.estimatedCostUsd || 0;
+        totalInputTokens += parsed.totalInputTokens || 0;
+        totalOutputTokens += parsed.totalOutputTokens || 0;
+      }
 
       // Check for enrichments
       const enrichment = allEnrichments[`transcript:${transcript.id}`];
@@ -957,7 +967,7 @@ export function registerEnrichmentEndpoints(
       enrichment_stats: enrichmentStats,
       sources: {
         hook_sessions: recentHookSessions.length,
-        local_transcripts: recentTranscripts.length - hookSessionPaths.size
+        local_transcripts: transcriptOnly.length
       }
     });
   });
@@ -973,7 +983,7 @@ export function registerEnrichmentEndpoints(
 
     const { getAllEnrichments } =
       require("./enrichment-store") as typeof import("./enrichment-store");
-    const { discoverLocalTranscripts } =
+    const { discoverLocalTranscripts, readTranscriptByPath } =
       require("./local-logs") as typeof import("./local-logs");
 
     const cutoff = Date.now() - days * 86400 * 1000;
@@ -1057,7 +1067,7 @@ export function registerEnrichmentEndpoints(
    * GET /api/analytics/cost-by-type - Cost breakdown by task type
    *
    * Includes both hook sessions AND local transcripts.
-   * Note: Cost data primarily comes from hook sessions; transcripts contribute to session counts.
+   * Note: Cost data is estimated from token usage; transcripts only contribute when usage is available.
    */
   app.get("/api/analytics/cost-by-type", async (c) => {
     const state = getState();
@@ -1065,7 +1075,7 @@ export function registerEnrichmentEndpoints(
 
     const { getAllEnrichments } =
       require("./enrichment-store") as typeof import("./enrichment-store");
-    const { discoverLocalTranscripts } =
+    const { discoverLocalTranscripts, readTranscriptByPath } =
       require("./local-logs") as typeof import("./local-logs");
 
     const cutoff = Date.now() - days * 86400 * 1000;
@@ -1119,7 +1129,15 @@ export function registerEnrichmentEndpoints(
         inputTokens: 0,
         outputTokens: 0
       };
-      // Cost comes from enrichment if available (from transcript parsing)
+      const parsed = await readTranscriptByPath(
+        transcript.agent,
+        transcript.path
+      );
+      if (parsed) {
+        stats.cost += parsed.estimatedCostUsd || 0;
+        stats.inputTokens += parsed.totalInputTokens || 0;
+        stats.outputTokens += parsed.totalOutputTokens || 0;
+      }
       stats.count++;
       byType.set(taskType, stats);
     }

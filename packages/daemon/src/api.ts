@@ -27,7 +27,13 @@ import type {
   DailyStats,
   GitCommit,
   SessionSource,
-  ListeningPort
+  ListeningPort,
+  RunPrediction,
+  RunOutcome,
+  CalibrationResult,
+  CalibrationStats,
+  Principle,
+  PrinciplesFile
 } from "@agentwatch/core";
 import {
   TranscriptSanitizer,
@@ -157,6 +163,11 @@ import type { RuleEngine } from "./rules";
 import type { CostTracker, CostLimitsChecker } from "./cost";
 import type { NotificationHub } from "./notifications/hub";
 import type { NotificationPayload } from "./notifications/types";
+import {
+  getPrinciplesForProject,
+  buildPrinciplesInjection
+} from "./principles-parser";
+import { buildEnhancedPrompt, type AgentType } from "./process-runner";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket();
 
@@ -184,6 +195,9 @@ export interface AppState {
     updated: number;
     removed: number;
   }>;
+  // Command Center (predictions, process runner)
+  predictionStore?: import("@agentwatch/monitor").PredictionStore;
+  processRunner?: import("./process-runner").ProcessRunner;
 }
 
 // Helper functions to convert types to API dicts
@@ -1995,6 +2009,333 @@ export function createApp(state: AppState): Hono {
       return c.json({ error: "Session not found" }, 404);
     }
     return c.json(managedSessionToDict(session));
+  });
+
+  // ==========================================================================
+  // Command Center: Run, Predictions, Calibration, Principles
+  // ==========================================================================
+
+  // Helper to convert RunPrediction to API dict
+  function predictionToDict(
+    prediction: RunPrediction,
+    outcome?: RunOutcome
+  ): Record<string, unknown> {
+    return {
+      id: prediction.id,
+      managed_session_id: prediction.managedSessionId,
+      created_at: prediction.createdAt,
+      predicted_duration_minutes: prediction.predictedDurationMinutes,
+      duration_confidence: prediction.durationConfidence,
+      predicted_tokens: prediction.predictedTokens,
+      token_confidence: prediction.tokenConfidence,
+      success_conditions: prediction.successConditions,
+      intentions: prediction.intentions,
+      selected_principles: prediction.selectedPrinciples ?? [],
+      principles_path: prediction.principlesPath ?? null,
+      outcome: outcome
+        ? {
+            prediction_id: outcome.predictionId,
+            managed_session_id: outcome.managedSessionId,
+            recorded_at: outcome.recordedAt,
+            actual_duration_minutes: outcome.actualDurationMinutes,
+            actual_tokens: outcome.actualTokens,
+            exit_code: outcome.exitCode,
+            user_marked_success: outcome.userMarkedSuccess,
+            outcome_notes: outcome.outcomeNotes ?? null
+          }
+        : null
+    };
+  }
+
+  // Launch a run with optional prediction (daemon-side process spawning)
+  app.post("/api/managed-sessions/run", async (c) => {
+    const body = (await c.req.json()) as Record<string, unknown>;
+
+    const prompt = String(body.prompt ?? "");
+    const agent = String(body.agent ?? "claude") as AgentType;
+    const cwd = String(body.cwd ?? process.cwd());
+
+    if (!prompt) {
+      return c.json({ error: "prompt is required" }, 400);
+    }
+
+    // Check if process runner is available
+    if (!state.processRunner) {
+      return c.json({ error: "Process runner not available" }, 503);
+    }
+
+    // Validate agent
+    if (!state.processRunner.isValidAgent(agent)) {
+      return c.json(
+        {
+          error: `Unknown agent: ${agent}`,
+          supported: state.processRunner.getSupportedAgents()
+        },
+        400
+      );
+    }
+
+    // Build principles injection if provided
+    let principlesInjection: string | undefined;
+    let principlesPath: string | undefined;
+    const selectedPrinciples = body.selected_principles as string[] | undefined;
+
+    if (selectedPrinciples && selectedPrinciples.length > 0) {
+      const principlesFile = getPrinciplesForProject(cwd);
+      if (principlesFile) {
+        principlesInjection = buildPrinciplesInjection(
+          selectedPrinciples,
+          principlesFile.principles
+        );
+        principlesPath = principlesFile.path;
+      }
+    }
+
+    const intentions = body.intentions as string | undefined;
+
+    // Create managed session
+    const session = state.sessionStore.createSession(prompt, agent, cwd);
+
+    // Create prediction if provided
+    let prediction: RunPrediction | undefined;
+    if (state.predictionStore && body.prediction) {
+      const pred = body.prediction as Record<string, unknown>;
+      prediction = state.predictionStore.createPrediction({
+        managedSessionId: session.id,
+        predictedDurationMinutes: Number(pred.duration_minutes ?? 15),
+        durationConfidence: String(
+          pred.duration_confidence ?? "medium"
+        ) as RunPrediction["durationConfidence"],
+        predictedTokens: Number(pred.tokens ?? 50000),
+        tokenConfidence: String(
+          pred.token_confidence ?? "medium"
+        ) as RunPrediction["tokenConfidence"],
+        successConditions: String(pred.success_conditions ?? ""),
+        intentions: intentions ?? "",
+        selectedPrinciples: selectedPrinciples,
+        principlesPath
+      });
+    }
+
+    // Spawn the process
+    try {
+      const { pid } = await state.processRunner.run({
+        sessionId: session.id,
+        prompt,
+        agent,
+        cwd,
+        principlesInjection,
+        intentions
+      });
+
+      return c.json(
+        {
+          session: managedSessionToDict(
+            state.sessionStore.getSession(session.id) ?? session
+          ),
+          prediction: prediction ? predictionToDict(prediction) : null,
+          pid
+        },
+        201
+      );
+    } catch (error) {
+      // Mark session as failed if spawn fails
+      state.sessionStore.endSession(session.id, -1);
+      return c.json(
+        {
+          error: "Failed to spawn process",
+          details: String(error)
+        },
+        500
+      );
+    }
+  });
+
+  // Get supported agents
+  app.get("/api/command-center/agents", (c) => {
+    const agents = state.processRunner?.getSupportedAgents() ?? [
+      "claude",
+      "codex",
+      "gemini"
+    ];
+    return c.json({ agents });
+  });
+
+  // ==========================================================================
+  // Predictions API
+  // ==========================================================================
+
+  // Create a prediction
+  app.post("/api/predictions", async (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const body = (await c.req.json()) as Record<string, unknown>;
+
+    const managedSessionId = String(body.managed_session_id ?? "");
+    if (!managedSessionId) {
+      return c.json({ error: "managed_session_id is required" }, 400);
+    }
+
+    const prediction = state.predictionStore.createPrediction({
+      managedSessionId,
+      predictedDurationMinutes: Number(body.predicted_duration_minutes ?? 15),
+      durationConfidence: String(
+        body.duration_confidence ?? "medium"
+      ) as RunPrediction["durationConfidence"],
+      predictedTokens: Number(body.predicted_tokens ?? 50000),
+      tokenConfidence: String(
+        body.token_confidence ?? "medium"
+      ) as RunPrediction["tokenConfidence"],
+      successConditions: String(body.success_conditions ?? ""),
+      intentions: String(body.intentions ?? ""),
+      selectedPrinciples: body.selected_principles as string[] | undefined,
+      principlesPath: body.principles_path as string | undefined
+    });
+
+    return c.json(predictionToDict(prediction), 201);
+  });
+
+  // Get prediction for a session
+  app.get("/api/predictions/session/:sessionId", (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const sessionId = c.req.param("sessionId");
+    const prediction = state.predictionStore.getPredictionForSession(sessionId);
+
+    if (!prediction) {
+      return c.json({ error: "Prediction not found" }, 404);
+    }
+
+    const outcome = state.predictionStore.getOutcome(prediction.id);
+    return c.json(predictionToDict(prediction, outcome ?? undefined));
+  });
+
+  // List predictions
+  app.get("/api/predictions", (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const hasOutcome = c.req.query("has_outcome");
+    const limit = Number.parseInt(c.req.query("limit") ?? "50", 10);
+
+    const results = state.predictionStore.listPredictions({
+      hasOutcome: hasOutcome === undefined ? undefined : hasOutcome === "true",
+      limit
+    });
+
+    return c.json(
+      results.map(({ prediction, outcome }) =>
+        predictionToDict(prediction, outcome)
+      )
+    );
+  });
+
+  // Record outcome for a prediction
+  app.post("/api/predictions/:id/outcome", async (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const predictionId = c.req.param("id");
+    const body = (await c.req.json()) as Record<string, unknown>;
+
+    const prediction = state.predictionStore.getPrediction(predictionId);
+    if (!prediction) {
+      return c.json({ error: "Prediction not found" }, 404);
+    }
+
+    const result = state.predictionStore.recordOutcome({
+      predictionId,
+      managedSessionId: prediction.managedSessionId,
+      actualDurationMinutes: Number(body.actual_duration_minutes ?? 0),
+      actualTokens: Number(body.actual_tokens ?? 0),
+      exitCode: Number(body.exit_code ?? 0),
+      userMarkedSuccess: Boolean(body.user_marked_success),
+      outcomeNotes: body.outcome_notes as string | undefined
+    });
+
+    if (!result) {
+      return c.json({ error: "Failed to record outcome" }, 500);
+    }
+
+    return c.json({
+      prediction: predictionToDict(prediction, result.outcome),
+      calibration: {
+        prediction_id: result.calibration.predictionId,
+        duration_error: result.calibration.durationError,
+        duration_within_confidence: result.calibration.durationWithinConfidence,
+        duration_score: result.calibration.durationScore,
+        token_error: result.calibration.tokenError,
+        token_within_confidence: result.calibration.tokenWithinConfidence,
+        token_score: result.calibration.tokenScore,
+        success_prediction_correct: result.calibration.successPredictionCorrect,
+        success_score: result.calibration.successScore,
+        overall_score: result.calibration.overallScore
+      }
+    });
+  });
+
+  // ==========================================================================
+  // Calibration API
+  // ==========================================================================
+
+  // Get calibration stats
+  app.get("/api/calibration", (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const stats = state.predictionStore.getCalibrationStats();
+
+    return c.json({
+      total_predictions: stats.totalPredictions,
+      completed_predictions: stats.completedPredictions,
+      overall_calibration_score: stats.overallCalibrationScore,
+      recent_trend: stats.recentTrend,
+      history: stats.history
+    });
+  });
+
+  // Get calibration history for charts
+  app.get("/api/calibration/history", (c) => {
+    if (!state.predictionStore) {
+      return c.json({ error: "Prediction store not available" }, 503);
+    }
+
+    const days = Number.parseInt(c.req.query("days") ?? "30", 10);
+    const history = state.predictionStore.getCalibrationHistory(days);
+
+    return c.json({ history, days });
+  });
+
+  // ==========================================================================
+  // Principles API
+  // ==========================================================================
+
+  // Get principles for a directory
+  app.get("/api/principles", (c) => {
+    const cwd = c.req.query("cwd") ?? process.cwd();
+    const principlesFile = getPrinciplesForProject(cwd);
+
+    if (!principlesFile) {
+      return c.json({ found: false, path: null, principles: [] });
+    }
+
+    return c.json({
+      found: true,
+      path: principlesFile.path,
+      last_modified: principlesFile.lastModified,
+      principles: principlesFile.principles.map((p) => ({
+        id: p.id,
+        text: p.text,
+        category: p.category ?? null
+      }))
+    });
   });
 
   // ==========================================================================
@@ -4633,15 +4974,33 @@ export function createApp(state: AppState): Hono {
     };
 
     for (const conv of correlated) {
-      const cost = conv.hookSession?.estimatedCostUsd ?? 0;
-      const inputTokens = conv.hookSession?.totalInputTokens ?? 0;
-      const outputTokens = conv.hookSession?.totalOutputTokens ?? 0;
+      let cost = conv.hookSession?.estimatedCostUsd ?? 0;
+      let inputTokens = conv.hookSession?.totalInputTokens ?? 0;
+      let outputTokens = conv.hookSession?.totalOutputTokens ?? 0;
+
+      if (!conv.hookSession && conv.transcript) {
+        const parsed = await readTranscriptByPath(
+          conv.transcript.agent,
+          conv.transcript.path
+        );
+        if (parsed) {
+          cost = parsed.estimatedCostUsd ?? 0;
+          inputTokens = parsed.totalInputTokens ?? 0;
+          outputTokens = parsed.totalOutputTokens ?? 0;
+        }
+      }
 
       // Check enrichment for quality
       let isSuccess = false;
       let isFailure = false;
       if (conv.hookSession) {
         const enrichment = allEnrichments[`hook:${conv.hookSession.sessionId}`];
+        if (enrichment?.qualityScore) {
+          if (enrichment.qualityScore.overall >= 60) isSuccess = true;
+          else if (enrichment.qualityScore.overall < 40) isFailure = true;
+        }
+      } else if (conv.transcript) {
+        const enrichment = allEnrichments[`transcript:${conv.transcript.id}`];
         if (enrichment?.qualityScore) {
           if (enrichment.qualityScore.overall >= 60) isSuccess = true;
           else if (enrichment.qualityScore.overall < 40) isFailure = true;

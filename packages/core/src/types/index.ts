@@ -37,5 +37,8 @@ export * from "./conversation-metadata";
 // Session enrichments (auto-tags, quality scores, annotations)
 export * from "./enrichments";
 
+// Run predictions and calibration
+export * from "./predictions";
+
 // Note: Pre-share types are re-exported from the main @agentwatch/core entry point
 // via `export * from "@agentwatch/pre-share"` in src/index.ts

@@ -10,7 +10,8 @@ import {
   ProcessLogger,
   ProcessScanner,
   RepoScanner,
-  SessionStore
+  SessionStore,
+  PredictionStore
 } from "@agentwatch/monitor";
 
 import { type AppState, createApp, websocket } from "./api";
@@ -31,6 +32,7 @@ import {
   loadTranscriptIndex,
   updateTranscriptIndex
 } from "./transcript-index";
+import { ProcessRunner } from "./process-runner";
 
 export interface DaemonServerOptions {
   config?: Config;
@@ -66,6 +68,10 @@ export class DaemonServer {
   private transcriptUpdateInterval: ReturnType<typeof setInterval> | null =
     null;
 
+  // Command Center services
+  private predictionStore: PredictionStore;
+  private processRunner: ProcessRunner;
+
   constructor(options: DaemonServerOptions = {}) {
     this.config = options.config ?? loadConfig();
     this.store = new DataStore();
@@ -88,6 +94,10 @@ export class DaemonServer {
 
     // Load transcript index
     this.transcriptIndex = loadTranscriptIndex();
+
+    // Initialize Command Center services
+    this.predictionStore = new PredictionStore();
+    this.processRunner = new ProcessRunner(this.sessionStore);
 
     // Set up store callbacks for broadcasts
     this.store.setCallbacks({
@@ -403,7 +413,10 @@ export class DaemonServer {
         const result = await updateTranscriptIndex(this.transcriptIndex);
         this.transcriptIndex = result.index;
         return result;
-      }
+      },
+      // Command Center services
+      predictionStore: this.predictionStore,
+      processRunner: this.processRunner
     };
 
     const app = createApp(appState);
