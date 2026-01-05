@@ -64,7 +64,7 @@ import type {
   TranscriptInfo
 } from "./types";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.DEV ? "http://localhost:8420/api" : "/api";
 
 // Config types
 export interface ConfigData {
