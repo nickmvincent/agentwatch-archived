@@ -2,6 +2,7 @@ import type {
   AgentProcess,
   AggregateCost,
   AnalyticsByProjectResult,
+  AnalyticsCombinedResult,
   AnalyticsDashboard,
   AuditCalculationsResult,
   AuditCategoriesResult,
@@ -1595,6 +1596,20 @@ export async function fetchLoopsAnalytics(
   const params = days ? `?days=${days}` : "";
   const res = await fetch(`${API_BASE}/analytics/loops${params}`);
   if (!res.ok) throw new Error("Failed to fetch loops analytics");
+  return res.json();
+}
+
+/**
+ * Fetch all analytics data in a single request.
+ * Combines dashboard, success_trend, cost_by_type, tool_retries,
+ * quality_distribution, and loops into one response.
+ */
+export async function fetchAnalyticsCombined(
+  days?: number
+): Promise<AnalyticsCombinedResult> {
+  const params = days ? `?days=${days}` : "";
+  const res = await fetch(`${API_BASE}/analytics/combined${params}`);
+  if (!res.ok) throw new Error("Failed to fetch combined analytics");
   return res.json();
 }
 

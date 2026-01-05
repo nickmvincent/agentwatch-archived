@@ -1447,6 +1447,34 @@ export interface AnalyticsByProjectResult {
   };
 }
 
+/**
+ * Combined analytics result - all analytics data in one request.
+ * Reduces 9 API calls to 1 for faster page loads.
+ */
+export interface AnalyticsCombinedResult {
+  days: number;
+  dashboard: AnalyticsDashboard;
+  success_trend: SuccessTrendPoint[];
+  cost_by_type: CostByTypeItem[];
+  tool_retries: ToolRetryPattern[];
+  quality_distribution: {
+    total_scored: number;
+    distribution: QualityDistributionBucket[];
+    percentiles: {
+      p25: number;
+      p50: number;
+      p75: number;
+      p90: number;
+    };
+  };
+  loops: {
+    sessions_with_loops: number;
+    total_loops: number;
+    total_retries: number;
+    by_pattern_type: Record<string, number>;
+  };
+}
+
 // Audit Log Types
 
 export type AuditCategory =

@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   fetchAnalyticsByProject,
-  fetchAnalyticsDashboard,
+  fetchAnalyticsCombined,
   fetchConfig,
-  fetchCostByType,
   fetchDailyStats,
-  fetchLoopsAnalytics,
-  fetchQualityDistribution,
-  fetchSuccessTrend,
-  fetchToolRetries,
   fetchToolStats
 } from "../api/client";
 import type {
@@ -433,69 +428,46 @@ export function AnalyticsPane({
     setLoading(true);
     setLoadErrors([]);
     try {
+      // Use combined endpoint for most analytics data (reduces 9 calls to 4)
       const results = await Promise.allSettled([
-        fetchAnalyticsDashboard(transcriptDays),
-        fetchSuccessTrend(transcriptDays),
-        fetchCostByType(transcriptDays),
-        fetchQualityDistribution(transcriptDays),
-        fetchToolStats(),
-        fetchToolRetries(transcriptDays),
-        fetchLoopsAnalytics(transcriptDays),
-        fetchDailyStats(transcriptDays),
-        fetchAnalyticsByProject(transcriptDays)
+        fetchAnalyticsCombined(transcriptDays), // Combined: dashboard, success_trend, cost_by_type, tool_retries, quality_distribution, loops
+        fetchToolStats(), // Separate: from hook store
+        fetchDailyStats(transcriptDays), // Separate: from hook store
+        fetchAnalyticsByProject(transcriptDays) // Separate: uses correlation
       ]);
-      const [
-        dashboardResult,
-        successResult,
-        costResult,
-        qualityResult,
-        toolStatsResult,
-        toolRetriesResult,
-        loopsResult,
-        dailyResult,
-        projectResult
-      ] = results;
+      const [combinedResult, toolStatsResult, dailyResult, projectResult] =
+        results;
       const errors: LoadError[] = [];
 
-      if (dashboardResult.status === "fulfilled") {
-        setDashboard(dashboardResult.value);
+      // Process combined analytics
+      if (combinedResult.status === "fulfilled") {
+        const combined = combinedResult.value;
+        setDashboard(combined.dashboard);
+        setSuccessTrend(combined.success_trend ?? []);
+        setCostByType(combined.cost_by_type ?? []);
+        setQualityDist(combined.quality_distribution?.distribution ?? []);
+        setQualityPercentiles(
+          combined.quality_distribution?.percentiles ?? null
+        );
+        setToolRetries({
+          days: combined.days,
+          patterns: combined.tool_retries ?? []
+        });
+        setLoopsAnalytics({
+          days: combined.days,
+          ...combined.loops
+        });
       } else {
         setDashboard(null);
-        errors.push({
-          name: "dashboard",
-          message: getErrorMessage(dashboardResult.reason)
-        });
-      }
-
-      if (successResult.status === "fulfilled") {
-        setSuccessTrend(successResult.value.trend ?? []);
-      } else {
         setSuccessTrend([]);
-        errors.push({
-          name: "success-trend",
-          message: getErrorMessage(successResult.reason)
-        });
-      }
-
-      if (costResult.status === "fulfilled") {
-        setCostByType(costResult.value.breakdown ?? []);
-      } else {
         setCostByType([]);
-        errors.push({
-          name: "cost-by-type",
-          message: getErrorMessage(costResult.reason)
-        });
-      }
-
-      if (qualityResult.status === "fulfilled") {
-        setQualityDist(qualityResult.value.distribution ?? []);
-        setQualityPercentiles(qualityResult.value.percentiles ?? null);
-      } else {
         setQualityDist([]);
         setQualityPercentiles(null);
+        setToolRetries(null);
+        setLoopsAnalytics(null);
         errors.push({
-          name: "quality-distribution",
-          message: getErrorMessage(qualityResult.reason)
+          name: "combined-analytics",
+          message: getErrorMessage(combinedResult.reason)
         });
       }
 
@@ -506,26 +478,6 @@ export function AnalyticsPane({
         errors.push({
           name: "tool-stats",
           message: getErrorMessage(toolStatsResult.reason)
-        });
-      }
-
-      if (toolRetriesResult.status === "fulfilled") {
-        setToolRetries(toolRetriesResult.value);
-      } else {
-        setToolRetries(null);
-        errors.push({
-          name: "tool-retries",
-          message: getErrorMessage(toolRetriesResult.reason)
-        });
-      }
-
-      if (loopsResult.status === "fulfilled") {
-        setLoopsAnalytics(loopsResult.value);
-      } else {
-        setLoopsAnalytics(null);
-        errors.push({
-          name: "loops",
-          message: getErrorMessage(loopsResult.reason)
         });
       }
 

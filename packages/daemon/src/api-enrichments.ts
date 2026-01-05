@@ -1325,4 +1325,357 @@ export function registerEnrichmentEndpoints(
       by_pattern_type: Object.fromEntries(patternTypes)
     });
   });
+
+  /**
+   * GET /api/analytics/combined - All analytics in one request
+   *
+   * Reduces 9 separate API calls to 1, fetching shared data once.
+   * Returns dashboard, success_trend, cost_by_type, tool_retries,
+   * quality_distribution, and loops in a single response.
+   */
+  app.get("/api/analytics/combined", async (c) => {
+    const state = getState();
+    const days = Number.parseInt(c.req.query("days") || "30", 10);
+
+    const { getAllEnrichments, getEnrichmentStats } =
+      require("./enrichment-store") as typeof import("./enrichment-store");
+    const { discoverLocalTranscripts, readTranscriptByPath } =
+      require("./local-logs") as typeof import("./local-logs");
+
+    const cutoff = Date.now() - days * 86400 * 1000;
+
+    // Fetch all shared data once
+    const allEnrichments = getAllEnrichments();
+    const enrichmentStats = getEnrichmentStats();
+    const hookSessions = state.hookStore.getAllSessions(1000);
+    const recentHookSessions = hookSessions.filter((s) => s.startTime > cutoff);
+    const hookSessionPaths = new Set(
+      recentHookSessions.map((s) => s.transcriptPath).filter(Boolean)
+    );
+
+    const localTranscripts = await discoverLocalTranscripts();
+    const recentTranscripts = localTranscripts.filter(
+      (t) => t.modifiedAt >= cutoff
+    );
+    const transcriptOnly = recentTranscripts.filter(
+      (t) => !hookSessionPaths.has(t.path)
+    );
+
+    // Parse transcripts once (needed for cost calculations)
+    const parsedTranscripts = new Map<
+      string,
+      { cost: number; input: number; output: number }
+    >();
+    for (const transcript of transcriptOnly) {
+      const parsed = await readTranscriptByPath(
+        transcript.agent,
+        transcript.path
+      );
+      if (parsed) {
+        parsedTranscripts.set(transcript.id, {
+          cost: parsed.estimatedCostUsd || 0,
+          input: parsed.totalInputTokens || 0,
+          output: parsed.totalOutputTokens || 0
+        });
+      }
+    }
+
+    // ========== Dashboard ==========
+    let totalSessions = 0;
+    let totalCostUsd = 0;
+    let totalDurationMs = 0;
+    let sessionsWithDuration = 0;
+    let successCount = 0;
+    let failureCount = 0;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+
+    for (const session of recentHookSessions) {
+      totalSessions++;
+      totalCostUsd += session.estimatedCostUsd || 0;
+      totalInputTokens += session.totalInputTokens ?? 0;
+      totalOutputTokens += session.totalOutputTokens ?? 0;
+      if (session.endTime) {
+        totalDurationMs += session.endTime - session.startTime;
+        sessionsWithDuration++;
+      }
+      const enrichment = allEnrichments[`hook:${session.sessionId}`];
+      if (enrichment?.qualityScore) {
+        if (enrichment.qualityScore.overall >= 60) successCount++;
+        else if (enrichment.qualityScore.overall < 40) failureCount++;
+      }
+    }
+
+    for (const transcript of transcriptOnly) {
+      totalSessions++;
+      const parsed = parsedTranscripts.get(transcript.id);
+      if (parsed) {
+        totalCostUsd += parsed.cost;
+        totalInputTokens += parsed.input;
+        totalOutputTokens += parsed.output;
+      }
+      const enrichment = allEnrichments[`transcript:${transcript.id}`];
+      if (enrichment?.qualityScore) {
+        if (enrichment.qualityScore.overall >= 60) successCount++;
+        else if (enrichment.qualityScore.overall < 40) failureCount++;
+      }
+    }
+
+    const avgDurationMs =
+      sessionsWithDuration > 0 ? totalDurationMs / sessionsWithDuration : 0;
+    const successRate =
+      totalSessions > 0 ? (successCount / totalSessions) * 100 : 0;
+
+    const dashboard = {
+      time_range: {
+        start: new Date(cutoff).toISOString(),
+        end: new Date().toISOString(),
+        days
+      },
+      summary: {
+        total_sessions: totalSessions,
+        success_rate: Math.round(successRate * 10) / 10,
+        total_cost_usd: Math.round(totalCostUsd * 100) / 100,
+        total_input_tokens: totalInputTokens,
+        total_output_tokens: totalOutputTokens,
+        avg_duration_ms: Math.round(avgDurationMs)
+      },
+      enrichment_stats: enrichmentStats,
+      sources: {
+        hook_sessions: recentHookSessions.length,
+        local_transcripts: transcriptOnly.length
+      }
+    };
+
+    // ========== Success Trend ==========
+    const trendByDate = new Map<
+      string,
+      { success: number; failure: number; total: number }
+    >();
+
+    for (const session of recentHookSessions) {
+      const date = new Date(session.startTime).toISOString().slice(0, 10);
+      const stats = trendByDate.get(date) || {
+        success: 0,
+        failure: 0,
+        total: 0
+      };
+      stats.total++;
+      const enrichment = allEnrichments[`hook:${session.sessionId}`];
+      if (enrichment?.qualityScore) {
+        if (enrichment.qualityScore.overall >= 60) stats.success++;
+        else if (enrichment.qualityScore.overall < 40) stats.failure++;
+      }
+      trendByDate.set(date, stats);
+    }
+
+    for (const transcript of transcriptOnly) {
+      const date = new Date(transcript.modifiedAt).toISOString().slice(0, 10);
+      const stats = trendByDate.get(date) || {
+        success: 0,
+        failure: 0,
+        total: 0
+      };
+      stats.total++;
+      const enrichment = allEnrichments[`transcript:${transcript.id}`];
+      if (enrichment?.qualityScore) {
+        if (enrichment.qualityScore.overall >= 60) stats.success++;
+        else if (enrichment.qualityScore.overall < 40) stats.failure++;
+      }
+      trendByDate.set(date, stats);
+    }
+
+    const success_trend = Array.from(trendByDate.entries())
+      .map(([date, stats]) => ({
+        date,
+        success_count: stats.success,
+        failure_count: stats.failure,
+        total: stats.total,
+        rate:
+          stats.total > 0
+            ? Math.round((stats.success / stats.total) * 1000) / 10
+            : 0
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // ========== Cost By Type ==========
+    const costByType = new Map<
+      string,
+      { cost: number; count: number; inputTokens: number; outputTokens: number }
+    >();
+
+    for (const session of recentHookSessions) {
+      const enrichment = allEnrichments[`hook:${session.sessionId}`];
+      const taskType = enrichment?.autoTags?.taskType || "unknown";
+      const stats = costByType.get(taskType) || {
+        cost: 0,
+        count: 0,
+        inputTokens: 0,
+        outputTokens: 0
+      };
+      stats.cost += session.estimatedCostUsd || 0;
+      stats.count++;
+      stats.inputTokens += session.totalInputTokens ?? 0;
+      stats.outputTokens += session.totalOutputTokens ?? 0;
+      costByType.set(taskType, stats);
+    }
+
+    for (const transcript of transcriptOnly) {
+      const enrichment = allEnrichments[`transcript:${transcript.id}`];
+      const taskType = enrichment?.autoTags?.taskType || "unknown";
+      const stats = costByType.get(taskType) || {
+        cost: 0,
+        count: 0,
+        inputTokens: 0,
+        outputTokens: 0
+      };
+      const parsed = parsedTranscripts.get(transcript.id);
+      if (parsed) {
+        stats.cost += parsed.cost;
+        stats.inputTokens += parsed.input;
+        stats.outputTokens += parsed.output;
+      }
+      stats.count++;
+      costByType.set(taskType, stats);
+    }
+
+    const cost_by_type = Array.from(costByType.entries())
+      .map(([taskType, stats]) => ({
+        task_type: taskType,
+        total_cost_usd: Math.round(stats.cost * 100) / 100,
+        total_input_tokens: stats.inputTokens,
+        total_output_tokens: stats.outputTokens,
+        session_count: stats.count,
+        avg_cost_usd:
+          stats.count > 0
+            ? Math.round((stats.cost / stats.count) * 100) / 100
+            : 0
+      }))
+      .sort((a, b) => b.total_cost_usd - a.total_cost_usd);
+
+    // ========== Tool Retries ==========
+    const toolByName = new Map<
+      string,
+      { total: number; failures: number; errors: string[] }
+    >();
+
+    for (const session of recentHookSessions) {
+      const toolUsages = state.hookStore.getSessionToolUsages(
+        session.sessionId
+      );
+      for (const usage of toolUsages) {
+        const stats = toolByName.get(usage.toolName) || {
+          total: 0,
+          failures: 0,
+          errors: []
+        };
+        stats.total++;
+        if (usage.success === false) {
+          stats.failures++;
+          if (usage.error && stats.errors.length < 5) {
+            const shortError = usage.error.slice(0, 50);
+            if (!stats.errors.includes(shortError)) {
+              stats.errors.push(shortError);
+            }
+          }
+        }
+        toolByName.set(usage.toolName, stats);
+      }
+    }
+
+    const tool_retries = Array.from(toolByName.entries())
+      .map(([toolName, stats]) => ({
+        tool_name: toolName,
+        total_calls: stats.total,
+        failures: stats.failures,
+        failure_rate:
+          stats.total > 0
+            ? Math.round((stats.failures / stats.total) * 1000) / 10
+            : 0,
+        common_errors: stats.errors
+      }))
+      .filter((p) => p.failures > 0)
+      .sort((a, b) => b.failure_rate - a.failure_rate);
+
+    // ========== Quality Distribution ==========
+    const buckets = [
+      { range: "0-25", min: 0, max: 25, count: 0 },
+      { range: "25-50", min: 25, max: 50, count: 0 },
+      { range: "50-75", min: 50, max: 75, count: 0 },
+      { range: "75-100", min: 75, max: 100, count: 0 }
+    ];
+    let qualityTotal = 0;
+    const scores: number[] = [];
+
+    for (const enrichment of Object.values(allEnrichments)) {
+      if (!enrichment.qualityScore) continue;
+      const score = enrichment.qualityScore.overall;
+      scores.push(score);
+      qualityTotal++;
+      for (const bucket of buckets) {
+        if (score >= bucket.min && score < bucket.max) {
+          bucket.count++;
+          break;
+        }
+        if (score >= 100 && bucket.max === 100) {
+          bucket.count++;
+          break;
+        }
+      }
+    }
+
+    scores.sort((a, b) => a - b);
+    const quality_distribution = {
+      total_scored: qualityTotal,
+      distribution: buckets.map((b) => ({
+        range: b.range,
+        min: b.min,
+        max: b.max,
+        count: b.count,
+        percentage:
+          qualityTotal > 0 ? Math.round((b.count / qualityTotal) * 1000) / 10 : 0
+      })),
+      percentiles: {
+        p25: scores[Math.floor(scores.length * 0.25)] || 0,
+        p50: scores[Math.floor(scores.length * 0.5)] || 0,
+        p75: scores[Math.floor(scores.length * 0.75)] || 0,
+        p90: scores[Math.floor(scores.length * 0.9)] || 0
+      }
+    };
+
+    // ========== Loops ==========
+    let sessionsWithLoops = 0;
+    let totalLoops = 0;
+    let totalRetries = 0;
+    const patternTypes = new Map<string, number>();
+
+    for (const enrichment of Object.values(allEnrichments)) {
+      if (!enrichment.loopDetection?.loopsDetected) continue;
+      sessionsWithLoops++;
+      totalLoops += enrichment.loopDetection.patterns.length;
+      totalRetries += enrichment.loopDetection.totalRetries;
+      for (const pattern of enrichment.loopDetection.patterns) {
+        const count = patternTypes.get(pattern.patternType) || 0;
+        patternTypes.set(pattern.patternType, count + 1);
+      }
+    }
+
+    const loops = {
+      sessions_with_loops: sessionsWithLoops,
+      total_loops: totalLoops,
+      total_retries: totalRetries,
+      by_pattern_type: Object.fromEntries(patternTypes)
+    };
+
+    // Return combined response
+    return c.json({
+      days,
+      dashboard,
+      success_trend,
+      cost_by_type,
+      tool_retries,
+      quality_distribution,
+      loops
+    });
+  });
 }
