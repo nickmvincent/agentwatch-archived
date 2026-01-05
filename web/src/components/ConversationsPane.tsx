@@ -818,6 +818,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                   value={filterMatchType}
                   onChange={(e) => setFilterMatchType(e.target.value)}
                   className="flex-1 min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                  title="Data completeness: Full = hooks + transcript matched. Linked = matched by path/time. Partial = only one source."
                 >
                   <option value="all">All sources</option>
                   <option value="exact">Full (hooks + transcript)</option>
@@ -829,6 +830,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                   value={filterFeedback}
                   onChange={(e) => setFilterFeedback(e.target.value)}
                   className="flex-1 min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                  title="Your manual rating of sessions (thumbs up/down)"
                 >
                   <option value="all">Feedback</option>
                   <option value="positive">Positive</option>
@@ -844,6 +846,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       value={filterAgent}
                       onChange={(e) => setFilterAgent(e.target.value)}
                       className="min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                      title="Filter by AI agent type (Claude Code, Codex, etc.)"
                     >
                       <option value="all">All agents</option>
                       {uniqueAgents.map((agent) => (
@@ -856,6 +859,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       value={filterHasHooks}
                       onChange={(e) => setFilterHasHooks(e.target.value)}
                       className="min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                      title="Hooks = agentwatch event tracking. Sessions with hooks have tool-level data."
                     >
                       <option value="all">Any hooks</option>
                       <option value="has">Has hooks</option>
@@ -865,6 +869,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       value={filterManaged}
                       onChange={(e) => setFilterManaged(e.target.value)}
                       className="min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                      title="Managed = started via 'aw run' with extra metadata. Unmanaged = normal sessions."
                     >
                       <option value="all">All types</option>
                       <option value="managed">Managed</option>
@@ -874,6 +879,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       value={filterHasQuality}
                       onChange={(e) => setFilterHasQuality(e.target.value)}
                       className="min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                      title="Quality scores are computed from session data (tool success, completion, safety)"
                     >
                       <option value="all">Quality score</option>
                       <option value="has">Has score</option>
@@ -883,6 +889,7 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       value={filterWorkflowStatus}
                       onChange={(e) => setFilterWorkflowStatus(e.target.value)}
                       className="min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                      title="Contribution workflow status: Pending → Reviewed → Ready to contribute"
                     >
                       <option value="all">Review status</option>
                       <option value="pending">Pending</option>

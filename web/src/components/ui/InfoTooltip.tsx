@@ -312,6 +312,43 @@ export const ENRICHMENT_GLOSSARY: Record<
   notes: {
     summary: "User notes",
     details: "Free-form notes about the session for your own reference."
+  },
+
+  // Jargon terms
+  hook_session: {
+    summary: "Session tracked by hooks",
+    details:
+      "A coding session where agentwatch hooks captured tool usage data (commands, file operations, API calls). Richer than transcripts alone."
+  },
+  managed_session: {
+    summary: "Session started via 'aw run'",
+    details:
+      "Sessions launched with 'aw run <agent>' have additional metadata: explicit start/end, sandboxing, and environment info."
+  },
+  enrichment: {
+    summary: "Metadata added to sessions",
+    details:
+      "Post-processing data added to sessions: auto-tags, quality scores, loop detection, git diffs. Stored in ~/.agentwatch/enrichments/"
+  },
+  transcript: {
+    summary: "Full chat log",
+    details:
+      "Claude Code's conversation file (~/.claude/projects/*/sessions/*.jsonl) containing all messages, tool calls, and responses."
+  },
+  redaction: {
+    summary: "Privacy protection",
+    details:
+      "Automatic removal of sensitive data (secrets, PII, file paths) before sharing. Patterns defined in redaction profiles."
+  },
+  data_source: {
+    summary: "Where session data comes from",
+    details:
+      "Full = hooks + transcript matched. Linked = matched by path/time heuristics. Partial = only hooks or only transcript."
+  },
+  permission_mode: {
+    summary: "How Claude handles approvals",
+    details:
+      "auto = proceed without asking. ask = request approval for each action. off = don't ask (may fail). Set in ~/.claude/settings.json"
   }
 };
 
