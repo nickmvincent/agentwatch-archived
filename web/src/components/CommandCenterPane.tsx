@@ -528,11 +528,15 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
             {calibrationStats ? (
               <div className="text-center">
                 <div className="text-5xl font-bold text-cyan-400">
-                  {Math.round(calibrationStats.overallCalibrationScore)}
+                  {Number.isFinite(calibrationStats.overallCalibrationScore)
+                    ? Math.round(calibrationStats.overallCalibrationScore)
+                    : "--"}
                 </div>
                 <div className="text-sm text-gray-400 mt-1">out of 100</div>
                 <div className="mt-3">
-                  <TrendIndicator trend={calibrationStats.recentTrend} />
+                  <TrendIndicator
+                    trend={calibrationStats.recentTrend || "stable"}
+                  />
                 </div>
 
                 {/* Mini history chart */}
@@ -663,15 +667,16 @@ function ProgressIndicator({
 function TrendIndicator({
   trend
 }: {
-  trend: "improving" | "stable" | "declining";
+  trend: "improving" | "stable" | "declining" | string;
 }) {
-  const config = {
-    improving: { icon: "^", color: "text-green-400", label: "Improving" },
-    stable: { icon: "~", color: "text-gray-400", label: "Stable" },
-    declining: { icon: "v", color: "text-red-400", label: "Declining" }
-  };
+  const config: Record<string, { icon: string; color: string; label: string }> =
+    {
+      improving: { icon: "^", color: "text-green-400", label: "Improving" },
+      stable: { icon: "~", color: "text-gray-400", label: "Stable" },
+      declining: { icon: "v", color: "text-red-400", label: "Declining" }
+    };
 
-  const { icon, color, label } = config[trend];
+  const { icon, color, label } = config[trend] ?? config.stable;
 
   return (
     <div className={`flex items-center justify-center gap-1 ${color}`}>
