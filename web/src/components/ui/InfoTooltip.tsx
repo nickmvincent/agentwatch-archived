@@ -205,3 +205,172 @@ export function HookTypeInfo({ hookType, asBadge = false }: HookTypeInfoProps) {
 
 // Export all hook descriptions for use elsewhere
 export { HOOK_DESCRIPTIONS };
+
+// Enrichment field descriptions for glossary tooltips
+export const ENRICHMENT_GLOSSARY: Record<
+  string,
+  { summary: string; details: string }
+> = {
+  // Auto-tags
+  task_type: {
+    summary: "Inferred task category",
+    details:
+      "Automatically classified from tool usage patterns: feature, bugfix, refactor, test, docs, config, exploration"
+  },
+  auto_tags: {
+    summary: "Automatically generated tags",
+    details:
+      "Keywords derived from git commits, file paths, and tool operations. Updated when session ends."
+  },
+
+  // Quality scores
+  quality_score: {
+    summary: "Overall quality rating (0-100)",
+    details:
+      "Composite score based on completion, code quality, efficiency, and safety dimensions. Higher is better."
+  },
+  completion_score: {
+    summary: "Task completion indicator",
+    details:
+      "Did the session achieve its apparent goal? Based on commits, successful tool calls, and exit status."
+  },
+  code_quality_score: {
+    summary: "Code quality indicator",
+    details:
+      "Based on lint results, test outcomes, and edit patterns. Penalized for repeated failures or oscillations."
+  },
+  efficiency_score: {
+    summary: "Resource efficiency",
+    details:
+      "Token usage relative to work done. Lower token count for same output = higher efficiency."
+  },
+  safety_score: {
+    summary: "Safety indicator",
+    details:
+      "Were dangerous operations avoided? Penalized for destructive commands, bypassed checks, or sensitive file access."
+  },
+
+  // Outcome signals
+  exit_code: {
+    summary: "Final process exit code",
+    details:
+      "0 = success, non-zero = error. From the Stop hook or process monitoring."
+  },
+  test_results: {
+    summary: "Test execution results",
+    details:
+      "Did tests pass? Extracted from test runner output in PostToolUse hooks."
+  },
+  lint_results: {
+    summary: "Lint/format check results",
+    details: "Any lint errors or warnings detected during the session."
+  },
+
+  // Loop detection
+  loop_detected: {
+    summary: "Repetitive behavior warning",
+    details:
+      "Session showed signs of getting stuck: repeated similar tool calls, oscillating edits, or error loops."
+  },
+  tool_retry: {
+    summary: "Tool retry loop",
+    details:
+      "Same tool called repeatedly with similar inputs, possibly indicating confusion or stuck state."
+  },
+  file_edit_loop: {
+    summary: "Edit oscillation",
+    details:
+      "Repeated edits to the same file without apparent progress - may indicate the model is struggling."
+  },
+
+  // Git/diff
+  lines_added: {
+    summary: "Lines of code added",
+    details:
+      "Total lines added across all commits in the session, from git diff analysis."
+  },
+  lines_removed: {
+    summary: "Lines of code removed",
+    details: "Total lines removed across all commits in the session."
+  },
+  files_changed: {
+    summary: "Number of files modified",
+    details: "Distinct files with changes committed during the session."
+  },
+
+  // Annotations
+  feedback: {
+    summary: "User feedback rating",
+    details:
+      "Manual thumbs up/down rating. Used to train quality heuristics and filter sessions."
+  },
+  user_tags: {
+    summary: "User-added tags",
+    details:
+      "Custom tags you add to categorize sessions. Separate from auto-generated tags."
+  },
+  notes: {
+    summary: "User notes",
+    details: "Free-form notes about the session for your own reference."
+  }
+};
+
+interface EnrichmentTooltipProps {
+  /** Enrichment field key */
+  field: string;
+  /** Show as inline badge or icon */
+  variant?: "icon" | "badge";
+}
+
+/**
+ * Shows enrichment field with glossary tooltip
+ */
+export function EnrichmentTooltip({
+  field,
+  variant = "icon"
+}: EnrichmentTooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const info = ENRICHMENT_GLOSSARY[field];
+
+  if (!info) {
+    return null;
+  }
+
+  if (variant === "badge") {
+    return (
+      <span
+        className="relative inline-flex"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        <span className="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded cursor-help">
+          {field.replace(/_/g, " ")}
+        </span>
+        {isVisible && (
+          <span className="absolute z-50 left-0 top-full mt-1 w-64 p-2 bg-gray-900 border border-gray-600 rounded shadow-lg text-xs">
+            <div className="font-medium text-white mb-1">{info.summary}</div>
+            <div className="text-gray-400">{info.details}</div>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="relative inline-flex items-center justify-center"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      <span className="w-3.5 h-3.5 rounded-full bg-gray-600 text-gray-300 text-[9px] flex items-center justify-center cursor-help hover:bg-gray-500">
+        ?
+      </span>
+      {isVisible && (
+        <span className="absolute z-50 left-full ml-1 top-1/2 -translate-y-1/2 w-64 p-2 bg-gray-900 border border-gray-600 rounded shadow-lg text-xs">
+          <div className="font-medium text-white mb-1">{info.summary}</div>
+          <div className="text-gray-400">{info.details}</div>
+        </span>
+      )}
+    </span>
+  );
+}

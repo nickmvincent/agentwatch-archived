@@ -26,6 +26,7 @@ import type {
 } from "../api/types";
 import { ReferencePane } from "./ReferencePane";
 import { Toast } from "./Toast";
+import { InfoTooltip } from "./ui/InfoTooltip";
 
 type HideableTab = "hooks" | "repos" | "ports";
 
@@ -646,6 +647,7 @@ export function SettingsPane({
             enabled={config.test_gate.enabled}
             onChange={(v) => handleToggle("test_gate.enabled", v)}
             saving={saving}
+            tooltip="When enabled, a PreToolUse hook intercepts git commit commands and checks if tests have passed recently. If the pass file is missing or too old, the commit is blocked and Claude is prompted to run tests first. Configure test_command and pass_file_max_age_seconds in config.toml."
           />
 
           <div className="mt-2 p-2 bg-gray-700/50 rounded text-xs text-gray-400 space-y-1">
@@ -754,7 +756,8 @@ function ToggleRow({
   enabled,
   onChange,
   saving,
-  disabled = false
+  disabled = false,
+  tooltip
 }: {
   label: string;
   description: string;
@@ -762,13 +765,18 @@ function ToggleRow({
   onChange: (value: boolean) => void;
   saving: boolean;
   disabled?: boolean;
+  /** Optional detailed help text shown on hover */
+  tooltip?: string;
 }) {
   return (
     <div
       className={`flex items-center justify-between ${disabled ? "opacity-50" : ""}`}
     >
       <div>
-        <div className="text-white text-sm font-medium">{label}</div>
+        <div className="text-white text-sm font-medium flex items-center gap-1.5">
+          {label}
+          {tooltip && <InfoTooltip content={tooltip} />}
+        </div>
         <div className="text-gray-500 text-xs">{description}</div>
       </div>
       <button
@@ -929,8 +937,9 @@ function ConversationsSettingsSection({
 
       {/* Days selector */}
       <div className="mb-4">
-        <label className="block text-sm text-gray-300 mb-2">
+        <label className="text-sm text-gray-300 mb-2 flex items-center gap-1.5">
           Show conversations from last:
+          <InfoTooltip content="Controls how far back to scan for transcripts and hook sessions. Larger values load more data but may be slower. Affects Conversations, Analytics, and Share tabs." />
         </label>
         <div className="flex gap-2">
           {[1, 7, 14, 30, 90].map((days) => (
@@ -960,8 +969,9 @@ function ConversationsSettingsSection({
       <div className="mb-4 p-3 bg-cyan-900/20 border border-cyan-800/30 rounded">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-cyan-300">
+            <h3 className="text-sm font-medium text-cyan-300 flex items-center gap-1.5">
               Include Process Snapshots
+              <InfoTooltip content="Process snapshots are created by the daemon's process scanner. They provide a lightweight record of agent activity even when hooks aren't installed. Useful for seeing 'gaps' in your conversation data." />
             </h3>
             <p className="text-xs text-gray-400 mt-1">
               Add lightweight activity markers for coding sessions without hooks

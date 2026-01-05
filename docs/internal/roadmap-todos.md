@@ -858,25 +858,35 @@ Please test and report on:
   - Documents Claude, Codex, Gemini, OpenCode transcript formats
   - No deletion needed - useful as reference API
 
-### Self-Documenting UI Initiative 🆕
+### Self-Documenting UI Initiative ✅
 
 Goal: Move routine reference info into the UI itself, reducing reliance on external docs.
 
-**Quick wins:**
-- [ ] **Config option tooltips** - Add info icons to SettingsPane toggles/inputs with descriptions from `configuration.md`
-- [ ] **Data storage footers** - Add "Data stored in: X" to ConversationsPane, AnalyticsPane, etc.
-- [ ] **Hook type descriptions** - Show SessionStart/PreToolUse/PostToolUse explanations in HooksPane
+**Completed (2026-01-05):**
+- [x] **Config option tooltips** - Added InfoTooltip component to SettingsPane toggles (Test Gate, Process Snapshots, Transcript Days)
+- [x] **Data storage footers** - Added storage paths to ConversationsPane and AnalyticsPane headers
+- [x] **Hook type descriptions** - Added hook types grid to HooksPane info banner, HookTypeInfo badges in RulesOverview
+- [x] **Enrichment field glossary** - Added EnrichmentTooltip component with 20+ field definitions, applied to ConversationsPane sections
 
-**Medium effort:**
+**New components created:**
+- `web/src/components/ui/InfoTooltip.tsx` - InfoTooltip, StorageInfo, HookTypeInfo, EnrichmentTooltip components
+- `HOOK_DESCRIPTIONS` - 9 hook types with summary, when, and use case
+- `ENRICHMENT_GLOSSARY` - 20+ enrichment field definitions
+
+**Medium effort (TODO):**
 - [ ] **API browser endpoint** - Create `/api/reference/endpoints` returning endpoint metadata
 - [ ] **API browser UI** - Component showing live endpoint docs (descriptions, params, response schemas)
 - [ ] **Field schema popovers** - Show type info in ContribPane when selecting fields for export
-- [ ] **Enrichment field glossary** - Tooltips explaining auto-tags, quality scores, loop detection
 
 **Philosophy:**
 - UI explains itself → docs become tutorials/architecture only
 - "Where is data stored?" answered in-context, not in markdown
 - API reference auto-generated from code, not maintained separately
+
+**Docs assessment (2026-01-05):**
+- Technical reference docs (API, CLI, Config) stay in docs/ but link from UI
+- Vision doc in internal/ is fine for contributors - could move to external blog later
+- Tutorials/guides stay in docs/ - essential for onboarding
 
 ### Medium Priority (Polish)
 

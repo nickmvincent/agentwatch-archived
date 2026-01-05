@@ -22,6 +22,7 @@ import type {
 } from "../api/types";
 import { useConversations } from "../context/ConversationContext";
 import { ChatViewer } from "./ChatViewer";
+import { EnrichmentTooltip } from "./ui/InfoTooltip";
 import { WorkflowProgressWidget } from "./WorkflowProgressWidget";
 
 type ViewMode = "data" | "chat" | "json" | "hooks-timeline" | "full-timeline";
@@ -1909,12 +1910,14 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                     {/* Auto Tags Section */}
                     {selectedEnrichments?.auto_tags && (
                       <section>
-                        <h3 className="text-lg font-semibold text-white mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                           Auto Tags
+                          <EnrichmentTooltip field="auto_tags" />
                         </h3>
                         <div className="mb-2">
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-400 text-sm flex items-center gap-1">
                             Task Type:
+                            <EnrichmentTooltip field="task_type" />
                           </span>
                           <span
                             className={`ml-2 px-2 py-1 rounded text-sm text-white ${getTaskTypeColor(selectedEnrichments.auto_tags.taskType)}`}
@@ -1943,8 +1946,9 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                     {/* Quality Score Section */}
                     {selectedEnrichments?.quality_score && (
                       <section>
-                        <h3 className="text-lg font-semibold text-white mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                           Quality Score
+                          <EnrichmentTooltip field="quality_score" />
                         </h3>
                         <div className="mb-3">
                           <span
@@ -1958,7 +1962,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                         </div>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
-                            <span className="text-gray-400">Completion:</span>
+                            <span className="text-gray-400 inline-flex items-center gap-1">
+                              Completion
+                              <EnrichmentTooltip field="completion_score" />:
+                            </span>
                             <span className="ml-2 text-white">
                               {
                                 selectedEnrichments.quality_score.dimensions
@@ -1968,7 +1975,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400">Code Quality:</span>
+                            <span className="text-gray-400 inline-flex items-center gap-1">
+                              Code Quality
+                              <EnrichmentTooltip field="code_quality_score" />:
+                            </span>
                             <span className="ml-2 text-white">
                               {
                                 selectedEnrichments.quality_score.dimensions
@@ -1978,7 +1988,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400">Efficiency:</span>
+                            <span className="text-gray-400 inline-flex items-center gap-1">
+                              Efficiency
+                              <EnrichmentTooltip field="efficiency_score" />:
+                            </span>
                             <span className="ml-2 text-white">
                               {
                                 selectedEnrichments.quality_score.dimensions
@@ -1988,7 +2001,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400">Safety:</span>
+                            <span className="text-gray-400 inline-flex items-center gap-1">
+                              Safety
+                              <EnrichmentTooltip field="safety_score" />:
+                            </span>
                             <span className="ml-2 text-white">
                               {
                                 selectedEnrichments.quality_score.dimensions
@@ -2004,12 +2020,21 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                     {/* Outcome Signals Section */}
                     {selectedEnrichments?.outcome_signals && (
                       <section>
-                        <h3 className="text-lg font-semibold text-white mb-3">
+                        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                           Outcome Signals
+                          <span
+                            className="w-3.5 h-3.5 rounded-full bg-gray-600 text-gray-300 text-[9px] flex items-center justify-center cursor-help"
+                            title="Objective results extracted from tool outputs: exit codes, test results, lint errors, build status"
+                          >
+                            ?
+                          </span>
                         </h3>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
-                            <span className="text-gray-400">Exit Codes:</span>
+                            <span className="text-gray-400 inline-flex items-center gap-1">
+                              Exit Codes
+                              <EnrichmentTooltip field="exit_code" />:
+                            </span>
                             <span className="ml-2 text-white">
                               {
                                 selectedEnrichments.outcome_signals.exitCodes
@@ -2025,7 +2050,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                           </div>
                           {selectedEnrichments.outcome_signals.testResults && (
                             <div>
-                              <span className="text-gray-400">Tests:</span>
+                              <span className="text-gray-400 inline-flex items-center gap-1">
+                                Tests
+                                <EnrichmentTooltip field="test_results" />:
+                              </span>
                               <span className="ml-2 text-green-400">
                                 {
                                   selectedEnrichments.outcome_signals
@@ -2047,7 +2075,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                           )}
                           {selectedEnrichments.outcome_signals.lintResults && (
                             <div>
-                              <span className="text-gray-400">Lint:</span>
+                              <span className="text-gray-400 inline-flex items-center gap-1">
+                                Lint
+                                <EnrichmentTooltip field="lint_results" />:
+                              </span>
                               <span className="ml-2 text-white">
                                 {
                                   selectedEnrichments.outcome_signals
@@ -2084,9 +2115,10 @@ export function ConversationsPane({ onNavigateToTab }: ConversationsPaneProps) {
                       selectedEnrichments.loop_detection.patterns.length >
                         0 && (
                         <section className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4">
-                          <h3 className="text-lg font-semibold text-yellow-400 mb-3">
+                          <h3 className="text-lg font-semibold text-yellow-400 mb-3 flex items-center gap-2">
                             Loop Detection
-                            <span className="ml-2 text-sm font-normal text-yellow-500">
+                            <EnrichmentTooltip field="loop_detected" />
+                            <span className="text-sm font-normal text-yellow-500">
                               ({selectedEnrichments.loop_detection.totalRetries}{" "}
                               retries)
                             </span>
