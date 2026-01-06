@@ -429,6 +429,87 @@ describe("Watcher API", () => {
     });
   });
 
+  describe("Config API", () => {
+    it("GET /api/config returns watcher configuration", async () => {
+      const res = await app.request("/api/config");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.roots).toBeInstanceOf(Array);
+      expect(data.repo).toHaveProperty("refresh_fast_seconds");
+      expect(data.repo).toHaveProperty("refresh_slow_seconds");
+      expect(data.watcher).toHaveProperty("host");
+      expect(data.watcher).toHaveProperty("port");
+      expect(data.watcher.port).toBe(8420);
+    });
+
+    it("GET /api/claude/settings returns settings info", async () => {
+      const res = await app.request("/api/claude/settings");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      // Should always have these fields
+      expect(data).toHaveProperty("exists");
+      expect(data).toHaveProperty("path");
+      expect(typeof data.exists).toBe("boolean");
+    });
+  });
+
+  describe("Ports API", () => {
+    it("GET /api/ports returns empty list when no ports", async () => {
+      store._setPorts([]);
+      const res = await app.request("/api/ports");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBe(0);
+    });
+
+    it("GET /api/ports returns ports", async () => {
+      store._setPorts([
+        {
+          port: 3000,
+          protocol: "tcp",
+          state: "LISTEN",
+          pid: 1234,
+          name: "node"
+        }
+      ]);
+      const res = await app.request("/api/ports");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.length).toBe(1);
+      expect(data[0].port).toBe(3000);
+    });
+
+    it("GET /api/ports/:port returns 404 for unknown port", async () => {
+      store._setPorts([]);
+      const res = await app.request("/api/ports/9999");
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("Hook Statistics API", () => {
+    it("GET /api/hooks/tools/stats returns tool statistics", async () => {
+      const res = await app.request("/api/hooks/tools/stats");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    it("GET /api/hooks/stats/daily returns daily stats", async () => {
+      const res = await app.request("/api/hooks/stats/daily");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    it("GET /api/hooks/commits returns commits", async () => {
+      const res = await app.request("/api/hooks/commits");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+  });
+
   describe("Sandbox API", () => {
     it("GET /api/sandbox/status returns installation status", async () => {
       const res = await app.request("/api/sandbox/status");
