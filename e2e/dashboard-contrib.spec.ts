@@ -5,8 +5,8 @@
  * These tests verify the full flow from session selection to preview,
  * ensuring proper ID mapping between frontend and backend.
  *
- * Requires: Running daemon with at least one hook session
- * Run with: TEST_TARGET=web playwright test --project=dashboard dashboard-contrib
+ * Requires: Legacy daemon running with at least one hook session
+ * Run with: TEST_TARGET=web playwright test --project=watcher dashboard-contrib
  */
 
 import { type Page, expect, test } from "@playwright/test";
@@ -81,7 +81,7 @@ test.describe("Dashboard - Share/Contribute Flow", () => {
   // Session Selection Tests
   // ============================================================================
 
-  test("should display sessions from daemon", async ({ page }) => {
+  test("should display sessions from legacy daemon", async ({ page }) => {
     // Look for session list or empty state
     const hasSessionList = await elementExists(
       page,
@@ -458,7 +458,7 @@ test.describe("Dashboard - Share/Contribute Flow", () => {
 });
 
 // ============================================================================
-// Integration Tests (require specific daemon state)
+// Integration Tests (require specific legacy daemon state)
 // ============================================================================
 
 test.describe("Dashboard - Contribute Integration", () => {

@@ -324,6 +324,7 @@ export function setManualAnnotation(
   options?: {
     notes?: string;
     userTags?: string[];
+    extraData?: Record<string, unknown>;
     rating?: number;
     taskDescription?: string;
     goalAchieved?: boolean;
@@ -347,6 +348,7 @@ export function setManualAnnotation(
     feedback,
     notes: options?.notes ?? existingAnnotation?.notes,
     userTags: options?.userTags ?? existingAnnotation?.userTags ?? [],
+    extraData: options?.extraData ?? existingAnnotation?.extraData,
     rating: options?.rating ?? existingAnnotation?.rating,
     taskDescription:
       options?.taskDescription ?? existingAnnotation?.taskDescription,

@@ -309,7 +309,7 @@ Each line is one session, ready for research use.
 ## FAQ
 
 ### Is my data sent anywhere automatically?
-No. AgentWatch never uploads data without your explicit action. The daemon runs locally, and all processing happens on your machine.
+No. AgentWatch never uploads data without your explicit action. The watcher/analyzer run locally, and all processing happens on your machine.
 
 ### Can I undo a contribution?
 After uploading to HuggingFace, you control your repository. You can delete files or close PRs. For datasets you don't own, contact the maintainer.

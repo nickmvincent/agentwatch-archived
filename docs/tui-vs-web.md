@@ -6,8 +6,8 @@ Agentwatch provides two interfaces: a terminal-based TUI and a browser-based Web
 
 | Aspect | TUI | Web UI |
 |--------|-----|--------|
-| **Launch** | `aw` or `aw tui` | `aw web` |
-| **Daemon required** | No (standalone mode) | Yes |
+| **Launch** | `aw` or `aw tui` (legacy daemon UI) | `aw watcher start` + `aw analyze` |
+| **Daemon required** | Yes (legacy daemon auto-started) | Watcher required; analyzer is on-demand |
 | **Best for** | Quick monitoring, SSH | Full features, analytics |
 | **Keyboard-driven** | Yes | Yes (shortcuts) |
 | **Real-time updates** | Polling | WebSocket |
@@ -21,7 +21,7 @@ Agentwatch provides two interfaces: a terminal-based TUI and a browser-based Web
 - Working over SSH
 - Minimal resource usage
 - No browser needed
-- Standalone operation without daemon
+- Lightweight terminal workflow
 
 ### Launching
 ```bash
@@ -67,17 +67,10 @@ aw tui      # Explicit TUI command
 - Settings editor
 - Port monitoring
 
-### Standalone Mode
+### Legacy Daemon Mode
 
-The TUI can run without the daemon by directly scanning for agents:
-```bash
-aw tui  # Runs standalone, no daemon needed
-```
-
-This is useful for:
-- Quick checks without starting daemon
-- Environments where daemon can't run
-- Lower resource usage
+The current TUI connects to the legacy daemon and will auto-start it if needed.
+Standalone scanning mode is not available in the current CLI.
 
 ## Web UI
 
@@ -160,14 +153,12 @@ Analysis and export - opens in browser:
 - Agent pinning
 - Split pane view
 - Ignore list UI
-- Standalone mode
 
 ## Decision Guide
 
 ### Use TUI when...
 - You need a quick status check
 - You're working over SSH
-- You want standalone operation
 - You prefer keyboard-only navigation
 - You need minimal resource usage
 

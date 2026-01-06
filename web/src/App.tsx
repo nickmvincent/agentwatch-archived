@@ -27,7 +27,9 @@ type Tab =
 type HideableTab = "ports";
 
 // Helper to fetch and patch config
-const API_BASE = import.meta.env.DEV ? "http://localhost:8420" : "";
+const API_BASE = import.meta.env.VITE_API_BASE
+  ? import.meta.env.VITE_API_BASE.replace(/\/api$/, "")
+  : "";
 
 async function fetchUiConfig(): Promise<{
   hiddenTabs: string[];

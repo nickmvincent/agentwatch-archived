@@ -1198,6 +1198,7 @@ export interface ManualAnnotationEnrichment {
   feedback: FeedbackType;
   notes?: string;
   userTags: string[];
+  extraData?: Record<string, unknown>;
   rating?: number;
   taskDescription?: string;
   goalAchieved?: boolean;

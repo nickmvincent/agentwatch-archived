@@ -26,7 +26,7 @@
     "daemon:rebuild": "bun run build:packages && aw daemon restart",
     "test": "bun test packages/",
     "test:e2e": "playwright test --project=pages",
-    "test:screenshots": "TEST_TARGET=web playwright test --project=dashboard",
+    "test:screenshots": "TEST_TARGET=web playwright test --project=watcher",
     "test:screenshots:view": "open e2e/screenshots",
     "lint": "biome check .",
     "format": "biome format --write .",

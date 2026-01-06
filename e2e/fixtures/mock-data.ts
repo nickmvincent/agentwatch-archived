@@ -1,6 +1,6 @@
 /**
  * Mock data fixtures for screenshot tests.
- * These can be used to seed the daemon with test data.
+ * These can be used to seed the legacy daemon with test data.
  */
 
 export const mockAgents = [

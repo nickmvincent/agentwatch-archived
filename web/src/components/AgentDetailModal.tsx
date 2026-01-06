@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   fetchAgentMetadataByPid,
   fetchAgentOutput,
+  fetchSessionEnrichments,
   killAgent,
   sendAgentSignal,
   setAgentMetadataByPid
@@ -11,8 +12,10 @@ import type {
   AgentProcess,
   Conversation,
   HookSession,
+  SessionEnrichments,
   ToolUsage
 } from "../api/types";
+import { ConversationAnnotationPanel } from "./ConversationAnnotationPanel";
 import { getProjectName } from "./ConversationCard";
 import { useConversations } from "../context/ConversationContext";
 
@@ -61,6 +64,11 @@ export function AgentDetailModal({
   const [editingConversationName, setEditingConversationName] = useState(false);
   const [conversationNameValue, setConversationNameValue] = useState("");
 
+  // Conversation enrichments for annotation (if analyzer is available)
+  const [sessionEnrichments, setSessionEnrichments] =
+    useState<SessionEnrichments | null>(null);
+  const [enrichmentsLoading, setEnrichmentsLoading] = useState(false);
+
   useEffect(() => {
     if (tab === "output" && agent.wrapper_state) {
       loadOutput();
@@ -72,6 +80,32 @@ export function AgentDetailModal({
       loadMetadata();
     }
   }, [tab, agent.pid, hookSession?.session_id]);
+
+  useEffect(() => {
+    const loadEnrichments = async () => {
+      if (tab !== "conversation" || !linkedConversation) return;
+      const enrichmentId =
+        linkedConversation.hook_session?.session_id ||
+        linkedConversation.correlation_id;
+      if (!enrichmentId) return;
+
+      setEnrichmentsLoading(true);
+      try {
+        const enrichments = await fetchSessionEnrichments(enrichmentId);
+        setSessionEnrichments(enrichments);
+      } catch {
+        setSessionEnrichments(null);
+      } finally {
+        setEnrichmentsLoading(false);
+      }
+    };
+
+    loadEnrichments();
+  }, [
+    tab,
+    linkedConversation?.correlation_id,
+    linkedConversation?.hook_session?.session_id
+  ]);
 
   // Load metadata on initial render for header display
   useEffect(() => {
@@ -739,6 +773,56 @@ export function AgentDetailModal({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Annotation */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                  Annotation
+                </h3>
+                {enrichmentsLoading ? (
+                  <div className="text-gray-500 text-sm">
+                    Loading annotation data...
+                  </div>
+                ) : linkedConversation.hook_session?.session_id ||
+                  linkedConversation.correlation_id ? (
+                  <ConversationAnnotationPanel
+                    sessionId={
+                      linkedConversation.hook_session?.session_id ||
+                      linkedConversation.correlation_id
+                    }
+                    manualAnnotation={
+                      sessionEnrichments?.manual_annotation ?? null
+                    }
+                    conversationName={getConversationName(
+                      linkedConversation.correlation_id ||
+                        linkedConversation.hook_session?.session_id ||
+                        ""
+                    )}
+                    conversationNamePlaceholder={getProjectName(
+                      linkedConversation.cwd
+                    )}
+                    onConversationNameSave={(name) =>
+                      updateConversationName(
+                        linkedConversation.correlation_id ||
+                          linkedConversation.hook_session?.session_id ||
+                          "",
+                        name
+                      )
+                    }
+                    onAnnotationSaved={(manual) =>
+                      setSessionEnrichments((prev) =>
+                        prev
+                          ? { ...prev, manual_annotation: manual ?? undefined }
+                          : prev
+                      )
+                    }
+                  />
+                ) : (
+                  <div className="text-gray-500 text-sm">
+                    No session identifier available for annotations.
+                  </div>
+                )}
               </div>
 
               {/* View Full Details Button */}

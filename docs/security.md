@@ -205,6 +205,8 @@ Configure in `~/.claude/settings.json`:
 
 **Purpose:** Ensure code quality, not machine security.
 
+**Status:** Legacy daemon-only. Watcher/analyzer do not expose Test Gate yet.
+
 ```toml
 # ~/.config/agentwatch/config.toml
 [test_gate]

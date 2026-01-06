@@ -125,7 +125,7 @@ Start the terminal UI dashboard.
 aw tui                       # Start TUI
 ```
 
-Auto-starts watcher if not running. See [TUI vs Web](tui-vs-web.md) for comparison.
+Auto-starts the legacy daemon if not running. See [TUI vs Web](tui-vs-web.md) for comparison.
 
 ---
 
@@ -158,15 +158,17 @@ aw security enable           # Enable Test Gate
 aw security disable          # Disable Test Gate
 ```
 
-When enabled, git commits are blocked until tests pass. Configure test command in [Settings](configuration.md#test-gate).
+When enabled, git commits are blocked until tests pass. This currently requires the legacy daemon; watcher/analyzer do not expose Test Gate yet. Configure the test command in [Settings](configuration.md#test-gate).
 
 ---
 
 ## Global Options
 
-Most commands accept:
-- `-H, --host <host>` - Watcher host (default: 127.0.0.1)
-- `-p, --port <port>` - Watcher port (default: 8420)
+Most daemon-backed commands accept:
+- `-H, --host <host>` - Legacy daemon host (default: 127.0.0.1)
+- `-p, --port <port>` - Legacy daemon port (default: 8420)
+
+Watcher/analyzer commands have their own host/port flags.
 
 ---
 

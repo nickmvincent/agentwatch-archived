@@ -832,7 +832,7 @@ test.describe("Pages Static Site - Error Handling", () => {
 });
 
 // ============================================================================
-// Web App tests (require daemon - run separately)
+// Web App tests (require legacy daemon - run separately)
 // ============================================================================
 
 // test.describe('Web App - Contrib Flow', () => {

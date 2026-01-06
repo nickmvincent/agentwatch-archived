@@ -21,6 +21,12 @@ import {
 import { loadTranscriptIndex, getIndexedTranscripts } from "../transcript-index";
 import type { LocalTranscript } from "../local-logs";
 import { loadAnalyzerConfig } from "../config";
+import {
+  deleteConversationMetadata,
+  getAllConversationMetadata,
+  getConversationMetadata,
+  setConversationMetadata
+} from "../conversation-metadata";
 
 /**
  * Read hook sessions from disk JSONL files.
@@ -320,8 +326,7 @@ export function registerConversationRoutes(app: Hono): void {
    * Get metadata for all conversations (for renaming, annotations).
    */
   app.get("/api/conversation-metadata", (c) => {
-    // Return empty for now - this is for user-defined metadata
-    return c.json({});
+    return c.json(getAllConversationMetadata());
   });
 
   /**
@@ -331,12 +336,11 @@ export function registerConversationRoutes(app: Hono): void {
    */
   app.get("/api/conversation-metadata/:conversationId", (c) => {
     const conversationId = c.req.param("conversationId");
-    return c.json({
-      conversation_id: conversationId,
-      custom_name: null,
-      tags: [],
-      notes: null
-    });
+    const metadata = getConversationMetadata(conversationId);
+    if (!metadata) {
+      return c.json({ error: "Conversation metadata not found" }, 404);
+    }
+    return c.json(metadata);
   });
 
   /**
@@ -346,11 +350,13 @@ export function registerConversationRoutes(app: Hono): void {
    */
   app.patch("/api/conversation-metadata/:conversationId", async (c) => {
     const conversationId = c.req.param("conversationId");
-    // Placeholder - would persist to annotations.json
-    return c.json({
-      conversation_id: conversationId,
-      updated: true
+    const body = (await c.req.json().catch(() => ({}))) as {
+      customName?: string | null;
+    };
+    const updated = setConversationMetadata(conversationId, {
+      customName: body.customName ?? null
     });
+    return c.json(updated);
   });
 
   /**
@@ -360,9 +366,7 @@ export function registerConversationRoutes(app: Hono): void {
    */
   app.delete("/api/conversation-metadata/:conversationId", (c) => {
     const conversationId = c.req.param("conversationId");
-    return c.json({
-      conversation_id: conversationId,
-      deleted: true
-    });
+    const success = deleteConversationMetadata(conversationId);
+    return c.json({ success });
   });
 }

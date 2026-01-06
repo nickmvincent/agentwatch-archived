@@ -11,6 +11,7 @@
  */
 
 import type { Hono } from "hono";
+import type { WorkflowStatus } from "@agentwatch/core";
 import {
   getAllEnrichments,
   getEnrichments,
@@ -46,11 +47,30 @@ export function registerEnrichmentRoutes(app: Hono): void {
       const enrichments = getAllEnrichments();
       const stats = getEnrichmentStats();
 
-      // Convert to array format for API
-      const sessions = Object.entries(enrichments).map(([id, e]) => ({
-        session_id: id,
-        ...e
-      }));
+      // Convert to EnrichmentListItem format for API
+      const sessions = Object.entries(enrichments).map(([id, e]) => {
+        // Parse the ID to extract session_ref components
+        const sessionRef = e.sessionRef || {};
+        return {
+          id,
+          session_ref: {
+            correlationId: sessionRef.correlationId,
+            hookSessionId: sessionRef.hookSessionId,
+            transcriptId: sessionRef.transcriptId
+          },
+          has_auto_tags: !!e.autoTags,
+          has_outcome_signals: !!e.outcomeSignals,
+          has_quality_score: !!e.qualityScore,
+          has_manual_annotation: !!e.manualAnnotation,
+          has_loop_detection: !!e.loopDetection,
+          has_diff_snapshot: !!e.diffSnapshot,
+          quality_score: e.qualityScore?.overall,
+          feedback: e.manualAnnotation?.feedback,
+          workflow_status: e.manualAnnotation?.workflowStatus,
+          task_type: e.autoTags?.taskType,
+          updated_at: e.updatedAt
+        };
+      });
 
       return c.json({
         sessions,
@@ -153,18 +173,54 @@ export function registerEnrichmentRoutes(app: Hono): void {
   app.post("/api/enrichments/:sessionId/annotation", async (c) => {
     const sessionId = c.req.param("sessionId");
     try {
-      const body = await c.req.json();
+      const body = (await c.req.json().catch(() => ({}))) as {
+        feedback?: "positive" | "negative" | null;
+        thumbs?: "positive" | "negative" | null;
+        rating?: number;
+        notes?: string;
+        user_tags?: string[];
+        userTags?: string[];
+        task_description?: string;
+        taskDescription?: string;
+        goal_achieved?: boolean;
+        goalAchieved?: boolean;
+        workflow_status?: string;
+        workflowStatus?: string;
+        extra_data?: Record<string, unknown>;
+        extraData?: Record<string, unknown>;
+      };
 
-      // Map rating to feedback type
       const feedback =
-        body.thumbs ||
-        (body.rating >= 4 ? "positive" : body.rating <= 2 ? "negative" : null);
+        body.feedback ??
+        body.thumbs ??
+        (typeof body.rating === "number"
+          ? body.rating >= 4
+            ? "positive"
+            : body.rating <= 2
+              ? "negative"
+              : null
+          : null);
 
-      setEnrichmentAnnotation({ transcriptId: sessionId }, feedback, {
-        notes: body.notes
+      const enrichment = setEnrichmentAnnotation(
+        { transcriptId: sessionId },
+        feedback,
+        {
+          notes: body.notes,
+          userTags: body.user_tags ?? body.userTags,
+          rating: body.rating,
+          taskDescription: body.task_description ?? body.taskDescription,
+          goalAchieved: body.goal_achieved ?? body.goalAchieved,
+          workflowStatus: (body.workflow_status ??
+            body.workflowStatus) as WorkflowStatus,
+          extraData: body.extra_data ?? body.extraData
+        }
+      );
+
+      return c.json({
+        success: true,
+        session_ref: enrichment.sessionRef,
+        manual_annotation: enrichment.manualAnnotation ?? null
       });
-
-      return c.json({ status: "ok", session_id: sessionId });
     } catch {
       return c.json({ error: "Failed to save annotation" }, 500);
     }
@@ -182,15 +238,17 @@ export function registerEnrichmentRoutes(app: Hono): void {
   app.post("/api/enrichments/:sessionId/tags", async (c) => {
     const sessionId = c.req.param("sessionId");
     try {
-      const body = await c.req.json();
+      const body = (await c.req.json().catch(() => ({}))) as {
+        tags?: string[];
+      };
       const tags = body.tags || [];
 
       const enrichment = updateUserTags({ transcriptId: sessionId }, tags);
 
       return c.json({
         success: true,
-        session_id: sessionId,
-        tags: enrichment.autoTags?.userTags || []
+        session_ref: enrichment.sessionRef,
+        user_tags: enrichment.manualAnnotation?.userTags || []
       });
     } catch {
       return c.json({ error: "Failed to update tags" }, 500);

@@ -52,6 +52,61 @@ export function registerMonitoringRoutes(
   });
 
   /**
+   * PATCH /api/config
+   *
+   * Proxy config updates to watcher.
+   */
+  app.patch("/api/config", async (c) => {
+    try {
+      const body = await c.req.json();
+      const res = await fetch(`${state.watcherUrl}/api/config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      return c.json(data, res.status);
+    } catch {
+      return c.json({ error: "Watcher not available" }, 503);
+    }
+  });
+
+  /**
+   * GET /api/config/raw
+   *
+   * Proxy raw config from watcher.
+   */
+  app.get("/api/config/raw", async (c) => {
+    try {
+      const res = await fetch(`${state.watcherUrl}/api/config/raw`);
+      const data = await res.json();
+      return c.json(data, res.status);
+    } catch {
+      return c.json({ error: "Watcher not available" }, 503);
+    }
+  });
+
+  /**
+   * PUT /api/config/raw
+   *
+   * Proxy raw config updates to watcher.
+   */
+  app.put("/api/config/raw", async (c) => {
+    try {
+      const body = await c.req.json();
+      const res = await fetch(`${state.watcherUrl}/api/config/raw`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      return c.json(data, res.status);
+    } catch {
+      return c.json({ error: "Watcher not available" }, 503);
+    }
+  });
+
+  /**
    * GET /api/status
    *
    * Get analyzer server status including uptime.

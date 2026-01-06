@@ -64,7 +64,7 @@ import type {
   TranscriptInfo
 } from "./types";
 
-const API_BASE = import.meta.env.DEV ? "http://localhost:8420/api" : "/api";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 // Config types
 export interface ConfigData {
@@ -78,6 +78,11 @@ export interface ConfigData {
   daemon: {
     host: string;
     port: number;
+  };
+  watcher?: {
+    host: string;
+    port: number;
+    log_dir: string;
   };
   test_gate: {
     enabled: boolean;
@@ -1304,6 +1309,7 @@ export async function setSessionAnnotation(
   options?: {
     notes?: string;
     userTags?: string[];
+    extraData?: Record<string, unknown>;
     rating?: number;
     taskDescription?: string;
     goalAchieved?: boolean;
@@ -1323,6 +1329,7 @@ export async function setSessionAnnotation(
         feedback,
         notes: options?.notes,
         user_tags: options?.userTags,
+        extra_data: options?.extraData,
         rating: options?.rating,
         task_description: options?.taskDescription,
         goal_achieved: options?.goalAchieved,
@@ -1622,6 +1629,17 @@ export async function fetchProjects(): Promise<Project[]> {
   if (!res.ok) throw new Error("Failed to fetch projects");
   const data = await res.json();
   return data.projects;
+}
+
+export async function fetchProjectsConfigPath(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/projects/config-path`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.path ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchProject(id: string): Promise<Project> {

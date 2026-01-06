@@ -101,7 +101,8 @@ import {
   registerMonitoringRoutes,
   registerConfigRoutes,
   registerClaudeSettingsRoutes,
-  registerSandboxRoutes
+  registerSandboxRoutes,
+  registerProjectRoutes
 } from "./routes";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket();
@@ -201,6 +202,9 @@ export function createWatcherApp(state: WatcherAppState): Hono {
 
   // Docker sandbox status and permission presets
   registerSandboxRoutes(app);
+
+  // Projects (shared config with analyzer)
+  registerProjectRoutes(app, state.store);
 
   // Hook sessions and timeline
   registerHookSessionRoutes(app, state.hookStore);

@@ -76,6 +76,7 @@ export function PortsPane({
 }: PortsPaneProps) {
   const { getProjects } = useData();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [showAllPorts, setShowAllPorts] = useState(false);
 
   useEffect(() => {
     getProjects().then(setProjects).catch(console.error);
@@ -104,8 +105,12 @@ export function PortsPane({
     };
   }, [projects]);
 
-  const visiblePorts = ports.filter((p) => !hiddenPorts.has(p.port));
-  const hiddenPortsList = ports.filter((p) => hiddenPorts.has(p.port));
+  const relevantPorts = ports.filter(
+    (p) => p.agent_label || getProjectForPort(p.cwd)
+  );
+  const filteredPorts = showAllPorts ? ports : relevantPorts;
+  const visiblePorts = filteredPorts.filter((p) => !hiddenPorts.has(p.port));
+  const hiddenPortsList = filteredPorts.filter((p) => hiddenPorts.has(p.port));
   const sortedPorts = [...visiblePorts].sort((a, b) => a.port - b.port);
   const sortedHiddenPorts = [...hiddenPortsList].sort(
     (a, b) => a.port - b.port
@@ -151,6 +156,12 @@ export function PortsPane({
                 {agentLinked} agent-linked
               </span>
             )}
+            <button
+              onClick={() => setShowAllPorts((prev) => !prev)}
+              className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded"
+            >
+              {showAllPorts ? "Show relevant only" : "Show all"}
+            </button>
           </div>
         </div>
 
@@ -168,6 +179,10 @@ export function PortsPane({
             <p>
               <strong>Agent linking:</strong> Ports are matched to detected
               agents by process ID
+            </p>
+            <p>
+              <strong>Default filter:</strong> Shows only agent-linked ports or
+              processes running inside project paths
             </p>
             <p>
               <strong>Categories:</strong> Common dev ports (React, Vite,

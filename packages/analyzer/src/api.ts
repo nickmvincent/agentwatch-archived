@@ -86,7 +86,8 @@ import {
   registerAnalyticsRoutes,
   registerProjectRoutes,
   registerShareRoutes,
-  registerConversationRoutes
+  registerConversationRoutes,
+  registerDocsRoutes
 } from "./routes";
 
 /**
@@ -168,6 +169,9 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
 
   // Conversations (correlated sessions + transcripts)
   registerConversationRoutes(app);
+
+  // Documentation
+  registerDocsRoutes(app);
 
   // =========== Static File Serving ===========
   // Look for built web UI in multiple locations

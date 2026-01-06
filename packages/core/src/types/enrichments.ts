@@ -341,6 +341,8 @@ export interface ManualAnnotationEnrichment {
   notes?: string;
   /** User-defined tags */
   userTags: string[];
+  /** Arbitrary user-provided structured data */
+  extraData?: Record<string, unknown>;
   /** Optional 1-5 rating for more granular feedback */
   rating?: number;
   /** User description of the task goal */

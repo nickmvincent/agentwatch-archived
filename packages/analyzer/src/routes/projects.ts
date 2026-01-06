@@ -17,6 +17,7 @@ import {
   addProject,
   updateProject,
   removeProject,
+  getConfigPath,
   type ProjectConfig
 } from "../config";
 
@@ -43,6 +44,15 @@ export function registerProjectRoutes(app: Hono): void {
         description: p.description
       }))
     });
+  });
+
+  /**
+   * GET /api/projects/config-path
+   *
+   * Return the config path for display.
+   */
+  app.get("/api/projects/config-path", (c) => {
+    return c.json({ path: getConfigPath() });
   });
 
   /**

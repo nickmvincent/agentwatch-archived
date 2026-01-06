@@ -214,6 +214,14 @@ export function useWebSocket(
             });
             break;
 
+          case "notification_sent":
+            addActivityEvent("notification_sent", message.session_id, {
+              notification_type: message.notification_type,
+              title: message.title,
+              message: message.message
+            });
+            break;
+
           case "hook_permission_request":
             addActivityEvent("permission", message.session_id, {
               tool_name: message.tool_name,
@@ -299,14 +307,6 @@ export function useWebSocket(
           case "hook_pre_compact":
             addActivityEvent("compact", message.session_id, {
               compact_type: message.compact_type
-            });
-            break;
-
-          case "notification_sent":
-            addActivityEvent("notification_sent", message.session_id, {
-              notification_type: message.notification_type,
-              title: message.title,
-              message: message.message
             });
             break;
 

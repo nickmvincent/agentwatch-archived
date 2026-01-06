@@ -33,6 +33,7 @@ The Watcher runs continuously in the background, monitoring AI coding agents, re
 | GET | `/api/agents/:pid` | Get agent details |
 | POST | `/api/agents/:pid/kill` | Kill agent process |
 | POST | `/api/agents/:pid/signal` | Send signal to agent |
+| POST | `/api/agents/:pid/input` | Send stdin to wrapped agent (legacy `aw run`) |
 
 ### Repositories
 
@@ -152,6 +153,23 @@ The analyzer uses a heartbeat-based lifecycle. When opened via `aw analyze`, it 
 | GET | `/api/transcripts/stats` | Aggregate transcript statistics |
 | GET | `/api/transcripts/:id` | Get transcript content |
 | POST | `/api/transcripts/rescan` | Trigger index rescan |
+
+### Conversations
+
+Correlated view of hook sessions + transcripts + managed sessions.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/contrib/correlated` | Correlated sessions for the Sessions/Conversations pane |
+
+### Conversation Metadata
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/conversation-metadata` | List conversation metadata |
+| GET | `/api/conversation-metadata/:conversationId` | Get metadata for a conversation |
+| PATCH | `/api/conversation-metadata/:conversationId` | Update metadata |
+| DELETE | `/api/conversation-metadata/:conversationId` | Delete metadata |
 
 ### Enrichments
 

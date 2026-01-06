@@ -1,10 +1,20 @@
 # Configuration Reference
 
-All agentwatch configuration is stored in `~/.config/agentwatch/config.toml`. This file uses [TOML format](https://toml.io/).
+Agentwatch configuration is stored in TOML files under `~/.config/agentwatch/`:
+
+- `watcher.toml` — Watcher server settings (preferred)
+- `analyzer.toml` — Analyzer settings (preferred)
+- `config.toml` — Legacy shared fallback read by both (deprecated)
+
+These files use [TOML format](https://toml.io/).
 
 > **New to TOML?** It's a simple configuration format—see the [Glossary](glossary.md) for a quick explanation.
 >
 > **Claude Code settings** are separate and stored in `~/.claude/settings.json`. See [Claude Code Settings](https://docs.anthropic.com/en/docs/claude-code/settings).
+
+## Watcher Configuration (watcher.toml)
+
+The watcher currently reads a limited set of fields from `watcher.toml`. The examples below show the supported keys.
 
 ## Repository Monitoring
 
@@ -14,22 +24,13 @@ roots = ["/Users/you/Documents/GitHub", "/Users/you/projects"]
 
 [repo]
 # Polling interval for dirty repos (seconds)
-refresh_fast_seconds = 3
+refresh_fast_seconds = 2
 
 # Polling interval for clean repos (seconds)
-refresh_slow_seconds = 45
-
-# Git operation timeout for quick commands like status (ms)
-git_timeout_fast_ms = 800
-
-# Git operation timeout for slow commands like upstream check (ms)
-git_timeout_slow_ms = 2500
-
-# Max parallel git operations
-concurrency_git = 12
+refresh_slow_seconds = 30
 
 # Include untracked file counts in dirty status
-include_untracked = false
+include_untracked = true
 
 # Show repositories with no changes
 show_clean = false
@@ -40,42 +41,23 @@ show_clean = false
 ```toml
 [agents]
 # How often to poll for processes (seconds)
-refresh_seconds = 1
+refresh_seconds = 2
 
 # Minimum CPU % to consider agent "active" vs "waiting"
 active_cpu_threshold = 1.0
 
 # Seconds of inactivity before marking agent as "stalled"
-stalled_seconds = 30
-
-# Add custom agent detection patterns
-[[agents.matchers]]
-label = "claude"
-type = "cmd_regex"      # "cmd_regex" or "exe_path"
-pattern = "\\bclaude\\b"
-
-[[agents.matchers]]
-label = "codex"
-type = "cmd_regex"
-pattern = "\\bcodex\\b"
-
-[[agents.matchers]]
-label = "cursor"
-type = "cmd_regex"
-pattern = "\\bcursor\\b"
-
-[[agents.matchers]]
-label = "gemini"
-type = "cmd_regex"
-pattern = "\\bgemini\\b"
+stalled_seconds = 300
 ```
+
+Note: Custom agent matchers are not configurable in the watcher yet; built-in matchers cover Claude, Codex, Cursor, OpenCode, and Gemini.
 
 ## Watcher Server
 
 ```toml
 [watcher]
 # Host to bind to
-host = "127.0.0.1"
+host = "localhost"
 
 # Port to listen on
 port = 8420
@@ -86,7 +68,28 @@ log_dir = "~/.agentwatch/logs"
 
 > **Migration note:** If you have an existing `[daemon]` section in config.toml, it will still be read for backwards compatibility. New installations should use `[watcher]`.
 
+## Analyzer Configuration (analyzer.toml)
+
+These settings apply to the analyzer server and UI.
+
+```toml
+[analyzer]
+# Host to bind to
+host = "localhost"
+
+# Port to listen on
+port = 8421
+
+# Watcher API URL
+watcher_url = "http://localhost:8420"
+
+# Data directory
+data_dir = "~/.agentwatch"
+```
+
 ## API Defaults
+
+Legacy daemon-only configuration. Watcher/analyzer ignore these settings.
 
 ```toml
 [api]
@@ -143,7 +146,21 @@ transcript_days = 30
 include_process_snapshots = false
 ```
 
+## Projects
+
+Define projects for grouping sessions in the analyzer:
+
+```toml
+[[projects]]
+id = "agentwatch"
+name = "AgentWatch"
+paths = ["/Users/you/projects/agentwatch"]
+description = "Agentwatch repo"
+```
+
 ## Suggestions & Heuristics
+
+Legacy daemon-only configuration. Watcher/analyzer ignore these settings.
 
 ```toml
 [suggestions]
@@ -165,6 +182,8 @@ long_session_minutes = 30
 
 ## Test Gate
 
+Legacy daemon-only configuration. Watcher/analyzer do not expose Test Gate yet.
+
 The Test Gate is a workflow feature that blocks git commits until your tests have passed.
 This is the only remaining Agentwatch security feature - for command blocking, use Claude
 Code's native deny rules in `~/.claude/settings.json` instead.
@@ -185,6 +204,8 @@ pass_file_max_age_seconds = 300
 ```
 
 ## Notifications
+
+Legacy daemon-only configuration. Watcher does not currently use these settings.
 
 ```toml
 [notifications]
@@ -219,6 +240,8 @@ hook_pre_compact = false       # Notify on PreCompact hook
 ```
 
 ## Hook Enhancements
+
+Legacy daemon-only configuration. Watcher/analyzer ignore these settings.
 
 These advanced features extend the basic [hook](https://docs.anthropic.com/en/docs/claude-code/hooks) functionality with intelligent responses. Hooks are scripts that Claude Code runs at specific events (session start, before/after tool use, etc.).
 
@@ -575,28 +598,23 @@ commit_message_prefix = "feat: "
 
 ## Environment Variables
 
-These environment variables can override configuration:
-
-| Variable | Description |
-|----------|-------------|
-| `AGENTWATCH_CONFIG` | Path to config file |
-| `AGENTWATCH_PORT` | Override watcher port |
-| `AGENTWATCH_HOST` | Override watcher host |
+Environment variable overrides are not implemented yet. Use CLI flags or edit TOML files directly.
 
 ## File Locations
 
 | File | Purpose |
 |------|---------|
-| `~/.config/agentwatch/config.toml` | Main configuration (includes UI prefs, sharing settings) |
+| `~/.config/agentwatch/config.toml` | Legacy shared configuration (fallback) |
 | `~/.config/agentwatch/watcher.toml` | Watcher-specific config (optional, takes precedence) |
+| `~/.config/agentwatch/analyzer.toml` | Analyzer-specific config (optional, takes precedence) |
 | `~/.config/agentwatch/ignore_repos.txt` | Repos to ignore |
-| `~/.agentwatch/events.jsonl` | Master event log |
+| `~/.agentwatch/events.jsonl` | Legacy daemon audit log |
 | `~/.agentwatch/watcher.pid` | Watcher PID file |
 | `~/.agentwatch/logs/` | Watcher logs |
 | `~/.agentwatch/sessions/` | Managed session data |
 | `~/.agentwatch/hooks/` | Hook event data |
 | `~/.agentwatch/transcripts/index.json` | Transcript discovery index |
-| `~/.agentwatch/test-pass` | Test gate timestamp |
+| `~/.agentwatch/test-pass` | Legacy daemon test gate timestamp |
 
 For a complete file reference, see [Data Sources](data-sources.md#complete-file-reference).
 

@@ -12,7 +12,9 @@ import type {
   RunPrediction
 } from "../api/types";
 
-const API_BASE = import.meta.env.DEV ? "http://localhost:8420" : "";
+const API_BASE = import.meta.env.VITE_API_BASE
+  ? import.meta.env.VITE_API_BASE.replace(/\/api$/, "")
+  : "";
 
 interface OutcomeModalProps {
   session: ManagedSession;

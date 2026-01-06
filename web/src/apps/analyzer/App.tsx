@@ -1,7 +1,7 @@
 /**
  * Analyzer App - Full analysis dashboard.
  *
- * Tabs: Sessions | Analytics | Projects | Share | Docs | Settings
+ * Tabs: Conversations | Analytics | Projects | Share | Docs | Settings
  */
 
 import { useEffect, useState } from "react";
@@ -27,7 +27,9 @@ type Tab =
 
 type HideableTab = "ports";
 
-const API_BASE = import.meta.env.DEV ? "http://localhost:8421" : "";
+const API_BASE = import.meta.env.VITE_API_BASE
+  ? import.meta.env.VITE_API_BASE.replace(/\/api$/, "")
+  : "";
 const WATCHER_URL = "http://localhost:8420";
 
 function AnalyzerApp() {
@@ -103,7 +105,7 @@ function AnalyzerApp() {
   }, []);
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "sessions", label: "Sessions" },
+    { id: "sessions", label: "Conversations" },
     { id: "analytics", label: "Analytics" },
     { id: "projects", label: "Projects" },
     { id: "share", label: "Share" },

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const testTarget = process.env.TEST_TARGET;
-const isWebDashboard = testTarget === "web";
+const isLegacyDashboard = testTarget === "web";
 const isAnalyzer = testTarget === "analyzer";
 
 export default defineConfig({
@@ -67,8 +67,9 @@ export default defineConfig({
         reuseExistingServer: true,
         timeout: 30000
       }
-    : isWebDashboard
+    : isLegacyDashboard
       ? {
+          // Legacy dashboard tests run against the deprecated daemon server.
           command: "bun run dev:daemon",
           port: 8420,
           reuseExistingServer: true,

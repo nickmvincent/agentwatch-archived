@@ -212,6 +212,8 @@ export function HookTimelineSection({
                 <option value="all">All Events</option>
                 <option value="session">Sessions</option>
                 <option value="tool">Tools</option>
+                <option value="notification">Notifications</option>
+                <option value="permission">Permissions</option>
                 <option value="user">User</option>
                 <option value="agent">Agent</option>
               </select>
@@ -234,6 +236,10 @@ export function HookTimelineSection({
                             ? "bg-blue-900/50 text-blue-400"
                             : event.type.includes("tool")
                               ? "bg-cyan-900/50 text-cyan-400"
+                              : event.type.includes("notification")
+                                ? "bg-green-900/50 text-green-400"
+                                : event.type.includes("permission")
+                                  ? "bg-yellow-900/50 text-yellow-400"
                               : event.type.includes("user")
                                 ? "bg-purple-900/50 text-purple-400"
                                 : "bg-gray-700 text-gray-400"

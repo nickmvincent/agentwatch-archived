@@ -1,8 +1,58 @@
-# Agentwatch Roadmap & Status
+# Agentwatch Status & Roadmap
 
-> Last updated: 2026-01-05
+> Last updated: 2026-01-06
 
-## Quick Status
+## Architecture Split ✅ (Code-Verified)
+
+Agentwatch has been split into two components:
+
+### Watcher (port 8420)
+Always-on background daemon for real-time monitoring:
+- Process scanning (detect running AI agents)
+- Hook capture (session lifecycle, tool usage, commits)
+- Repository status tracking
+- Port monitoring
+- Agent control: list/detail/kill/signal; `/api/agents/:pid/input` is stubbed (501), `/api/agents/:pid/output` missing
+- Claude settings management (`/api/claude/settings` GET/PUT/PATCH)
+- Sandbox status/presets/apply/current (missing levels/commands)
+- WebSocket for live updates
+
+**Start:** `aw watcher start`
+
+### Analyzer (port 8421)
+On-demand browser-based analysis:
+- Transcript discovery + stats + rescan
+- Enrichments (quality scores, auto-tags, workflow stats, privacy risk)
+- Manual annotations + user tags + bulk enrichment fetch
+- Analytics overview/daily/quality distribution/by-project
+- Projects CRUD
+- Correlated sessions (`/api/contrib/correlated`) + conversation metadata stubs
+- Share endpoints exist but are stubs (`/api/share/status`, `/api/share/export`)
+
+**Start:** `aw analyze` (opens browser, closes when browser closes)
+
+### Data Contract
+```
+~/.agentwatch/
+├── hooks/          # Written by Watcher, read by Analyzer
+├── processes/      # Written by Watcher, read by Analyzer
+├── transcripts/    # Read by both (source: Claude)
+├── annotations.json    # Written by Analyzer
+├── enrichments/        # Written by Analyzer
+└── artifacts.json      # Written by Analyzer
+```
+
+### Benefits Realized
+1. **Performance isolation** - Analysis workloads can't affect monitoring uptime
+2. **Resource efficiency** - No idle browser tab consuming memory for hooks to work
+3. **Clear mental model** - "Watcher watches, Analyzer analyzes"
+4. **Independent lifecycles** - Analysis can iterate without restarting monitoring
+5. **Optional analysis** - Users who only need monitoring never load analysis code
+
+### Legacy Daemon
+The combined `@agentwatch/daemon` package is deprecated. It remains the reference for unported endpoints and still backs `aw run`/`aw sessions` via `/api/managed-sessions`.
+
+## Legacy Daemon Status (Reference)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -17,69 +67,66 @@
 | **Projects** | ✅ Working | TOML config, auto-link by cwd, analytics |
 | Process log storage | ✅ Implemented | `SessionLogger` → `~/.agentwatch/logs/` |
 | Pre-share sanitization | ✅ Working | 137 tests, field grouping |
-| Hugging Face upload | ⚠️ Partial | Code exists, needs testing |
+| Hugging Face upload | ⚠️ Split gap | Tested in daemon; analyzer endpoints not wired |
 | Local transcript scan | ✅ Working | Claude Code, Codex, OpenCode |
-| Process wrapping | ❌ Not impl | Types exist, no CLI command |
-| **Session Manager** | ✅ Working | `aw run`, `aw sessions` commands |
+| Process wrapping | ⚠️ Daemon-only | `aw run` uses daemon runner; watcher lacks wrapped I/O |
+| **Session Manager** | ✅ Working | `aw run`, `aw sessions` still call daemon `/api/managed-sessions` |
 | Memory management | ✅ Working | Cleanup every hour, documented |
 | Contributor settings | ✅ Working | Persists to `~/.agentwatch/` |
 | Session annotations | ✅ Working | Thumbs up/down feedback |
 | Heuristic scoring | ✅ Working | Auto-success detection |
 | Settings persistence | ✅ Working | TOML config at `~/.config/agentwatch/` |
 
-### Architecture Split ✅ (Structure Complete, Features Pending)
+### Split Package Coverage (Code-Verified)
 | Package | Status | Purpose |
 |---------|--------|---------|
 | `@agentwatch/shared-api` | ✅ Complete | Dict converters, API utilities, JSDoc documented |
-| `@agentwatch/watcher` | ⚠️ MVP | Real-time monitoring (agents, repos, hooks, WebSocket) - ~27 endpoints |
-| `@agentwatch/analyzer` | ⚠️ MVP | Analysis (enrichments, transcripts, analytics, sharing) - ~20 endpoints |
-| CLI commands | ✅ Complete | `aw watcher start/stop`, `aw analyze` |
+| `@agentwatch/watcher` | ⚠️ Partial | Real-time monitoring (agents, repos, hooks, sandbox, WebSocket) - 38 endpoints |
+| `@agentwatch/analyzer` | ⚠️ Partial | Analysis (transcripts, enrichments, analytics, projects) - 37 endpoints |
+| CLI commands | ⚠️ Partial | `aw watcher start/stop`, `aw analyze` are split; `aw run` still depends on daemon |
 | Web UI split | ✅ Complete | Two apps: watcher (Agents/Repos/Ports), analyzer (Sessions/Analytics) |
 | Package tests | ✅ Complete | 13 watcher tests, 18 analyzer tests |
-| Daemon | ⚠️ Reference | Has ~194 endpoints - source for missing features |
+| Daemon | ⚠️ Reference | Has ~194 endpoints - source for missing features and managed sessions |
 
 ### Feature Gap Analysis (2026-01-06)
 
-**Daemon has ~194 endpoints. Watcher has ~27. Analyzer has ~20. Many features need porting.**
+**Daemon has ~194 endpoints. Watcher has 38. Analyzer has 37 (some stubs). Many features still need porting.**
 
 #### Missing from Watcher (Critical)
 
 | Category | Endpoints | Priority |
 |----------|-----------|----------|
-| Agent Control | `/api/agents/:pid/kill`, `/signal`, `/input`, `/output` | High |
-| Claude Settings | `/api/claude/settings`, `/mcp`, `/reference/*` | High |
-| Sandbox | `/api/sandbox/status`, `/presets`, `/levels`, `/commands` | High |
+| Agent Control | Implemented: `/api/agents/:pid/kill`, `/signal`; Missing: `/output`; `/input` is stubbed (501) | High |
+| Claude Settings | Implemented: `/api/claude/settings` (GET/PUT/PATCH); Missing: `/api/claude/mcp`, `/api/reference/*` | High |
+| Sandbox | Implemented: `/api/sandbox/status`, `/presets`, `/presets/:id`, `/presets/:id/apply`, `/current`; Missing: `/levels`, `/commands` | High |
 | Managed Sessions | `/api/managed-sessions/*` (7 endpoints) | High |
 | Command Center | `/api/command-center/*` (4 endpoints) | Medium |
 | Test Gate | `/api/test-gate/*` (3 endpoints) | Medium |
-| Config Editing | `/api/config` (PATCH), `/api/config/raw` | Medium |
+| Config Editing | Missing: `PATCH /api/config`, `/api/config/raw` (GET only today) | Medium |
 | Rules | `/api/rules/*` (6 endpoints) - from api-enhancements.ts | Medium |
 | Cost Limits | `/api/cost/*` (3 endpoints) - from api-enhancements.ts | Medium |
 | Notifications | `/api/notifications/*` (5 endpoints) - from api-enhancements.ts | Low |
 | Hook Enhancements | `/api/hook-enhancements` (GET, PATCH) | Low |
 | Sessions (legacy) | `/api/sessions/*` (GET, /:id) | Low |
-| Port Details | `/api/ports/:port` (GET) | Low |
 
 #### Missing from Analyzer (Critical)
 
 | Category | Endpoints | Priority |
 |----------|-----------|----------|
-| Enrichment Tags | `/api/enrichments/:id/tags`, `/analyze-transcript`, `/bulk` | High |
-| Privacy Risk | `/api/enrichments/privacy-risk` | High |
-| Transcript Stats | `/api/transcripts/stats` | High |
-| Analytics (rich) | `/api/analytics/dashboard`, `/success-trend`, `/cost-by-type`, `/tool-retries`, `/quality-distribution`, `/loops`, `/combined` | High |
-| Projects | `/api/projects/*` (6 endpoints) | High |
-| Predictions | `/api/predictions/*` (5 endpoints) | Medium |
-| Calibration | `/api/calibration/*` (2 endpoints) | Medium |
+| Enrichment Analyze | Missing: `/api/enrichments/analyze-transcript` (tags + bulk already implemented) | High |
+| Analytics (rich) | Missing: `/api/analytics/dashboard`, `/success-trend`, `/cost-by-type`, `/tool-retries`, `/loops`, `/combined` (overview/daily/quality-distribution/by-project implemented) | High |
 | Annotations (rich) | `/api/annotations/stats`, `/heuristics` | Medium |
 | Agent Metadata | `/api/agent-metadata/*` (7 endpoints) | Medium |
-| Conversation Metadata | `/api/conversation-metadata/*` (4 endpoints) | Medium |
-| Export | `/api/export/sessions`, `/activity` | Medium |
-| Contrib (full) | `/api/contrib/*` (~30 endpoints) | Medium |
+| Conversation Metadata | Endpoints exist but are stubs (no persistence) | Medium |
+| Export | `/api/export/sessions`, `/api/export/activity` | Medium |
+| Contrib (full) | Missing: `/api/contrib/*` except `/api/contrib/correlated` | Medium |
+| Share Core | `/api/share/status`, `/api/share/export` are stubs | Medium |
 | Share (HuggingFace) | `/api/share/huggingface/*` (8 endpoints) | Medium |
 | Share (Gist) | `/api/share/gist` | Low |
 | Privacy Flags | `/api/privacy-flags/*` (6 endpoints) | Low |
 | Audit | `/api/audit/*` (9 endpoints) - from api-audit.ts | Low |
+| Predictions | `/api/predictions/*` (5 endpoints) | Medium |
+| Calibration | `/api/calibration/*` (2 endpoints) | Medium |
 
 #### Settings Split Needed
 
@@ -88,27 +135,31 @@
 | `~/.config/agentwatch/watcher.toml` | Scanning intervals, hook behavior, agent detection |
 | `~/.config/agentwatch/analyzer.toml` | Transcript search, enrichment settings, sharing prefs |
 
-#### Recommended Implementation Order
+#### Recommended Implementation Order (Remaining)
 
-1. **Phase 1: Core Watcher Features**
-   - Agent control (kill/signal/input)
-   - Claude settings read/write
-   - Managed sessions (for `aw run` command)
+1. **Phase 1: Watcher gaps**
+   - Managed sessions (for `aw run`/`aw sessions`)
+   - Agent I/O for wrapped mode (`/api/agents/:pid/input` + `/output`)
+   - Config editing (`PATCH /api/config`, `/api/config/raw`)
+   - Claude MCP/reference endpoints
+   - Sandbox levels/commands
 
-2. **Phase 2: Core Analyzer Features**
-   - Full enrichment API (tags, analyze, privacy-risk)
-   - Rich analytics (all dashboard endpoints)
-   - Projects CRUD
+2. **Phase 2: Analyzer core gaps**
+   - `POST /api/enrichments/analyze-transcript`
+   - Rich analytics dashboards (success trends, cost, retries, loops, combined)
+   - Annotation stats/heuristics
+   - Persisted conversation metadata
+   - Agent metadata endpoints
 
-3. **Phase 3: Sharing Pipeline**
-   - Contrib endpoints
-   - HuggingFace upload
+3. **Phase 3: Sharing pipeline**
+   - Contrib endpoints + export endpoints
+   - HuggingFace/Gist share APIs
    - Privacy flags
 
-4. **Phase 4: Advanced Features**
+4. **Phase 4: Advanced/policy features**
    - Predictions/calibration
-   - Agent/conversation metadata
    - Audit logging
+   - Command center, test gate, rules, cost limits, notifications
 
 ### Test Coverage (803 tests total)
 | Package | Tests | Notes |
@@ -122,16 +173,22 @@
 | analyzer | 18 | API endpoints, enrichments, transcripts |
 | transcript-parser | 19 | Discovery, parsing, cost estimation |
 
+### Test Coverage Updates (In Progress)
+- Added Playwright analyzer UI flow coverage (sessions → preview → annotate → share/export) with API mocks because analyzer server endpoints don't yet match web UI expectations.
+- Added Playwright config support for `TEST_TARGET=analyzer` (serves analyzer UI from `@agentwatch/analyzer`).
+- Added watcher integration test that runs real scanners (process/repo/port) and asserts WebSocket broadcasts.
+- Added CLI integration tests for hooks install/status/uninstall, watcher foreground start/stop, and analyzer headless start/stop using isolated HOME.
+
 ---
 
 ## Half-Implemented / Needs Attention
 
-### 1. Process Wrapping ❌
-**What exists:** Types (`AgentWrapperState`, `WrapperConfig`), DataStore methods, API fields
-**What's missing:** `agentwatch run <cmd>` CLI, socket listener, PTY spawning
+### 1. Process Wrapping ⚠️ (Daemon-only)
+**What exists:** Managed sessions + process runner in daemon, CLI `aw run`/`aw sessions`, tmux launch support
+**What's missing:** Watcher integration for wrapped sessions, stdin/stdout streaming endpoints, wrapper socket listener
 **History:** Original Python version had full wrapper support, removed during TS migration
 **Pitfall:** TUI references `v` key for wrapper output (now removed from docs)
-**Decision:** Left for future. Hooks + process scanning cover most cases.
+**Decision:** Leave for future split-porting. Hooks + process scanning cover most cases.
 
 ### 3. Correlation UI Integration ✅ (Completed 2026-01-02)
 **What exists:** `correlation.ts` with full matching logic, `/api/contrib/correlated` endpoint
@@ -143,9 +200,9 @@
 - Process snapshots optional attachment via config toggle
 **Status:** Core integration complete. ConversationsPane still uses own detailed state for complex UI interactions.
 
-### 4. Hugging Face Upload Flow ✅
-**Status:** Tested with manual integration test (2026-01-03)
-**What exists:** `huggingface.ts` with upload logic, CLI auth detection, OAuth support
+### 4. Hugging Face Upload Flow ⚠️ (Daemon-only)
+**Status:** Tested in daemon with manual integration test (2026-01-03). Analyzer has `huggingface.ts` but no API wiring yet.
+**What exists:** `packages/daemon/src/huggingface.ts` with upload logic, CLI auth detection, OAuth support
 **Test:** `packages/daemon/test/huggingface-integration.test.ts` (run with `HF_INTEGRATION_TEST=1`)
 **Token storage:** Persisted to `~/.agentwatch/contributor.json`
 
@@ -294,6 +351,7 @@ DELETE /api/contrib/artifacts/:sessionId  - Remove artifact link
 ### Agent Session Manager (`aw run` + `aw sessions`) ✨
 **What:** CLI commands to launch agents with tracked prompts and view session history
 **Goal:** Solve the "what prompt did I give that tmux pane 2 hours ago?" problem
+**Status:** Implemented in daemon; watcher/analyzer do not expose `/api/managed-sessions` yet.
 
 **New Files:**
 - `packages/monitor/src/session-store.ts` - Persistence for managed sessions

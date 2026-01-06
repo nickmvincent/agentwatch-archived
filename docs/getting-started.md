@@ -90,11 +90,13 @@ See [Data Sources](data-sources.md) for full details.
 
 ### 3. Configure Security (Optional)
 
-**For code quality:** Enable the Test Gate
+**For code quality:** Enable the Test Gate (legacy daemon only)
 
 ```bash
 aw security enable
 ```
+
+Test Gate currently runs on the legacy daemon. If you're only using watcher/analyzer, you can skip this step for now.
 
 **For machine protection:** Configure deny rules in `~/.claude/settings.json`:
 

@@ -767,13 +767,17 @@ test.describe("Dashboard Screenshots", () => {
       }
     });
 
-    test("93 - Settings daemon config", async ({ page }) => {
+    test("93 - Settings daemon config (legacy)", async ({ page }) => {
       await navigateToTab(page, TABS.SETTINGS);
       const daemonSection = page.locator(
         ':has-text("Daemon"), :has-text("daemon"), :has-text("Server")'
       );
       if (await daemonSection.first().isVisible()) {
-        await screenshot(page, "93-settings-daemon", "Daemon configuration");
+        await screenshot(
+          page,
+          "93-settings-daemon",
+          "Legacy daemon configuration"
+        );
       }
     });
 

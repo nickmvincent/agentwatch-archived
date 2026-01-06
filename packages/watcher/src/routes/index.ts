@@ -9,6 +9,7 @@
  * - `monitoring` - Health, repos, and ports
  * - `config` - Watcher and Claude settings
  * - `sandbox` - Docker sandbox status and permission presets
+ * - `projects` - Shared project configuration
  *
  * @example
  * ```typescript
@@ -45,3 +46,4 @@ export {
 } from "./monitoring";
 export { registerConfigRoutes, registerClaudeSettingsRoutes } from "./config";
 export { registerSandboxRoutes } from "./sandbox";
+export { registerProjectRoutes } from "./projects";

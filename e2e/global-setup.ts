@@ -1,6 +1,6 @@
 /**
  * Global setup for Playwright tests.
- * Ensures the daemon is running and screenshots directory exists.
+ * Ensures the legacy daemon is running for dashboard tests and screenshots directory exists.
  */
 
 import * as fs from "fs";
@@ -15,19 +15,19 @@ async function globalSetup() {
     console.log("Created screenshots directory:", SCREENSHOTS_DIR);
   }
 
-  // Check if daemon is running (for dashboard tests)
+  // Check if legacy daemon is running (for dashboard tests)
   if (process.env.TEST_TARGET === "web") {
     try {
       const response = await fetch("http://localhost:8420/api/health");
       if (!response.ok) {
         console.warn(
-          "Warning: Daemon health check failed. Make sure daemon is running."
+          "Warning: Legacy daemon health check failed. Make sure the daemon is running."
         );
       } else {
-        console.log("Daemon is running and healthy.");
+        console.log("Legacy daemon is running and healthy.");
       }
     } catch (error) {
-      console.warn("Warning: Could not connect to daemon at localhost:8420");
+      console.warn("Warning: Could not connect to legacy daemon at localhost:8420");
       console.warn("Run: bun run dev:daemon OR aw daemon start");
     }
   }
