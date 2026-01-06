@@ -557,7 +557,7 @@ export function AgentPane({
                   />
                   <SortableHeader
                     column="lastHook"
-                    label="Activity"
+                    label="Last Hook"
                     sortColumn={sortColumn}
                     sortDirection={sortDirection}
                     onSort={handleSort}
