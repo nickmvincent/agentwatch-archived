@@ -162,7 +162,7 @@ export function SettingsPane({
                 ~/.config/agentwatch/config.toml
               </code>
               <p className="text-gray-400 mt-0.5">
-                AgentWatch daemon settings: notifications, test gates, hook
+                AgentWatch watcher settings: notifications, test gates, hook
                 enhancements
               </p>
             </div>
@@ -955,7 +955,7 @@ function ConversationsSettingsSection({
           <div>
             <h3 className="text-sm font-medium text-cyan-300 flex items-center gap-1.5">
               Include Process Snapshots
-              <InfoTooltip content="Process snapshots are created by the daemon's process scanner. They provide a lightweight record of agent activity even when hooks aren't installed. Useful for seeing 'gaps' in your conversation data." />
+              <InfoTooltip content="Process snapshots are created by the watcher's process scanner. They provide a lightweight record of agent activity even when hooks aren't installed. Useful for seeing 'gaps' in your conversation data." />
             </h3>
             <p className="text-xs text-gray-400 mt-1">
               Add lightweight activity markers for coding sessions without hooks
@@ -2729,8 +2729,8 @@ over_budget_action = "warn"
           <Toast message={saveMessage} onDismiss={() => setSaveMessage(null)} />
 
           <div className="mt-2 text-xs text-gray-500">
-            Changes require daemon restart to take effect. Run:{" "}
-            <code className="bg-gray-700 px-1 rounded">aw daemon start</code>
+            Changes require watcher restart to take effect. Run:{" "}
+            <code className="bg-gray-700 px-1 rounded">aw watcher restart</code>
           </div>
         </>
       )}

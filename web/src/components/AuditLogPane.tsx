@@ -529,7 +529,7 @@ export function AuditLogPane() {
             {auditLog.events.length === 0 ? (
               <div className="text-gray-400 text-center py-8">
                 No events found. Events are inferred from data files and logged
-                during daemon operation.
+                during watcher operation.
               </div>
             ) : (
               <div className="space-y-0">

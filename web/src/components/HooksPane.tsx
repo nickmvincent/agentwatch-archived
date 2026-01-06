@@ -261,7 +261,7 @@ export function HooksPane({
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           <h2 className="text-lg font-semibold text-white">Live Session</h2>
           <span className="text-xs text-gray-500">
-            Real-time from current daemon
+            Real-time from watcher
           </span>
         </div>
 
