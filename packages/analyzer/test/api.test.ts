@@ -178,9 +178,12 @@ describe("Analyzer API", () => {
 
     it("DELETE /api/annotations/:sessionId returns 404 for nonexistent", async () => {
       // Delete a nonexistent annotation
-      const res = await app.request("/api/annotations/nonexistent-delete-test", {
-        method: "DELETE"
-      });
+      const res = await app.request(
+        "/api/annotations/nonexistent-delete-test",
+        {
+          method: "DELETE"
+        }
+      );
       expect(res.status).toBe(404);
     });
   });

@@ -67,6 +67,20 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
   // =========== Health & Status ===========
   app.get("/api/health", (c) => c.json({ status: "ok" }));
 
+  // Proxy config from watcher
+  app.get("/api/config", async (c) => {
+    try {
+      const res = await fetch(`${state.watcherUrl}/api/config`);
+      if (res.ok) {
+        const config = await res.json();
+        return c.json(config);
+      }
+      return c.json({ error: "Watcher not available" }, 503);
+    } catch {
+      return c.json({ error: "Watcher not available" }, 503);
+    }
+  });
+
   app.get("/api/status", (c) => {
     const uptimeSeconds = Math.max(
       0,
@@ -113,13 +127,24 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
             stats.qualityDistribution.fair +
             stats.qualityDistribution.poor,
           with_annotations: stats.annotated.positive + stats.annotated.negative,
-          with_auto_tags: stats.byType.autoTags
+          with_auto_tags: stats.byType.autoTags,
+          // Include annotated breakdown for UI compatibility
+          annotated: {
+            positive: stats.annotated.positive,
+            negative: stats.annotated.negative
+          }
         }
       });
     } catch {
       return c.json({
         sessions: [],
-        stats: { total: 0, with_quality_score: 0, with_annotations: 0, with_auto_tags: 0 }
+        stats: {
+          total: 0,
+          with_quality_score: 0,
+          with_annotations: 0,
+          with_auto_tags: 0,
+          annotated: { positive: 0, negative: 0 }
+        }
       });
     }
   });
@@ -127,7 +152,8 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
   app.get("/api/enrichments/workflow-stats", async (c) => {
     try {
       const stats = getEnrichmentStats();
-      const withAnnotations = stats.annotated.positive + stats.annotated.negative;
+      const withAnnotations =
+        stats.annotated.positive + stats.annotated.negative;
       return c.json({
         total: stats.totalSessions,
         reviewed: withAnnotations,
@@ -170,12 +196,14 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
     try {
       const body = await c.req.json();
 
-      setEnrichmentAnnotation(
-        { transcriptId: sessionId },
-        body.rating,
-        body.thumbs,
-        body.notes
-      );
+      // Map rating to feedback type
+      const feedback =
+        body.thumbs ||
+        (body.rating >= 4 ? "positive" : body.rating <= 2 ? "negative" : null);
+
+      setEnrichmentAnnotation({ transcriptId: sessionId }, feedback, {
+        notes: body.notes
+      });
 
       return c.json({ status: "ok", session_id: sessionId });
     } catch (err) {
@@ -285,7 +313,8 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
       const index = loadTranscriptIndex();
       const indexStats = getIndexStats(index);
       const enrichStats = getEnrichmentStats();
-      const withFeedback = enrichStats.annotated.positive + enrichStats.annotated.negative;
+      const withFeedback =
+        enrichStats.annotated.positive + enrichStats.annotated.negative;
 
       return c.json({
         sessions: {
@@ -355,7 +384,9 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
       const body = await c.req.json();
 
       // setAnnotation(sessionId, feedback, notes) - feedback is "positive" | "negative" | null
-      const feedback = body.feedback || (body.rating >= 4 ? "positive" : body.rating <= 2 ? "negative" : null);
+      const feedback =
+        body.feedback ||
+        (body.rating >= 4 ? "positive" : body.rating <= 2 ? "negative" : null);
       setAnnotation(sessionId, feedback, body.notes);
 
       return c.json({ status: "ok", session_id: sessionId });

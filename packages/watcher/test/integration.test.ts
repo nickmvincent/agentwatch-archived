@@ -164,7 +164,11 @@ describe("Watcher Integration: Hook Lifecycle", () => {
     // Use multiple tools
     const tools = [
       { name: "Read", id: "tool-1", input: { file_path: "/a.txt" } },
-      { name: "Write", id: "tool-2", input: { file_path: "/b.txt", content: "x" } },
+      {
+        name: "Write",
+        id: "tool-2",
+        input: { file_path: "/b.txt", content: "x" }
+      },
       { name: "Bash", id: "tool-3", input: { command: "ls" } },
       { name: "Read", id: "tool-4", input: { file_path: "/c.txt" } }
     ];
@@ -357,7 +361,12 @@ describe("Watcher Integration: Session Queries", () => {
           logDir: join(TEST_DATA_DIR, "logs")
         },
         hookEnhancements: {
-          costControls: { enabled: false, sessionLimitUsd: 5, dailyLimitUsd: 50, warningThreshold: 0.8 },
+          costControls: {
+            enabled: false,
+            sessionLimitUsd: 5,
+            dailyLimitUsd: 50,
+            warningThreshold: 0.8
+          },
           notificationHub: { enabled: false, desktop: false }
         }
       },
@@ -502,7 +511,12 @@ describe("Watcher Integration: Statistics", () => {
           logDir: join(TEST_DATA_DIR, "logs")
         },
         hookEnhancements: {
-          costControls: { enabled: false, sessionLimitUsd: 5, dailyLimitUsd: 50, warningThreshold: 0.8 },
+          costControls: {
+            enabled: false,
+            sessionLimitUsd: 5,
+            dailyLimitUsd: 50,
+            warningThreshold: 0.8
+          },
           notificationHub: { enabled: false, desktop: false }
         }
       },
