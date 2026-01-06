@@ -7,14 +7,23 @@ General guidance for AI agents working on this codebase.
 **Monorepo with Bun workspaces:**
 - `packages/core` - Shared types, sanitization, transcript parsing
 - `packages/monitor` - Data stores, process/repo/port scanners, hook store
-- `packages/daemon` - HTTP API server (Hono), serves web UI
-- `packages/cli` - CLI commands (`aw daemon`, `aw hooks`, etc.)
+- `packages/shared-api` - Dict converters, sanitizers for API responses
+- `packages/watcher` - Real-time monitoring daemon (agents, repos, hooks)
+- `packages/analyzer` - On-demand analysis server (enrichments, share)
+- `packages/daemon` - Full HTTP API server (Hono), serves web UI
+- `packages/cli` - CLI commands (`aw watcher`, `aw analyze`, etc.)
 - `packages/tui` - Terminal UI (Ink/React)
 - `packages/pre-share` - Sanitization library (browser + server)
+- `packages/transcript-parser` - Transcript discovery and parsing
 - `web/` - React dashboard (Vite, serves from daemon)
 - `pages/` - Static site (Astro, for standalone use)
 
 **Data flow:** Hooks/scanners → DataStore/HookStore → API → Web UI
+
+**Architecture split (in progress):**
+- Watcher: Always-on daemon for real-time monitoring (port 8420)
+- Analyzer: Browser-only on-demand analysis (port 8421)
+- Daemon: Full combined server (current, to be deprecated)
 
 ## Development vs Production
 
@@ -33,6 +42,13 @@ bun run dev:web          # Web only (needs daemon running)
 
 **Prod commands:**
 ```bash
+# New commands (watcher + analyzer split)
+aw watcher start         # Start real-time monitoring daemon
+aw watcher stop/status   # Control watcher
+aw analyze               # Open analyzer in browser (shuts down when browser closes)
+aw analyze --headless    # Run analyzer without opening browser
+
+# Legacy commands (full daemon)
 aw daemon start          # Background
 aw daemon start -f       # Foreground (see logs)
 aw daemon stop/status    # Control
@@ -61,20 +77,26 @@ cd packages/pre-share && bun test  # Test specific package
 
 Build order matters:
 1. `@agentwatch/core` (no internal deps)
-2. `@agentwatch/monitor` (depends on core)
-3. `@agentwatch/pre-share` (depends on core)
-4. `@agentwatch/daemon` (depends on monitor, core, pre-share)
-5. `@agentwatch/cli`, `@agentwatch/tui` (depend on daemon types)
+2. `@agentwatch/pre-share` (depends on core)
+3. `@agentwatch/transcript-parser` (no internal deps)
+4. `@agentwatch/monitor` (depends on core)
+5. `@agentwatch/shared-api` (depends on core)
+6. `@agentwatch/watcher` (depends on core, monitor, shared-api)
+7. `@agentwatch/analyzer` (depends on core, monitor, shared-api, pre-share, transcript-parser)
+8. `@agentwatch/daemon` (depends on monitor, core, pre-share)
+9. `@agentwatch/cli`, `@agentwatch/tui` (depend on watcher, analyzer, daemon)
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `packages/daemon/src/api.ts` | All REST endpoints |
-| `packages/daemon/src/api-enhancements.ts` | Hook enhancement endpoints |
-| `packages/daemon/src/server.ts` | Daemon lifecycle, scanners |
-| `packages/daemon/src/research-profiles.ts` | Research-oriented redaction profiles |
-| `packages/daemon/src/contributor-settings.ts` | Contributor settings, artifact linking |
+| `packages/watcher/src/server.ts` | Watcher daemon lifecycle |
+| `packages/watcher/src/api.ts` | Watcher REST endpoints (agents, repos, hooks) |
+| `packages/analyzer/src/server.ts` | Analyzer server (browser-only lifecycle) |
+| `packages/analyzer/src/enrichments/` | Quality scoring, auto-tagging |
+| `packages/shared-api/src/dict-converters.ts` | camelCase → snake_case for API |
+| `packages/daemon/src/api.ts` | All REST endpoints (legacy) |
+| `packages/daemon/src/server.ts` | Daemon lifecycle, scanners (legacy) |
 | `packages/monitor/src/hook-store.ts` | Hook session/tool tracking |
 | `packages/monitor/src/store.ts` | In-memory data store |
 | `packages/core/src/sanitizer.ts` | Transcript sanitization |

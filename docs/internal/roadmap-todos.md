@@ -1,6 +1,6 @@
 # Agentwatch Roadmap & Status
 
-> Last updated: 2026-01-03
+> Last updated: 2026-01-05
 
 ## Quick Status
 
@@ -27,13 +27,27 @@
 | Heuristic scoring | ✅ Working | Auto-success detection |
 | Settings persistence | ✅ Working | TOML config at `~/.config/agentwatch/` |
 
-### Test Coverage (705 tests total)
-| Package | Tests | Coverage |
-|---------|-------|----------|
-| daemon | 225+ | API, rules, enrichments, notifications, costs, correlation, research profiles, artifacts |
-| monitor | 980+ | HookStore, DataStore, git utils, scanners |
+### Architecture Split (In Progress)
+| Package | Status | Purpose |
+|---------|--------|---------|
+| `@agentwatch/shared-api` | ✅ Created | Dict converters, API utilities |
+| `@agentwatch/watcher` | ✅ Created | Real-time monitoring daemon |
+| `@agentwatch/analyzer` | ✅ Created | On-demand analysis server |
+| CLI commands | ✅ Added | `aw watcher`, `aw analyze` |
+| Web UI split | ⏳ Deferred | Two build targets planned |
+| Test migration | ⏳ Deferred | Move tests to new packages |
+| Daemon deprecation | ⏳ Planned | Keep as compatibility layer |
+
+### Test Coverage (772 tests total)
+| Package | Tests | Notes |
+|---------|-------|-------|
+| daemon | 225+ | API, rules, enrichments, correlation, research profiles |
+| monitor | 400+ | HookStore, DataStore, git utils, scanners |
 | pre-share | 137+ | Sanitization, patterns, preparation |
 | core | 30+ | Transcript parsing, cost estimation |
+| shared-api | - | Uses daemon tests for now |
+| watcher | - | Uses daemon tests for now |
+| analyzer | - | Uses daemon tests for now |
 
 ---
 
