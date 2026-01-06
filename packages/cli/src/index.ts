@@ -3,6 +3,8 @@
  */
 
 export { daemonCommand } from "./commands/daemon.js";
+export { watcherCommand } from "./commands/watcher.js";
+export { analyzeCommand } from "./commands/analyze.js";
 export { tuiCommand } from "./commands/tui.js";
 export { webCommand } from "./commands/web.js";
 export { logsCommand } from "./commands/logs.js";
