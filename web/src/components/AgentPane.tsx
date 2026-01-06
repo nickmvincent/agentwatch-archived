@@ -95,11 +95,14 @@ function getState(agent: AgentProcess): { state: string; color: string } {
 }
 
 // Find matching hook session for an agent by cwd
+// Only matches Claude Code agents - other agents (Codex, etc.) don't use hooks
 function findHookSession(
   agent: AgentProcess,
   sessions: HookSession[]
 ): HookSession | undefined {
   if (!agent.cwd) return undefined;
+  // Only Claude Code agents use hooks - Codex and others don't
+  if (agent.label !== "claude") return undefined;
   // First try to find an active session with matching cwd
   const active = sessions.find((s) => s.active && s.cwd === agent.cwd);
   if (active) return active;

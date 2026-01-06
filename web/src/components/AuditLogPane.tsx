@@ -485,7 +485,7 @@ export function AuditLogPane() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
-                  {Object.keys(auditLog.stats.by_category).length}
+                  {Object.keys(auditLog.stats.by_category || {}).length}
                 </div>
                 <div className="text-gray-400 text-sm">Categories</div>
               </div>
@@ -509,7 +509,7 @@ export function AuditLogPane() {
 
             {/* Category breakdown */}
             <div className="mt-4 flex flex-wrap gap-2">
-              {Object.entries(auditLog.stats.by_category)
+              {Object.entries(auditLog.stats.by_category || {})
                 .sort((a, b) => b[1] - a[1])
                 .map(([cat, count]) => (
                   <span

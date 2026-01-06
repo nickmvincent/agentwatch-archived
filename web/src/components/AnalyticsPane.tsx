@@ -1079,16 +1079,16 @@ export function AnalyticsPane({
                     </div>
                     <div className="flex items-end gap-1 h-24">
                       {successTrend.map((point, i) => {
-                        const total = point.success_count + point.failure_count;
+                        // Use point.total for all sessions (including unscored)
+                        const scoredTotal =
+                          point.success_count + point.failure_count;
                         const successPct =
-                          total > 0 ? point.success_count / total : 0;
+                          scoredTotal > 0 ? point.success_count / scoredTotal : 0;
                         const maxCount = Math.max(
-                          ...successTrend.map(
-                            (p) => p.success_count + p.failure_count
-                          ),
+                          ...successTrend.map((p) => p.total),
                           1
                         );
-                        const height = (total / maxCount) * 100;
+                        const height = (point.total / maxCount) * 100;
 
                         return (
                           <div

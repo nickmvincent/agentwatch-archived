@@ -182,8 +182,7 @@ export function ConversationsPane({
     (filterHasHooks !== "all" ? 1 : 0) +
     (filterManaged !== "all" ? 1 : 0) +
     (filterHasQuality !== "all" ? 1 : 0) +
-    (filterWorkflowStatus !== "all" ? 1 : 0) +
-    (filterProject !== "all" ? 1 : 0);
+    (filterWorkflowStatus !== "all" ? 1 : 0);
 
   // Apply context filter when it changes (from analytics click-through)
   useEffect(() => {
@@ -845,6 +844,21 @@ export function ConversationsPane({
                 </select>
               </div>
 
+              {/* Project filter - main section */}
+              <select
+                value={filterProject}
+                onChange={(e) => setFilterProject(e.target.value)}
+                className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
+                title="Filter by project"
+              >
+                <option value="all">All Projects</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
               {showAdvancedFilters && (
                 <div id="conversations-advanced-filters" className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -902,18 +916,6 @@ export function ConversationsPane({
                       <option value="reviewed">Reviewed</option>
                       <option value="ready_to_contribute">Ready</option>
                       <option value="skipped">Skipped</option>
-                    </select>
-                    <select
-                      value={filterProject}
-                      onChange={(e) => setFilterProject(e.target.value)}
-                      className="col-span-2 min-w-0 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-xs text-white truncate"
-                    >
-                      <option value="all">All Projects</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
                     </select>
                     {sessionsWithoutQuality > 0 && (
                       <button

@@ -720,15 +720,6 @@ export function SettingsPane({
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded">
-          <div className="text-blue-400 text-sm">
-            Edit{" "}
-            <code className="bg-gray-700 px-1 rounded">
-              ~/.config/agentwatch/config.toml
-            </code>{" "}
-            for advanced settings.
-          </div>
-        </div>
       </div>
 
       {/* External Reference - expandable section */}
@@ -1783,7 +1774,7 @@ function HookEnhancementsSection() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["cost_controls"])
+    new Set()
   );
 
   useEffect(() => {
@@ -3569,16 +3560,19 @@ function ClaudeSettingsSection() {
         {/* Permissions Section */}
         {activeSection === "permissions" && (
           <div className="space-y-4">
-            {/* Presets */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
+            {/* Presets - collapsed by default */}
+            <details className="group">
+              <summary className="flex items-center gap-2 mb-2 cursor-pointer list-none">
+                <span className="text-gray-500 text-xs group-open:rotate-90 transition-transform">
+                  ▶
+                </span>
                 <h3 className="text-sm font-medium text-white">
                   Quick Presets
                 </h3>
                 <span className="text-xs text-yellow-500">
                   (replaces existing allow/deny lists)
                 </span>
-              </div>
+              </summary>
               <div className="space-y-2">
                 {PERMISSION_PRESETS.map((preset) => (
                   <div
@@ -3685,7 +3679,7 @@ function ClaudeSettingsSection() {
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
 
             {/* Allow/Deny patterns */}
             <div className="grid grid-cols-2 gap-4">

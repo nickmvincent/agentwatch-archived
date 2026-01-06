@@ -1,4 +1,6 @@
-import type { ListeningPort } from "../api/types";
+import { useEffect, useMemo, useState } from "react";
+import type { ListeningPort, Project } from "../api/types";
+import { useData } from "../context/DataProvider";
 
 interface PortsPaneProps {
   ports: ListeningPort[];
@@ -72,6 +74,36 @@ export function PortsPane({
   onBulkHide,
   onClearHidden
 }: PortsPaneProps) {
+  const { getProjects } = useData();
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    getProjects().then(setProjects).catch(console.error);
+  }, [getProjects]);
+
+  // Match port cwd to projects
+  const getProjectForPort = useMemo(() => {
+    return (cwd: string | undefined): Project | null => {
+      if (!cwd) return null;
+      // Normalize paths for comparison
+      const normalizedCwd = cwd.replace(/\/$/, "");
+      for (const project of projects) {
+        for (const path of project.paths) {
+          const normalizedPath = path.replace(/\/$/, "").replace(/^~/, "");
+          if (
+            normalizedCwd === normalizedPath ||
+            normalizedCwd.startsWith(normalizedPath + "/") ||
+            normalizedCwd.endsWith("/" + normalizedPath) ||
+            normalizedCwd.includes("/" + normalizedPath + "/")
+          ) {
+            return project;
+          }
+        }
+      }
+      return null;
+    };
+  }, [projects]);
+
   const visiblePorts = ports.filter((p) => !hiddenPorts.has(p.port));
   const hiddenPortsList = ports.filter((p) => hiddenPorts.has(p.port));
   const sortedPorts = [...visiblePorts].sort((a, b) => a.port - b.port);
@@ -79,6 +111,7 @@ export function PortsPane({
     (a, b) => a.port - b.port
   );
   const agentLinked = visiblePorts.filter((p) => p.agent_label).length;
+  const projectLinked = visiblePorts.filter((p) => getProjectForPort(p.cwd)).length;
 
   // Bulk hide helpers
   const portsOver10000 = visiblePorts
@@ -105,11 +138,18 @@ export function PortsPane({
               )
             </span>
           </h2>
-          {agentLinked > 0 && (
-            <span className="text-sm text-green-400">
-              {agentLinked} agent-linked
-            </span>
-          )}
+          <div className="flex gap-3">
+            {projectLinked > 0 && (
+              <span className="text-sm text-yellow-400">
+                {projectLinked} project-linked
+              </span>
+            )}
+            {agentLinked > 0 && (
+              <span className="text-sm text-green-400">
+                {agentLinked} agent-linked
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Info banner */}
@@ -205,7 +245,8 @@ export function PortsPane({
             <tbody>
               {sortedPorts.map((port) => {
                 const category = categorizePort(port.port);
-                const projectName = formatCwd(port.cwd);
+                const matchedProject = getProjectForPort(port.cwd);
+                const folderName = formatCwd(port.cwd);
                 const isIPv6 = port.protocol === "tcp6";
                 const portUrl = `http://localhost:${port.port}`;
                 return (
@@ -242,10 +283,18 @@ export function PortsPane({
                       <span className="text-gray-500 ml-1">({port.pid})</span>
                     </td>
                     <td
-                      className="px-4 py-2 text-yellow-400"
+                      className="px-4 py-2"
                       title={port.cwd || undefined}
                     >
-                      {projectName || <span className="text-gray-600">-</span>}
+                      {matchedProject ? (
+                        <span className="text-yellow-400 font-medium">
+                          {matchedProject.name}
+                        </span>
+                      ) : folderName ? (
+                        <span className="text-gray-400">{folderName}</span>
+                      ) : (
+                        <span className="text-gray-600">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-purple-400">
                       {category || <span className="text-gray-600">-</span>}

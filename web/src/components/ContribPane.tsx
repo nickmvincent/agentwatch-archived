@@ -448,7 +448,7 @@ function MyDataSection() {
   return (
     <div className="mb-4 p-3 bg-gray-900/50 rounded border border-gray-700">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium text-white">My Transcript Data</div>
+        <div className="text-sm font-medium text-white">Pre-Share Transcript Scan</div>
         {loading && <span className="text-xs text-gray-400">Scanning...</span>}
       </div>
 
