@@ -5,6 +5,42 @@ A tool with two purposes:
 1. **Monitor & control AI coding agents** — see what's running, track sessions, enforce security gates
 2. **Review & contribute session data** — sanitize transcripts, enrich with feedback, share with researchers
 
+## Architecture
+
+Agentwatch uses a **two-server architecture**:
+
+| Component | Port | Purpose | Lifecycle |
+|-----------|------|---------|-----------|
+| **Watcher** | 8420 | Real-time monitoring daemon | Always-on background service |
+| **Analyzer** | 8421 | Analysis and sharing dashboard | On-demand (opens with browser, closes when browser closes) |
+
+**Watcher** monitors running processes, captures hook events, and provides WebSocket updates.
+**Analyzer** handles transcript indexing, enrichments, annotations, and data sharing.
+
+## Quick Start
+
+```bash
+# Install
+git clone https://github.com/nickmvincent/agentwatch && cd agentwatch
+bun install
+cd packages/cli && bun link && cd ../..
+
+# Start the watcher (background monitoring)
+aw watcher start
+
+# For Claude Code: Install hooks for real-time tracking
+aw hooks install
+
+# Open analysis dashboard (when you want to review sessions)
+aw analyze            # Opens browser, closes with browser
+```
+
+### User Flow
+
+1. **Start watcher once** — `aw watcher start` runs in background, monitors agents
+2. **Work normally** — Claude Code hooks capture tool usage automatically
+3. **Open analyzer when needed** — `aw analyze` for reviewing sessions, analytics, sharing
+
 ## Agent Support
 
 | Agent | Transcripts | Hooks | Process Detection | Command Center |
@@ -20,22 +56,6 @@ A tool with two purposes:
 - **Hooks**: Real-time tool tracking via Claude Code hooks (`aw hooks install`)
 - **Process Detection**: Detect running agents, view CPU/memory
 - **Command Center**: Launch agent sessions via web UI
-
-## Quick Start
-
-```bash
-# Install
-git clone https://github.com/nickmvincent/agentwatch && cd agentwatch
-bun install
-cd packages/cli && bun link && cd ../..
-
-# Start daemon and web UI
-aw daemon start
-aw web                 # Opens http://localhost:8420
-
-# For Claude Code: Install hooks for real-time tracking
-aw hooks install
-```
 
 See [Getting Started](docs/getting-started.md) for detailed setup instructions.
 
@@ -62,19 +82,34 @@ See [Getting Started](docs/getting-started.md) for detailed setup instructions.
 
 See [CLI Reference](docs/cli-reference.md) for all commands.
 
-## Web UI Tabs
+## Web UIs
+
+### Watcher Dashboard (port 8420)
+
+Real-time monitoring — view with `aw watcher start` then open http://localhost:8420
 
 | Tab | Purpose |
 |-----|---------|
-| **Agents** | Monitor running agents, process controls |
-| **Claude Code Hooks** | Real-time tool usage and session timeline |
-| **Conversations** | Browse sessions with enrichments and annotations |
-| **Analytics** | Success rates, costs, quality trends |
-| **Repos / Ports** | Git status, listening ports |
-| **Review/Share** | Sanitize and export sessions |
-| **Settings** | Claude Code settings, Test Gate, Projects |
+| **Agents** | Monitor running agents, session status, tool usage |
+| **Repos** | Git repository status (staged, unstaged, conflicts) |
+| **Ports** | Listening ports spawned by agents |
+| **Timeline** | Real-time activity feed |
 
-**Keyboard shortcuts:** `1-9` switch tabs, `p` pause, `r` refresh
+### Analyzer Dashboard (port 8421)
+
+Analysis and sharing — open with `aw analyze`
+
+| Tab | Purpose |
+|-----|---------|
+| **Sessions** | Browse all sessions with enrichments and annotations |
+| **Analytics** | Success rates, costs, quality trends over time |
+| **Projects** | Manage project configurations |
+| **Share** | Sanitize and export sessions for contribution |
+| **Command** | Launch agent sessions |
+| **Docs** | In-app documentation |
+| **Settings** | Claude Code settings, Test Gate configuration |
+
+**Keyboard shortcuts:** `1-7` switch tabs, `r` refresh
 
 ## Documentation
 
@@ -87,37 +122,50 @@ See [CLI Reference](docs/cli-reference.md) for all commands.
 **Full index:** [docs/README.md](docs/README.md)
 
 
-## Architecture
+## Package Structure
 
 ```
 packages/
-├── cli/        # Command-line interface (aw daemon, aw hooks)
-├── core/       # Shared types and utilities
-├── daemon/     # HTTP/WebSocket server (Hono)
-├── monitor/    # Process and repo scanning
-├── pre-share/  # Sanitization pipeline
-├── tui/        # Terminal UI (Ink/React)
-└── ui/         # Shared React components
+├── cli/              # Command-line interface (aw watcher, aw analyze)
+├── core/             # Shared types and utilities
+├── watcher/          # Watcher server (port 8420) - monitoring daemon
+├── analyzer/         # Analyzer server (port 8421) - analysis dashboard
+├── shared-api/       # Shared API utilities (converters, sanitizers)
+├── monitor/          # Process and repo scanning
+├── pre-share/        # Sanitization pipeline
+├── tui/              # Terminal UI (Ink/React)
+├── daemon/           # [DEPRECATED] Legacy combined server
+└── transcript-parser/# Transcript parsing utilities
 
-web/            # Web dashboard (React + Vite)
-pages/          # Static demo site (Astro)
-docs/           # Documentation
+web/                  # Web dashboards (React + Vite)
+├── src/apps/watcher/ # Watcher UI (Agents, Repos, Ports, Timeline)
+├── src/apps/analyzer/# Analyzer UI (Sessions, Analytics, Share, etc.)
+└── src/components/   # Shared React components
+
+pages/                # Static demo site (Astro)
+docs/                 # Documentation
 ```
 
 ## Development
 
 ```bash
-bun run dev          # Daemon + web with hot reload (http://localhost:5173)
-bun run build        # Build all packages
-bun test             # Run tests
+bun run dev              # Watcher + unified web with hot reload
+bun run build            # Build all packages
+bun run test             # Run all tests (831 tests)
+
+# Build split UIs
+cd web
+bun run build:watcher    # Build watcher UI → dist/watcher/
+bun run build:analyzer   # Build analyzer UI → dist/analyzer/
 ```
 
 | Command | Description |
 |---------|-------------|
-| `bun run dev` | Full-stack with hot reload |
-| `bun run dev:daemon` | Daemon only |
-| `bun run dev:web` | Web only (needs daemon) |
-| `aw daemon start` | Production mode |
+| `bun run dev` | Full-stack with hot reload (http://localhost:5173) |
+| `bun run dev:watcher` | Watcher dev mode |
+| `bun run dev:web` | Web only (needs watcher running) |
+| `aw watcher start` | Production watcher (port 8420) |
+| `aw analyze` | Production analyzer (port 8421) |
 
 ## License
 
