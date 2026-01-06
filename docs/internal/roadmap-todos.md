@@ -50,7 +50,7 @@ On-demand browser-based analysis:
 5. **Optional analysis** - Users who only need monitoring never load analysis code
 
 ### Legacy Daemon
-The combined `@agentwatch/daemon` package is deprecated. It remains the reference for unported endpoints and still backs `aw run`/`aw sessions` via `/api/managed-sessions`.
+The combined `@agentwatch/daemon` package is deprecated. Managed-session endpoints now live in the watcher; the daemon remains only as an archival reference.
 
 ## Legacy Daemon Status (Reference)
 
@@ -70,7 +70,7 @@ The combined `@agentwatch/daemon` package is deprecated. It remains the referenc
 | Hugging Face upload | ⚠️ Split gap | Tested in daemon; analyzer endpoints not wired |
 | Local transcript scan | ✅ Working | Claude Code, Codex, OpenCode |
 | Process wrapping | ⚠️ Daemon-only | `aw run` uses daemon runner; watcher lacks wrapped I/O |
-| **Session Manager** | ✅ Working | `aw run`, `aw sessions` still call daemon `/api/managed-sessions` |
+| **Session Manager** | ✅ Working | `aw run`, `aw sessions` now backed by watcher `/api/managed-sessions` |
 | Memory management | ✅ Working | Cleanup every hour, documented |
 | Contributor settings | ✅ Working | Persists to `~/.agentwatch/` |
 | Session annotations | ✅ Working | Thumbs up/down feedback |
@@ -99,7 +99,7 @@ The combined `@agentwatch/daemon` package is deprecated. It remains the referenc
 | Agent Control | Implemented: `/api/agents/:pid/kill`, `/signal`; Missing: `/output`; `/input` is stubbed (501) | High |
 | Claude Settings | Implemented: `/api/claude/settings` (GET/PUT/PATCH); Missing: `/api/claude/mcp`, `/api/reference/*` | High |
 | Sandbox | Implemented: `/api/sandbox/status`, `/presets`, `/presets/:id`, `/presets/:id/apply`, `/current`; Missing: `/levels`, `/commands` | High |
-| Managed Sessions | `/api/managed-sessions/*` (7 endpoints) | High |
+| Managed Sessions | `/api/managed-sessions/*` (now in watcher) | High |
 | Command Center | `/api/command-center/*` (4 endpoints) | Medium |
 | Test Gate | `/api/test-gate/*` (3 endpoints) | Medium |
 | Config Editing | Missing: `PATCH /api/config`, `/api/config/raw` (GET only today) | Medium |
@@ -351,7 +351,7 @@ DELETE /api/contrib/artifacts/:sessionId  - Remove artifact link
 ### Agent Session Manager (`aw run` + `aw sessions`) ✨
 **What:** CLI commands to launch agents with tracked prompts and view session history
 **Goal:** Solve the "what prompt did I give that tmux pane 2 hours ago?" problem
-**Status:** Implemented in daemon; watcher/analyzer do not expose `/api/managed-sessions` yet.
+**Status:** Implemented in watcher (legacy daemon kept for reference).
 
 **New Files:**
 - `packages/monitor/src/session-store.ts` - Persistence for managed sessions

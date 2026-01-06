@@ -2,12 +2,12 @@ import { execSync, spawn } from "child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { dirname, join } from "path";
-import { DAEMON } from "@agentwatch/core";
 import { Command } from "commander";
 import pc from "picocolors";
 
-const DEFAULT_HOST = DAEMON.HOST;
-const DEFAULT_PORT = DAEMON.PORT;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
+
 const DEFAULT_IMAGE_NAME = "claude-sandbox";
 const DEFAULT_SCRIPT_PATH = join(
   homedir(),
@@ -243,10 +243,10 @@ sandboxCommand
   .command("preset <name>")
   .description("Apply a permission preset to ~/.claude/settings.json")
   .option("--dry-run", "Show what would change without applying")
-  .option("--host <host>", "Agentwatch daemon host", DEFAULT_HOST)
-  .option("--port <port>", "Agentwatch daemon port", String(DEFAULT_PORT))
+  .option("--host <host>", "Watcher host", DEFAULT_HOST)
+  .option("--port <port>", "Watcher port", String(DEFAULT_PORT))
   .action(async (name, options) => {
-    // Fetch presets from daemon
+    // Fetch presets from watcher
     const url = `http://${options.host}:${options.port}/api/sandbox/presets`;
 
     let presets: Array<{
@@ -259,14 +259,14 @@ sandboxCommand
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        // Daemon not running, use built-in presets
+        // Watcher not running, use built-in presets
         presets = getBuiltInPresets();
       } else {
         const data = (await res.json()) as { presets: typeof presets };
         presets = data.presets;
       }
     } catch {
-      // Use built-in presets if daemon unavailable
+      // Use built-in presets if watcher unavailable
       presets = getBuiltInPresets();
     }
 

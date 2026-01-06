@@ -2,12 +2,11 @@
  * aw sessions - List and view managed agent sessions
  */
 
-import { DAEMON } from "@agentwatch/core";
 import { Command } from "commander";
 import pc from "picocolors";
 
-const DEFAULT_HOST = DAEMON.HOST;
-const DEFAULT_PORT = DAEMON.PORT;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
 
 interface ManagedSessionResponse {
   id: string;
@@ -60,16 +59,16 @@ export const sessionsCommand = new Command("sessions")
   .option("-a, --active", "Show only active (running) sessions")
   .option("-n, --limit <count>", "Number of sessions to show", "20")
   .option("--agent <agent>", "Filter by agent type")
-  .option("-H, --host <host>", "Daemon host", DEFAULT_HOST)
-  .option("--port <port>", "Daemon port", String(DEFAULT_PORT))
+  .option("-H, --host <host>", "Watcher host", DEFAULT_HOST)
+  .option("--port <port>", "Watcher port", String(DEFAULT_PORT))
   .action(async (id: string | undefined, options) => {
     const { active, limit, agent, host, port } = options;
-    const daemonUrl = `http://${host}:${port}`;
+    const watcherUrl = `http://${host}:${port}`;
 
     try {
       if (id) {
         // Show specific session
-        const res = await fetch(`${daemonUrl}/api/managed-sessions/${id}`);
+        const res = await fetch(`${watcherUrl}/api/managed-sessions/${id}`);
         if (!res.ok) {
           if (res.status === 404) {
             console.log(pc.red(`Session not found: ${id}`));
@@ -116,7 +115,7 @@ export const sessionsCommand = new Command("sessions")
         params.set("limit", limit);
         if (agent) params.set("agent", agent);
 
-        const res = await fetch(`${daemonUrl}/api/managed-sessions?${params}`);
+        const res = await fetch(`${watcherUrl}/api/managed-sessions?${params}`);
         if (!res.ok) {
           console.log(pc.red(`Error fetching sessions: ${res.statusText}`));
           process.exit(1);
@@ -184,13 +183,13 @@ export const sessionsCommand = new Command("sessions")
         );
       }
     } catch (e) {
-      console.log(pc.red("Could not connect to daemon"));
+      console.log(pc.red("Could not connect to watcher"));
       console.log(
         pc.gray(`Error: ${e instanceof Error ? e.message : String(e)}`)
       );
       console.log();
-      console.log(pc.gray("Start the daemon with:"));
-      console.log(pc.cyan("  aw daemon start"));
+      console.log(pc.gray("Start the watcher with:"));
+      console.log(pc.cyan("  aw watcher start"));
       process.exit(1);
     }
   });

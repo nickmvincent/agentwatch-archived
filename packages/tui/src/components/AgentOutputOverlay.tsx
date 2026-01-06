@@ -4,7 +4,7 @@ import type { AgentProcess } from "../types.js";
 
 interface AgentOutputOverlayProps {
   agent: AgentProcess;
-  daemonUrl: string;
+  watcherUrl: string;
   columns: number;
   rows: number;
   onClose: () => void;
@@ -12,7 +12,7 @@ interface AgentOutputOverlayProps {
 
 export function AgentOutputOverlay({
   agent,
-  daemonUrl,
+  watcherUrl,
   columns,
   rows,
   onClose
@@ -26,7 +26,7 @@ export function AgentOutputOverlay({
   useEffect(() => {
     const loadOutput = async () => {
       try {
-        const res = await fetch(`${daemonUrl}/api/agents/${agent.pid}/output`);
+        const res = await fetch(`${watcherUrl}/api/agents/${agent.pid}/output`);
         if (res.ok) {
           const data = (await res.json()) as { lines: string[] };
           setLines(data.lines);
@@ -43,7 +43,7 @@ export function AgentOutputOverlay({
     loadOutput();
     const interval = setInterval(loadOutput, 1000);
     return () => clearInterval(interval);
-  }, [agent.pid, daemonUrl, rows]);
+  }, [agent.pid, watcherUrl, rows]);
 
   // Show temporary message
   const showMessage = (msg: string) => {
@@ -54,7 +54,7 @@ export function AgentOutputOverlay({
   // Send signal
   const sendSignal = async (signal: string) => {
     try {
-      const res = await fetch(`${daemonUrl}/api/agents/${agent.pid}/signal`, {
+      const res = await fetch(`${watcherUrl}/api/agents/${agent.pid}/signal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ signal })
@@ -72,7 +72,7 @@ export function AgentOutputOverlay({
   // Kill agent
   const killAgent = async (force: boolean) => {
     try {
-      await fetch(`${daemonUrl}/api/agents/${agent.pid}`, {
+      await fetch(`${watcherUrl}/api/agents/${agent.pid}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ force })

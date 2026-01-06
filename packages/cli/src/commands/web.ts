@@ -1,34 +1,36 @@
-import { DAEMON } from "@agentwatch/core";
 import { Command } from "commander";
 import pc from "picocolors";
 
-const DEFAULT_HOST = DAEMON.HOST;
-const DEFAULT_PORT = DAEMON.PORT;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
 
 export const webCommand = new Command("web")
-  .description("Open the web dashboard")
-  .option("-H, --host <host>", "Daemon host", DEFAULT_HOST)
-  .option("-p, --port <port>", "Daemon port", String(DEFAULT_PORT))
+  .description("Open the watcher dashboard")
+  .option("-H, --host <host>", "Watcher host", DEFAULT_HOST)
+  .option("-p, --port <port>", "Watcher port", String(DEFAULT_PORT))
   .option("--no-open", "Don't open browser automatically")
   .action(async (options) => {
-    const daemonUrl = `http://${options.host}:${options.port}`;
+    const watcherUrl = `http://${options.host}:${options.port}`;
 
-    // Check if daemon is running
+    // Check if watcher is running
     try {
-      const res = await fetch(`${daemonUrl}/api/status`);
+      const res = await fetch(`${watcherUrl}/api/status`);
       if (!res.ok) {
-        const health = await fetch(`${daemonUrl}/api/health`);
+        const health = await fetch(`${watcherUrl}/api/health`);
         if (!health.ok) {
-          console.log(pc.yellow("Daemon not responding. Starting daemon..."));
-          await startDaemon(options.host, options.port);
+          console.log(
+            pc.yellow("Watcher not responding. Starting watcher...")
+          );
+          await startWatcher(options.host, options.port);
         }
       }
     } catch {
-      console.log(pc.yellow("Daemon not running. Starting daemon..."));
-      await startDaemon(options.host, options.port);
+      console.log(pc.yellow("Watcher not running. Starting watcher..."));
+      await startWatcher(options.host, options.port);
     }
 
-    console.log(pc.green(`Web dashboard available at ${daemonUrl}`));
+    console.log(pc.green(`Watcher dashboard available at ${watcherUrl}`));
+    console.log(pc.gray("For analyzer UI, use: aw analyze"));
 
     if (options.open !== false) {
       // Open browser
@@ -39,29 +41,30 @@ export const webCommand = new Command("web")
             ? "start"
             : "xdg-open";
 
-      Bun.spawn([openCmd, daemonUrl], {
+      Bun.spawn([openCmd, watcherUrl], {
         stdio: ["ignore", "ignore", "ignore"]
       });
     }
   });
 
-async function startDaemon(host: string, port: string) {
+async function startWatcher(host: string, port: string) {
+  const repoRoot = import.meta.dir + "/../../../..";
   Bun.spawn(
     [
       "bun",
       "run",
-      import.meta.dir + "/../daemon-runner.ts",
+      import.meta.dir + "/../watcher-runner.ts",
       "--host",
       host,
       "--port",
       port
     ],
     {
-      cwd: process.cwd(),
+      cwd: repoRoot,
       stdio: ["ignore", "ignore", "ignore"]
     }
   );
 
-  // Wait for daemon to start
+  // Wait for watcher to start
   await new Promise((r) => setTimeout(r, 1000));
 }

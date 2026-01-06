@@ -16,7 +16,8 @@ import {
   PortScanner,
   ProcessLogger,
   ProcessScanner,
-  RepoScanner
+  RepoScanner,
+  SessionStore
 } from "@agentwatch/monitor";
 import {
   repoToDict,
@@ -42,6 +43,7 @@ export class WatcherServer {
   private config: WatcherConfig;
   private store: DataStore;
   private hookStore: HookStore;
+  private sessionStore: SessionStore;
   private processScanner: ProcessScanner | null = null;
   private repoScanner: RepoScanner | null = null;
   private portScanner: PortScanner | null = null;
@@ -57,6 +59,7 @@ export class WatcherServer {
     this.config = options.config ?? loadConfig();
     this.store = new DataStore();
     this.hookStore = new HookStore();
+    this.sessionStore = new SessionStore();
     this.sessionLogger = new SessionLogger(this.config.watcher.logDir);
     this.processLogger = new ProcessLogger();
     this.connectionManager = new ConnectionManager();
@@ -74,6 +77,13 @@ export class WatcherServer {
           type: "agents_update",
           agents: agents.map((a) => agentToDict(a))
         });
+
+        // Align managed sessions with live PIDs when we have data
+        if (agents.length > 0) {
+          this.sessionStore.markStaleSessions(
+            new Set(agents.map((a) => a.pid))
+          );
+        }
 
         // Log process snapshots
         const agentMap = new Map(agents.map((a) => [a.pid, a]));
@@ -118,9 +128,11 @@ export class WatcherServer {
       store: this.store,
       hookStore: this.hookStore,
       sessionLogger: this.sessionLogger,
+      sessionStore: this.sessionStore,
       connectionManager: this.connectionManager,
       config: this.config,
       startedAt: Date.now(),
+      rescanRepos: () => this.repoScanner?.rescan(),
       shutdown: () => this.stop()
     });
 
@@ -139,6 +151,7 @@ export class WatcherServer {
       () => {
         this.sessionLogger.rotateLogs();
         this.hookStore.cleanupOldData();
+        this.sessionStore.cleanup();
       },
       60 * 60 * 1000
     );

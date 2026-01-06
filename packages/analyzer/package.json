@@ -13,7 +13,7 @@
   "files": ["dist", "src"],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target bun && tsc",
-    "dev": "bun run --watch ./src/index.ts",
+    "dev": "bun run --watch ./src/dev.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

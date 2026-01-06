@@ -1,12 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { dirname, join } from "path";
-import { DAEMON } from "@agentwatch/core";
 import { Command } from "commander";
 import pc from "picocolors";
 
-const DEFAULT_HOST = DAEMON.HOST;
-const DEFAULT_PORT = DAEMON.PORT;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
 
 // Claude Code settings file location
 const CLAUDE_CONFIG_PATH = join(homedir(), ".claude", "settings.json");
@@ -20,7 +19,7 @@ hooksCommand
   .description("Install agentwatch hooks into Claude Code")
   .option(
     "--url <url>",
-    "Agentwatch daemon URL",
+    "Watcher URL",
     `http://${DEFAULT_HOST}:${DEFAULT_PORT}`
   )
   .action(async (options) => {

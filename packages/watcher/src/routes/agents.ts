@@ -145,6 +145,39 @@ export function registerAgentRoutes(app: Hono, store: DataStore): void {
   });
 
   /**
+   * DELETE /api/agents/:pid
+   *
+   * Alias for /api/agents/:pid/kill (legacy compatibility).
+   */
+  app.delete("/api/agents/:pid", async (c) => {
+    const pid = Number.parseInt(c.req.param("pid"), 10);
+    const body = (await c.req.json().catch(() => ({}))) as { force?: boolean };
+    const force = body.force ?? false;
+
+    try {
+      process.kill(pid, force ? "SIGKILL" : "SIGTERM");
+      return c.json({ success: true });
+    } catch {
+      return c.json({ error: "Process not found" }, 404);
+    }
+  });
+
+  /**
+   * GET /api/agents/:pid/output
+   *
+   * Placeholder endpoint for agent output (not yet implemented).
+   */
+  app.get("/api/agents/:pid/output", (c) => {
+    return c.json(
+      {
+        lines: [],
+        error: "Agent output capture not implemented in watcher"
+      },
+      501
+    );
+  });
+
+  /**
    * POST /api/agents/:pid/input
    *
    * Send input to an agent's stdin.

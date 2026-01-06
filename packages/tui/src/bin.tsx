@@ -8,19 +8,27 @@ import { App } from "./App.js";
 
 const args = process.argv.slice(2);
 
-// Parse --daemon-url flag
-let daemonUrl = "http://127.0.0.1:9850";
+// Parse --watcher-url flag (with legacy --daemon-url fallback)
+let watcherUrl = "http://127.0.0.1:8420";
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   const nextArg = args[i + 1];
+  if (arg === "--watcher-url" && nextArg) {
+    watcherUrl = nextArg;
+    break;
+  }
   if (arg === "--daemon-url" && nextArg) {
-    daemonUrl = nextArg;
+    watcherUrl = nextArg;
+    break;
+  }
+  if (arg && arg.startsWith("--watcher-url=")) {
+    watcherUrl = arg.split("=")[1] ?? watcherUrl;
     break;
   }
   if (arg && arg.startsWith("--daemon-url=")) {
-    daemonUrl = arg.split("=")[1] ?? daemonUrl;
+    watcherUrl = arg.split("=")[1] ?? watcherUrl;
     break;
   }
 }
 
-render(<App daemonUrl={daemonUrl} />);
+render(<App watcherUrl={watcherUrl} />);

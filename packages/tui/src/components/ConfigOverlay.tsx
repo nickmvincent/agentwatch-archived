@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 interface ConfigOverlayProps {
   columns: number;
   rows: number;
-  daemonUrl: string;
+  watcherUrl: string;
 }
 
 interface ConfigData {
@@ -25,7 +25,7 @@ interface ConfigData {
 export function ConfigOverlay({
   columns,
   rows,
-  daemonUrl
+  watcherUrl
 }: ConfigOverlayProps) {
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export function ConfigOverlay({
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const res = await fetch(`${daemonUrl}/api/config`);
+        const res = await fetch(`${watcherUrl}/api/config`);
         const data = (await res.json()) as ConfigData;
         setConfig(data);
       } catch (e) {
@@ -41,7 +41,7 @@ export function ConfigOverlay({
       }
     };
     loadConfig();
-  }, [daemonUrl]);
+  }, [watcherUrl]);
 
   const boxWidth = 50;
   const boxHeight = 20;

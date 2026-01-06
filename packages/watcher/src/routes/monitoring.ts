@@ -20,6 +20,8 @@ export interface MonitoringRouteOptions {
   startedAt: number;
   /** Callback to trigger shutdown */
   shutdown?: () => void;
+  /** Trigger immediate repo rescan */
+  rescanRepos?: () => void;
 }
 
 /**
@@ -127,6 +129,11 @@ export function registerMonitoringRoutes(
    * @returns { status: "ok", message: "Rescan triggered" }
    */
   app.post("/api/repos/rescan", (c) => {
+    try {
+      options.rescanRepos?.();
+    } catch {
+      // Ignore errors from scanner
+    }
     return c.json({ status: "ok", message: "Rescan triggered" });
   });
 

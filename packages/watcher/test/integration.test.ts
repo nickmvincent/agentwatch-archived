@@ -15,6 +15,23 @@ import { existsSync } from "node:fs";
 
 // Test data directory
 const TEST_DATA_DIR = "/tmp/claude/agentwatch-watcher-integration-test";
+const mockSessionStore = {
+  createSession: () => ({
+    id: "test",
+    prompt: "",
+    agent: "",
+    cwd: "",
+    startedAt: Date.now(),
+    status: "running"
+  }),
+  updateSession: () => null,
+  endSession: () => null,
+  getSession: () => null,
+  getSessionByPid: () => null,
+  listSessions: () => [],
+  markStaleSessions: () => [],
+  cleanup: () => {}
+};
 
 describe("Watcher Integration: Hook Lifecycle", () => {
   let app: ReturnType<typeof createWatcherApp>;
@@ -36,6 +53,7 @@ describe("Watcher Integration: Hook Lifecycle", () => {
     const state: WatcherAppState = {
       store: dataStore,
       hookStore: hookStore,
+      sessionStore: mockSessionStore as any,
       sessionLogger: {
         rotateLogs: () => {},
         closeAll: () => {}

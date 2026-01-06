@@ -1,5 +1,5 @@
 /**
- * Types for TUI - matches daemon API responses
+ * Types for TUI - matches watcher API responses
  */
 
 export interface AgentProcess {

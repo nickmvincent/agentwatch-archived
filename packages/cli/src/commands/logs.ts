@@ -1,23 +1,23 @@
 import { Command } from "commander";
 import pc from "picocolors";
 
-const DEFAULT_HOST = "127.0.0.1";
-const DEFAULT_PORT = 9850;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
 
 export const logsCommand = new Command("logs")
   .description("View session logs")
   .argument("[session_id]", "Session ID to view")
-  .option("-H, --host <host>", "Daemon host", DEFAULT_HOST)
-  .option("-p, --port <port>", "Daemon port", String(DEFAULT_PORT))
+  .option("-H, --host <host>", "Watcher host", DEFAULT_HOST)
+  .option("-p, --port <port>", "Watcher port", String(DEFAULT_PORT))
   .option("-n, --tail <count>", "Number of recent sessions to list", "20")
   .action(async (sessionId, options) => {
-    const daemonUrl = `http://${options.host}:${options.port}`;
+    const watcherUrl = `http://${options.host}:${options.port}`;
 
     if (sessionId) {
       // View specific session
       try {
         const res = await fetch(
-          `${daemonUrl}/api/hooks/sessions/${sessionId}/timeline`
+          `${watcherUrl}/api/hooks/sessions/${sessionId}/timeline`
         );
         if (!res.ok) {
           console.log(pc.red(`Session ${sessionId} not found`));
@@ -34,7 +34,11 @@ export const logsCommand = new Command("logs")
         console.log(pc.gray("-".repeat(60)));
 
         for (const entry of timeline) {
-          const ts = new Date(entry.timestamp * 1000).toLocaleTimeString();
+          const tsValue =
+            entry.timestamp > 1e12
+              ? entry.timestamp
+              : entry.timestamp * 1000;
+          const ts = new Date(tsValue).toLocaleTimeString();
           const success =
             entry.success === null
               ? "⏳"
@@ -57,7 +61,7 @@ export const logsCommand = new Command("logs")
       // List recent sessions
       try {
         const res = await fetch(
-          `${daemonUrl}/api/hooks/sessions?limit=${options.tail}`
+          `${watcherUrl}/api/hooks/sessions?limit=${options.tail}`
         );
         if (!res.ok) {
           console.log(pc.red("Failed to fetch sessions"));
@@ -81,7 +85,11 @@ export const logsCommand = new Command("logs")
         console.log(pc.gray("-".repeat(60)));
 
         for (const session of sessions) {
-          const start = new Date(session.start_time * 1000);
+          const startValue =
+            session.start_time > 1e12
+              ? session.start_time
+              : session.start_time * 1000;
+          const start = new Date(startValue);
           const status = session.active
             ? session.awaiting_user
               ? pc.yellow("waiting")

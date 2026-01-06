@@ -199,6 +199,24 @@ class MockConnectionManager {
   broadcast(msg: any) {}
 }
 
+const mockSessionStore = {
+  createSession: () => ({
+    id: "test",
+    prompt: "",
+    agent: "",
+    cwd: "",
+    startedAt: Date.now(),
+    status: "running"
+  }),
+  updateSession: () => null,
+  endSession: () => null,
+  getSession: () => null,
+  getSessionByPid: () => null,
+  listSessions: () => [],
+  markStaleSessions: () => [],
+  cleanup: () => {}
+};
+
 describe("Watcher API", () => {
   let app: Hono;
   let store: MockDataStore;
@@ -211,6 +229,7 @@ describe("Watcher API", () => {
     const state: WatcherAppState = {
       store: store as any,
       hookStore: hookStore as any,
+      sessionStore: mockSessionStore as any,
       sessionLogger: new MockSessionLogger() as any,
       connectionManager: new MockConnectionManager() as any,
       config: {

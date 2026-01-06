@@ -8,7 +8,7 @@ export { AgentPane } from "./components/AgentPane.js";
 export { RepoPane } from "./components/RepoPane.js";
 export { HelpOverlay } from "./components/HelpOverlay.js";
 export { StatusBar } from "./components/StatusBar.js";
-export { useDaemon } from "./hooks/useDaemon.js";
+export { useWatcher } from "./hooks/useWatcher.js";
 export type {
   AgentProcess,
   RepoStatus,

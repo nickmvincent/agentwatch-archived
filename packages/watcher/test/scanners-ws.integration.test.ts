@@ -83,6 +83,23 @@ describe("Watcher Integration: Scanners + WebSocket Broadcasts", () => {
     const store = new DataStore();
     const hookStore = new HookStore(join(resources.tempDir, "hooks"));
     const connectionManager = new ConnectionManager();
+    const sessionStore = {
+      createSession: () => ({
+        id: "test",
+        prompt: "",
+        agent: "",
+        cwd: "",
+        startedAt: Date.now(),
+        status: "running"
+      }),
+      updateSession: () => null,
+      endSession: () => null,
+      getSession: () => null,
+      getSessionByPid: () => null,
+      listSessions: () => [],
+      markStaleSessions: () => [],
+      cleanup: () => {}
+    };
 
     store.setCallbacks({
       onReposChange: (repos) => {
@@ -123,6 +140,7 @@ describe("Watcher Integration: Scanners + WebSocket Broadcasts", () => {
     const app = createWatcherApp({
       store,
       hookStore,
+      sessionStore: sessionStore as any,
       sessionLogger: {
         rotateLogs: () => {},
         closeAll: () => {}

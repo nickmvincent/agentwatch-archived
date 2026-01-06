@@ -10,18 +10,18 @@ import { HooksPane } from "./components/HooksPane.js";
 import { PortsPane } from "./components/PortsPane.js";
 import { RepoPane } from "./components/RepoPane.js";
 import { StatusBar } from "./components/StatusBar.js";
-import { useDaemon } from "./hooks/useDaemon.js";
+import { useWatcher } from "./hooks/useWatcher.js";
 import type { AgentProcess, RepoStatus } from "./types.js";
 
 interface AppProps {
-  daemonUrl: string;
+  watcherUrl: string;
 }
 
 type Focus = "agents" | "repos" | "hooks" | "ports" | "contrib";
 type View = "main" | "help" | "config" | "output";
 type ContribViewMode = "list" | "cost" | "patterns";
 
-export function App({ daemonUrl }: AppProps) {
+export function App({ watcherUrl }: AppProps) {
   const { exit } = useApp();
   const { stdout } = useStdout();
 
@@ -59,9 +59,9 @@ export function App({ daemonUrl }: AppProps) {
     new Set()
   );
 
-  // Data from daemon
+  // Data from watcher
   const { connected, agents, repos, hookSessions, ports, error, refresh } =
-    useDaemon(daemonUrl, paused);
+    useWatcher(watcherUrl, paused);
 
   // Terminal dimensions
   const [termSize, setTermSize] = useState({
@@ -366,7 +366,7 @@ export function App({ daemonUrl }: AppProps) {
           paused={paused}
         />
         <Box flexGrow={1} justifyContent="center" alignItems="center">
-          <Text color="yellow">Connecting to daemon at {daemonUrl}...</Text>
+          <Text color="yellow">Connecting to watcher at {watcherUrl}...</Text>
         </Box>
         <StatusBar
           focus={focus}
@@ -486,14 +486,14 @@ export function App({ daemonUrl }: AppProps) {
         <ConfigOverlay
           columns={termSize.columns}
           rows={termSize.rows}
-          daemonUrl={daemonUrl}
+          watcherUrl={watcherUrl}
         />
       )}
 
       {view === "output" && filteredAgents[agentSelection]?.wrapper_state && (
         <AgentOutputOverlay
           agent={filteredAgents[agentSelection]!}
-          daemonUrl={daemonUrl}
+          watcherUrl={watcherUrl}
           columns={termSize.columns}
           rows={termSize.rows}
           onClose={() => setView("main")}

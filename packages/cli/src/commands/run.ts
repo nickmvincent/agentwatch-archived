@@ -2,13 +2,12 @@
  * aw run - Launch an agent with a tracked prompt
  */
 
-import { DAEMON } from "@agentwatch/core";
 import { Command } from "commander";
 import pc from "picocolors";
 import { $ } from "bun";
 
-const DEFAULT_HOST = DAEMON.HOST;
-const DEFAULT_PORT = DAEMON.PORT;
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 8420;
 
 // Agent CLI commands
 const AGENT_COMMANDS: Record<
@@ -109,7 +108,7 @@ async function runPrintCompare(
   host: string,
   port: string
 ): Promise<number> {
-  const daemonUrl = `http://${host}:${port}`;
+  const watcherUrl = `http://${host}:${port}`;
   const cwd = process.cwd();
 
   console.log(pc.cyan(`Running ${agents.length} agents in parallel...\n`));
@@ -123,7 +122,7 @@ async function runPrintCompare(
       // Create session
       let sessionId: string | null = null;
       try {
-        const res = await fetch(`${daemonUrl}/api/managed-sessions`, {
+        const res = await fetch(`${watcherUrl}/api/managed-sessions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt, agent, cwd })
@@ -146,7 +145,7 @@ async function runPrintCompare(
       // Update session with PID
       if (sessionId) {
         try {
-          await fetch(`${daemonUrl}/api/managed-sessions/${sessionId}`, {
+          await fetch(`${watcherUrl}/api/managed-sessions/${sessionId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pid: proc.pid })
@@ -162,7 +161,7 @@ async function runPrintCompare(
       // End session
       if (sessionId) {
         try {
-          await fetch(`${daemonUrl}/api/managed-sessions/${sessionId}/end`, {
+          await fetch(`${watcherUrl}/api/managed-sessions/${sessionId}/end`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ exit_code: exitCode })
@@ -204,11 +203,11 @@ export const runCommand = new Command("run")
     "Compare multiple agents (comma-separated, e.g. claude,codex,gemini)"
   )
   .option("-p, --print", "Non-interactive mode (agent outputs and exits)")
-  .option("-H, --host <host>", "Daemon host", DEFAULT_HOST)
-  .option("--port <port>", "Daemon port", String(DEFAULT_PORT))
+  .option("-H, --host <host>", "Watcher host", DEFAULT_HOST)
+  .option("--port <port>", "Watcher port", String(DEFAULT_PORT))
   .action(async (prompt: string, options) => {
     const { agent, compare, print, host, port } = options;
-    const daemonUrl = `http://${host}:${port}`;
+    const watcherUrl = `http://${host}:${port}`;
 
     // Handle compare mode
     if (compare) {
@@ -260,7 +259,7 @@ export const runCommand = new Command("run")
 
     // Single agent mode - validate agent
     if (!AGENT_COMMANDS[agent]) {
-      console.log(pc.red(`Unknown agent: ${agent}`));
+          console.log(pc.red(`Unknown agent: ${agent}`));
       console.log(
         pc.gray(`Supported agents: ${Object.keys(AGENT_COMMANDS).join(", ")}`)
       );
@@ -269,10 +268,10 @@ export const runCommand = new Command("run")
 
     const cwd = process.cwd();
 
-    // Create session via daemon API
+    // Create session via watcher API
     let sessionId: string | null = null;
     try {
-      const res = await fetch(`${daemonUrl}/api/managed-sessions`, {
+      const res = await fetch(`${watcherUrl}/api/managed-sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, agent, cwd })
@@ -283,15 +282,11 @@ export const runCommand = new Command("run")
         sessionId = session.id;
         console.log(pc.gray(`Session ${sessionId} created`));
       } else {
-        console.log(
-          pc.yellow(
-            "Warning: Could not create session (daemon may not be running)"
-          )
-        );
+        console.log(pc.yellow("Warning: Could not create session (watcher may not be running)"));
       }
     } catch {
       console.log(
-        pc.yellow("Warning: Could not connect to daemon. Session not tracked.")
+        pc.yellow("Warning: Could not connect to watcher. Session not tracked.")
       );
     }
 
@@ -322,7 +317,7 @@ export const runCommand = new Command("run")
     // Update session with PID
     if (sessionId) {
       try {
-        await fetch(`${daemonUrl}/api/managed-sessions/${sessionId}`, {
+        await fetch(`${watcherUrl}/api/managed-sessions/${sessionId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ pid: proc.pid })
@@ -347,7 +342,7 @@ export const runCommand = new Command("run")
     // End session
     if (sessionId) {
       try {
-        await fetch(`${daemonUrl}/api/managed-sessions/${sessionId}/end`, {
+        await fetch(`${watcherUrl}/api/managed-sessions/${sessionId}/end`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ exit_code: exitCode })
