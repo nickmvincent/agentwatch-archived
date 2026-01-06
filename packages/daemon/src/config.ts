@@ -389,7 +389,7 @@ const DEFAULT_CONFIG: Config = {
     gitTimeoutFastMs: REPO_SCANNER.GIT_TIMEOUT_FAST_MS,
     gitTimeoutSlowMs: REPO_SCANNER.GIT_TIMEOUT_SLOW_MS,
     concurrencyGit: REPO_SCANNER.CONCURRENCY_GIT,
-    includeUntracked: false,
+    includeUntracked: true, // Include untracked files in dirty count for more intuitive UX
     showClean: false
   },
   agents: {

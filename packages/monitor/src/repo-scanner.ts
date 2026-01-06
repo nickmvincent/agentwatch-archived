@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: RepoScannerConfig = {
   ],
   refreshFastSeconds: 3,
   refreshSlowSeconds: 45,
-  includeUntracked: false,
+  includeUntracked: true, // Include untracked files for more intuitive dirty status
   showClean: false,
   gitTimeoutFastMs: 800,
   gitTimeoutSlowMs: 2500,
