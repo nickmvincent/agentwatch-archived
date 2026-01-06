@@ -16,9 +16,8 @@ const apiPort = ports[target] || 8420;
 
 // Calculate absolute output path for non-default targets
 const __dirname = new URL(".", import.meta.url).pathname;
-const outDir = target === "default"
-  ? "dist"
-  : resolve(__dirname, `dist/${target}`);
+const outDir =
+  target === "default" ? "dist" : resolve(__dirname, `dist/${target}`);
 
 export default defineConfig({
   plugins: [react()],

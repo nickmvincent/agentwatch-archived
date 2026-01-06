@@ -61,7 +61,11 @@ export function sanitizeProcessSnapshot(
     }
   }
 
-  if (redactCmdlineFlag && result.cmdline && typeof result.cmdline === "string") {
+  if (
+    redactCmdlineFlag &&
+    result.cmdline &&
+    typeof result.cmdline === "string"
+  ) {
     result.cmdline = sanitizeCmdline(result.cmdline);
   }
 

@@ -70,7 +70,10 @@ function AnalyzerApp() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -115,15 +118,12 @@ function AnalyzerApp() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <Header
-        connected={watcherConnected}
-        repoCount={0}
-        agentCount={0}
-      />
+      <Header connected={watcherConnected} repoCount={0} agentCount={0} />
 
       {!watcherConnected && (
         <div className="bg-yellow-900/50 border-b border-yellow-700 px-4 py-2 text-sm text-yellow-200">
-          Watcher not running. Start with: <code className="bg-yellow-800 px-1 rounded">aw watcher start</code>
+          Watcher not running. Start with:{" "}
+          <code className="bg-yellow-800 px-1 rounded">aw watcher start</code>
         </div>
       )}
 
@@ -160,7 +160,7 @@ function AnalyzerApp() {
           <SettingsPane
             hiddenTabs={hiddenTabs}
             onToggleTabVisibility={(tab) => {
-              setHiddenTabs(prev => {
+              setHiddenTabs((prev) => {
                 const next = new Set(prev);
                 if (next.has(tab)) {
                   next.delete(tab);

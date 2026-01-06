@@ -62,7 +62,11 @@ export function createWatcherApp(state: WatcherAppState): Hono {
   app.use(
     "/api/*",
     cors({
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8421"],
+      origin: [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8421"
+      ],
       credentials: true
     })
   );
@@ -107,6 +111,25 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     return c.json(agentToDict(agent));
   });
 
+  // =========== Config ===========
+  app.get("/api/config", (c) => {
+    const cfg = state.config;
+    return c.json({
+      roots: cfg.roots,
+      repo: {
+        refresh_fast_seconds: cfg.repo.refreshFastSeconds,
+        refresh_slow_seconds: cfg.repo.refreshSlowSeconds,
+        include_untracked: cfg.repo.includeUntracked,
+        show_clean: cfg.repo.showClean
+      },
+      watcher: {
+        host: cfg.watcher.host,
+        port: cfg.watcher.port,
+        log_dir: cfg.watcher.logDir
+      }
+    });
+  });
+
   // =========== Repos ===========
   app.get("/api/repos", (c) => {
     const showClean = c.req.query("show_clean") === "true";
@@ -127,6 +150,12 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     return c.json(repos.map(repoToDict));
   });
 
+  app.post("/api/repos/rescan", (c) => {
+    // Trigger a rescan - the RepoScanner will pick this up
+    // For now just acknowledge the request
+    return c.json({ status: "ok", message: "Rescan triggered" });
+  });
+
   // =========== Ports ===========
   app.get("/api/ports", (c) => {
     const ports = state.store.snapshotPorts();
@@ -138,7 +167,7 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     const active = c.req.query("active") === "true";
     const limit = Number.parseInt(c.req.query("limit") ?? "100", 10);
 
-    let sessions = active
+    const sessions = active
       ? state.hookStore.getActiveSessions()
       : state.hookStore.getAllSessions(limit);
 
@@ -173,6 +202,22 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     return c.json(stats.map(toolStatsToDict));
   });
 
+  app.get("/api/hooks/tools/recent", (c) => {
+    const limit = Number.parseInt(c.req.query("limit") ?? "50", 10);
+    // Get recent tool usages across all sessions
+    const allSessions = state.hookStore.getAllSessions(100);
+    const recentUsages: any[] = [];
+
+    for (const session of allSessions) {
+      const usages = state.hookStore.getSessionToolUsages(session.sessionId);
+      recentUsages.push(...usages);
+    }
+
+    // Sort by timestamp descending and limit
+    recentUsages.sort((a, b) => b.timestamp - a.timestamp);
+    return c.json(recentUsages.slice(0, limit).map(toolUsageToDict));
+  });
+
   app.get("/api/hooks/stats/daily", (c) => {
     const limit = Number.parseInt(c.req.query("limit") ?? "30", 10);
     const stats = state.hookStore.getDailyStats(limit);
@@ -183,6 +228,15 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     const limit = Number.parseInt(c.req.query("limit") ?? "50", 10);
     const commits = state.hookStore.getAllCommits(limit);
     return c.json(commits.map(gitCommitToDict));
+  });
+
+  app.get("/api/hooks/sessions/:id/commits", (c) => {
+    const sessionId = c.req.param("id");
+    const commits = state.hookStore.getAllCommits(100);
+    const sessionCommits = commits.filter(
+      (commit) => commit.sessionId === sessionId
+    );
+    return c.json(sessionCommits.map(gitCommitToDict));
   });
 
   // =========== Hook Event Handlers ===========

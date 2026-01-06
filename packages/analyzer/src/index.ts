@@ -21,7 +21,10 @@
 
 export { AnalyzerServer, type AnalyzerServerOptions } from "./server";
 export { createAnalyzerApp, type AnalyzerAppState } from "./api";
-export { BrowserLifecycle, type BrowserLifecycleOptions } from "./browser-lifecycle";
+export {
+  BrowserLifecycle,
+  type BrowserLifecycleOptions
+} from "./browser-lifecycle";
 
 // Re-export enrichment utilities
 export * from "./enrichments";

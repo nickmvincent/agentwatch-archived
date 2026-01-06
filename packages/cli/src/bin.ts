@@ -25,7 +25,7 @@ program
 // Add commands
 program.addCommand(watcherCommand);
 program.addCommand(analyzeCommand);
-program.addCommand(daemonCommand);  // Keep for backwards compatibility
+program.addCommand(daemonCommand); // Keep for backwards compatibility
 program.addCommand(tuiCommand);
 program.addCommand(webCommand);
 program.addCommand(logsCommand);

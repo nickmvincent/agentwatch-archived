@@ -87,12 +87,16 @@ export function loadConfig(): WatcherConfig {
     }
 
     // Parse watcher section
-    const watcherHostMatch = content.match(/\[(?:daemon|watcher)\][\s\S]*?host\s*=\s*["']([^"']+)["']/);
+    const watcherHostMatch = content.match(
+      /\[(?:daemon|watcher)\][\s\S]*?host\s*=\s*["']([^"']+)["']/
+    );
     if (watcherHostMatch?.[1]) {
       config.watcher.host = watcherHostMatch[1];
     }
 
-    const watcherPortMatch = content.match(/\[(?:daemon|watcher)\][\s\S]*?port\s*=\s*(\d+)/);
+    const watcherPortMatch = content.match(
+      /\[(?:daemon|watcher)\][\s\S]*?port\s*=\s*(\d+)/
+    );
     if (watcherPortMatch?.[1]) {
       config.watcher.port = Number.parseInt(watcherPortMatch[1], 10);
     }

@@ -28,12 +28,16 @@ export const analyzeCommand = new Command("analyze")
     try {
       const watcherStatus = await fetch(`${watcherUrl}/api/status`);
       if (!watcherStatus.ok) {
-        console.log(pc.yellow("Watcher not running. Some features may be limited."));
+        console.log(
+          pc.yellow("Watcher not running. Some features may be limited.")
+        );
         console.log(pc.gray(`  Start with: aw watcher start`));
         console.log();
       }
     } catch {
-      console.log(pc.yellow("Watcher not running. Some features may be limited."));
+      console.log(
+        pc.yellow("Watcher not running. Some features may be limited.")
+      );
       console.log(pc.gray(`  Start with: aw watcher start`));
       console.log();
     }

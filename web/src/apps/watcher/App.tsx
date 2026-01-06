@@ -40,7 +40,10 @@ function WatcherApp() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
 
@@ -122,15 +125,13 @@ function WatcherApp() {
             sessionTokens={sessionTokens}
           />
         )}
-        {activeTab === "repos" && (
-          <ReposPane repos={repos} />
-        )}
+        {activeTab === "repos" && <ReposPane repos={repos} />}
         {activeTab === "ports" && (
           <PortsPane
             ports={ports}
             hiddenPorts={hiddenPorts}
             onToggleHide={(port) => {
-              setHiddenPorts(prev => {
+              setHiddenPorts((prev) => {
                 const next = new Set(prev);
                 if (next.has(port)) {
                   next.delete(port);
@@ -142,9 +143,7 @@ function WatcherApp() {
             }}
           />
         )}
-        {activeTab === "timeline" && (
-          <TimelinePane events={activityEvents} />
-        )}
+        {activeTab === "timeline" && <TimelinePane events={activityEvents} />}
       </main>
     </div>
   );
@@ -173,13 +172,19 @@ function ReposPane({ repos }: { repos: any[] }) {
             </div>
             <div className="flex space-x-4 text-sm">
               {repo.staged_count > 0 && (
-                <span className="text-green-400">+{repo.staged_count} staged</span>
+                <span className="text-green-400">
+                  +{repo.staged_count} staged
+                </span>
               )}
               {repo.unstaged_count > 0 && (
-                <span className="text-yellow-400">{repo.unstaged_count} modified</span>
+                <span className="text-yellow-400">
+                  {repo.unstaged_count} modified
+                </span>
               )}
               {repo.untracked_count > 0 && (
-                <span className="text-gray-400">{repo.untracked_count} untracked</span>
+                <span className="text-gray-400">
+                  {repo.untracked_count} untracked
+                </span>
               )}
             </div>
           </div>
@@ -193,9 +198,7 @@ function ReposPane({ repos }: { repos: any[] }) {
 function TimelinePane({ events }: { events: any[] }) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        No recent activity
-      </div>
+      <div className="text-center py-12 text-gray-500">No recent activity</div>
     );
   }
 
@@ -208,7 +211,9 @@ function TimelinePane({ events }: { events: any[] }) {
           </span>
           <span className="text-gray-300">{event.type}</span>
           {event.details && (
-            <span className="text-gray-500 ml-2">{JSON.stringify(event.details)}</span>
+            <span className="text-gray-500 ml-2">
+              {JSON.stringify(event.details)}
+            </span>
           )}
         </div>
       ))}

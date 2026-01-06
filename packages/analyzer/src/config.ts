@@ -61,22 +61,27 @@ export function loadAnalyzerConfig(): AnalyzerConfig {
     const config = { ...DEFAULT_CONFIG };
 
     // Parse projects section
-    const projectsMatch = content.match(/\[\[projects\]\][\s\S]*?(?=\[\[|\[(?!\[)|$)/g);
+    const projectsMatch = content.match(
+      /\[\[projects\]\][\s\S]*?(?=\[\[|\[(?!\[)|$)/g
+    );
     if (projectsMatch) {
-      config.projects = projectsMatch.map((section) => {
-        const idMatch = section.match(/id\s*=\s*["']([^"']+)["']/);
-        const nameMatch = section.match(/name\s*=\s*["']([^"']+)["']/);
-        const pathsMatch = section.match(/paths\s*=\s*\[([\s\S]*?)\]/);
+      config.projects = projectsMatch
+        .map((section) => {
+          const idMatch = section.match(/id\s*=\s*["']([^"']+)["']/);
+          const nameMatch = section.match(/name\s*=\s*["']([^"']+)["']/);
+          const pathsMatch = section.match(/paths\s*=\s*\[([\s\S]*?)\]/);
 
-        const id = idMatch?.[1] ?? "";
-        const name = nameMatch?.[1] ?? id;
-        const paths = pathsMatch?.[1]
-          ?.split(",")
-          .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-          .filter(Boolean) ?? [];
+          const id = idMatch?.[1] ?? "";
+          const name = nameMatch?.[1] ?? id;
+          const paths =
+            pathsMatch?.[1]
+              ?.split(",")
+              .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+              .filter(Boolean) ?? [];
 
-        return { id, name, paths };
-      }).filter((p) => p.id && p.paths.length > 0);
+          return { id, name, paths };
+        })
+        .filter((p) => p.id && p.paths.length > 0);
     }
 
     return config;

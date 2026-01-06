@@ -5,7 +5,7 @@
  */
 
 import { beforeEach, describe, expect, it } from "bun:test";
-import { Hono } from "hono";
+import type { Hono } from "hono";
 import { createWatcherApp, type WatcherAppState } from "../src/api";
 
 // Mock DataStore
@@ -159,7 +159,13 @@ class MockHookStore {
     message = "",
     repoPath = ""
   ) {
-    const commit = { sessionId, commitHash, message, repoPath, timestamp: Date.now() };
+    const commit = {
+      sessionId,
+      commitHash,
+      message,
+      repoPath,
+      timestamp: Date.now()
+    };
     this.commits.push(commit);
     return commit;
   }
@@ -209,9 +215,26 @@ describe("Watcher API", () => {
       connectionManager: new MockConnectionManager() as any,
       config: {
         roots: ["/home/user"],
-        repo: { refreshFastSeconds: 2, refreshSlowSeconds: 30, includeUntracked: true, showClean: false },
-        watcher: { host: "localhost", port: 8420, logDir: "~/.agentwatch/logs" },
-        hookEnhancements: { costControls: { enabled: false, sessionLimitUsd: 5, dailyLimitUsd: 50, warningThreshold: 0.8 }, notificationHub: { enabled: false, desktop: true } }
+        repo: {
+          refreshFastSeconds: 2,
+          refreshSlowSeconds: 30,
+          includeUntracked: true,
+          showClean: false
+        },
+        watcher: {
+          host: "localhost",
+          port: 8420,
+          logDir: "~/.agentwatch/logs"
+        },
+        hookEnhancements: {
+          costControls: {
+            enabled: false,
+            sessionLimitUsd: 5,
+            dailyLimitUsd: 50,
+            warningThreshold: 0.8
+          },
+          notificationHub: { enabled: false, desktop: true }
+        }
       },
       startedAt: Date.now()
     };
@@ -248,7 +271,14 @@ describe("Watcher API", () => {
 
     it("GET /api/agents returns agents", async () => {
       store._setAgents([
-        { pid: 1234, name: "claude", cmdline: ["claude"], startTime: Date.now(), cpuPercent: 5, rssKb: 100000 }
+        {
+          pid: 1234,
+          name: "claude",
+          cmdline: ["claude"],
+          startTime: Date.now(),
+          cpuPercent: 5,
+          rssKb: 100000
+        }
       ]);
 
       const res = await app.request("/api/agents");
@@ -287,7 +317,14 @@ describe("Watcher API", () => {
 
     it("GET /api/repos filters clean repos by default", async () => {
       store._setRepos([
-        { path: "/clean", branch: "main", stagedCount: 0, unstagedCount: 0, untrackedCount: 0, specialState: {} }
+        {
+          path: "/clean",
+          branch: "main",
+          stagedCount: 0,
+          unstagedCount: 0,
+          untrackedCount: 0,
+          specialState: {}
+        }
       ]);
 
       const res = await app.request("/api/repos");
@@ -367,7 +404,13 @@ describe("Watcher API", () => {
 
     it("POST /api/hooks/post-tool-use completes tool usage", async () => {
       hookStore.sessionStart("test-session", "", "/home/user/project");
-      hookStore.recordPreToolUse("test-session", "tool-1", "Read", {}, "/home/user/project");
+      hookStore.recordPreToolUse(
+        "test-session",
+        "tool-1",
+        "Read",
+        {},
+        "/home/user/project"
+      );
 
       const res = await app.request("/api/hooks/post-tool-use", {
         method: "POST",

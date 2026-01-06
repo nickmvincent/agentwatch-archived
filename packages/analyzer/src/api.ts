@@ -98,10 +98,13 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
 
   app.get("/api/enrichments/:sessionId", async (c) => {
     const sessionId = c.req.param("sessionId");
-    return c.json({
-      error: "Not implemented",
-      session_id: sessionId
-    }, 501);
+    return c.json(
+      {
+        error: "Not implemented",
+        session_id: sessionId
+      },
+      501
+    );
   });
 
   // =========== Transcripts ===========
@@ -115,10 +118,13 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
 
   app.get("/api/transcripts/:id", async (c) => {
     const id = c.req.param("id");
-    return c.json({
-      error: "Not implemented",
-      transcript_id: id
-    }, 501);
+    return c.json(
+      {
+        error: "Not implemented",
+        transcript_id: id
+      },
+      501
+    );
   });
 
   // =========== Analytics ===========
@@ -154,10 +160,13 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
 
   app.post("/api/annotations/:sessionId", async (c) => {
     const sessionId = c.req.param("sessionId");
-    return c.json({
-      error: "Not implemented",
-      session_id: sessionId
-    }, 501);
+    return c.json(
+      {
+        error: "Not implemented",
+        session_id: sessionId
+      },
+      501
+    );
   });
 
   // =========== Share/Export ===========
@@ -170,9 +179,12 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
   });
 
   app.post("/api/share/export", async (c) => {
-    return c.json({
-      error: "Not implemented"
-    }, 501);
+    return c.json(
+      {
+        error: "Not implemented"
+      },
+      501
+    );
   });
 
   // =========== Static File Serving ===========

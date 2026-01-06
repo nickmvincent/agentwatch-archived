@@ -72,9 +72,7 @@ watcherCommand
           console.log(pc.green("Watcher started successfully"));
           printWatcherInfo();
         } else {
-          console.log(
-            pc.yellow("Watcher started but health check failed")
-          );
+          console.log(pc.yellow("Watcher started but health check failed"));
         }
       } catch (e) {
         console.log(
