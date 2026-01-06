@@ -58,6 +58,7 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
 
   // UI state
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
   const [tmuxAvailable, setTmuxAvailable] = useState<boolean | null>(null);
   const [interactiveMode, setInteractiveMode] = useState(false);
@@ -176,6 +177,7 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
 
     setLaunching(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const res = await fetch(`${API_BASE}/api/managed-sessions/run`, {
@@ -208,6 +210,8 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
         throw new Error(data.error || "Failed to launch run");
       }
 
+      const data = await res.json();
+
       // Clear form on success
       setPrompt("");
       setSuccessConditions("");
@@ -215,6 +219,13 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
       setSelectedPrinciples(new Set());
       setPredictedDuration(15);
       setPredictedTokens(50000);
+
+      // Show success message
+      setSuccessMessage(
+        `Run launched! Agent: ${selectedAgent}${data.session?.id ? ` (Session: ${data.session.id.slice(0, 8)}...)` : ""}`
+      );
+      // Auto-clear after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
 
       // Reload predictions
       loadPredictions();
@@ -237,6 +248,7 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
 
     setLaunching(true);
     setError(null);
+    setSuccessMessage(null);
     setTmuxAttachCommand(null);
 
     try {
@@ -274,7 +286,8 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
       }
 
       const data = await res.json();
-      setTmuxAttachCommand(data.attachCommand);
+      // API returns snake_case, convert to camelCase
+      setTmuxAttachCommand(data.attach_command || data.attachCommand);
 
       // Don't clear form - user might want to launch another
       // Reload predictions
@@ -332,6 +345,19 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
       {error && (
         <div className="p-3 bg-red-900/30 border border-red-700 rounded text-red-300 text-sm">
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="p-3 bg-green-900/30 border border-green-700 rounded text-green-300 text-sm flex items-center justify-between">
+          <span>{successMessage}</span>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="text-green-400 hover:text-green-300"
+          >
+            &times;
+          </button>
         </div>
       )}
 
