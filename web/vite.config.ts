@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -13,16 +14,19 @@ const ports: Record<string, number> = {
 
 const apiPort = ports[target] || 8420;
 
+// Calculate absolute output path for non-default targets
+const __dirname = new URL(".", import.meta.url).pathname;
+const outDir = target === "default"
+  ? "dist"
+  : resolve(__dirname, `dist/${target}`);
+
 export default defineConfig({
   plugins: [react()],
+  root: target === "default" ? undefined : `src/apps/${target}`,
+  base: "/",
   build: {
-    outDir: target === "default" ? "dist" : `dist/${target}`,
-    rollupOptions: {
-      input:
-        target === "default"
-          ? undefined
-          : `src/apps/${target}/main.tsx`
-    }
+    outDir,
+    emptyOutDir: true
   },
   server: {
     port: 5173,

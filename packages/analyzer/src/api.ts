@@ -9,11 +9,16 @@
  * - /api/annotations/* - Manual annotations
  * - /api/analytics/* - Aggregated statistics
  * - /api/share/* - Export and contribution
+ * - Static files for web UI
  */
 
+import { existsSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { serveStatic } from "hono/bun";
 
 export interface AnalyzerAppState {
   startedAt: number;
@@ -169,6 +174,40 @@ export function createAnalyzerApp(state: AnalyzerAppState): Hono {
       error: "Not implemented"
     }, 501);
   });
+
+  // =========== Static File Serving ===========
+  // Look for built web UI in multiple locations
+  const staticDirs = [
+    join(process.cwd(), "web", "dist", "analyzer"),
+    join(process.cwd(), "web", "dist"),
+    "/usr/share/agentwatch/web/analyzer",
+    join(homedir(), ".agentwatch", "web", "analyzer")
+  ];
+
+  for (const staticDir of staticDirs) {
+    const indexPath = join(staticDir, "index.html");
+    if (existsSync(indexPath)) {
+      // Serve static assets
+      app.use("/assets/*", serveStatic({ root: staticDir }));
+
+      // Serve index.html for root
+      app.get("/", serveStatic({ path: indexPath }));
+
+      // SPA fallback - serve index.html for all non-API routes
+      app.get("*", async (c) => {
+        const path = c.req.path;
+        if (path.startsWith("/api/")) {
+          return c.notFound();
+        }
+        const file = Bun.file(indexPath);
+        return new Response(file, {
+          headers: { "Content-Type": "text/html" }
+        });
+      });
+
+      break;
+    }
+  }
 
   return app;
 }
