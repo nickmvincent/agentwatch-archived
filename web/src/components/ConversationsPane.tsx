@@ -25,7 +25,12 @@ import { ChatViewer } from "./ChatViewer";
 import { EnrichmentTooltip } from "./ui/InfoTooltip";
 import { WorkflowProgressWidget } from "./WorkflowProgressWidget";
 
-type ViewMode = "overview" | "chat" | "transcript-source" | "aw-log" | "timeline";
+type ViewMode =
+  | "overview"
+  | "chat"
+  | "transcript-source"
+  | "aw-log"
+  | "timeline";
 type SortField = "time" | "quality";
 type SortDirection = "asc" | "desc";
 
@@ -270,7 +275,12 @@ export function ConversationsPane({
 
   // Load source JSON when switching to transcript-source view
   useEffect(() => {
-    if (viewMode === "transcript-source" && selectedSessionId && !sourceJson && !sourceLoading) {
+    if (
+      viewMode === "transcript-source" &&
+      selectedSessionId &&
+      !sourceJson &&
+      !sourceLoading
+    ) {
       const conv = conversations.find(
         (s) =>
           s.correlation_id === selectedSessionId ||
@@ -278,7 +288,9 @@ export function ConversationsPane({
       );
       if (conv?.transcript?.id) {
         setSourceLoading(true);
-        fetch(`/api/contrib/local-logs/${encodeURIComponent(conv.transcript.id)}/raw`)
+        fetch(
+          `/api/contrib/local-logs/${encodeURIComponent(conv.transcript.id)}/raw`
+        )
           .then((res) => {
             if (!res.ok) throw new Error("Failed to fetch");
             return res.text();
@@ -1478,7 +1490,8 @@ export function ConversationsPane({
                       <div className="text-xs text-gray-400">
                         Original Claude transcript file:{" "}
                         <code className="text-purple-400">
-                          {selectedSession?.session.transcript?.path || "Unknown"}
+                          {selectedSession?.session.transcript?.path ||
+                            "Unknown"}
                         </code>
                       </div>
                       <button
@@ -1514,7 +1527,8 @@ export function ConversationsPane({
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-xs text-gray-400">
-                        Agentwatch merged session data (hooks + transcript metadata)
+                        Agentwatch merged session data (hooks + transcript
+                        metadata)
                       </div>
                       <button
                         onClick={() => {

@@ -111,7 +111,9 @@ export function PortsPane({
     (a, b) => a.port - b.port
   );
   const agentLinked = visiblePorts.filter((p) => p.agent_label).length;
-  const projectLinked = visiblePorts.filter((p) => getProjectForPort(p.cwd)).length;
+  const projectLinked = visiblePorts.filter((p) =>
+    getProjectForPort(p.cwd)
+  ).length;
 
   // Bulk hide helpers
   const portsOver10000 = visiblePorts
@@ -282,10 +284,7 @@ export function PortsPane({
                       {port.process_name}
                       <span className="text-gray-500 ml-1">({port.pid})</span>
                     </td>
-                    <td
-                      className="px-4 py-2"
-                      title={port.cwd || undefined}
-                    >
+                    <td className="px-4 py-2" title={port.cwd || undefined}>
                       {matchedProject ? (
                         <span className="text-yellow-400 font-medium">
                           {matchedProject.name}

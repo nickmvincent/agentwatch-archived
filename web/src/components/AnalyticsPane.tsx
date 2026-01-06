@@ -1083,7 +1083,9 @@ export function AnalyticsPane({
                         const scoredTotal =
                           point.success_count + point.failure_count;
                         const successPct =
-                          scoredTotal > 0 ? point.success_count / scoredTotal : 0;
+                          scoredTotal > 0
+                            ? point.success_count / scoredTotal
+                            : 0;
                         const maxCount = Math.max(
                           ...successTrend.map((p) => p.total),
                           1

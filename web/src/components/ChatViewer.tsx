@@ -278,289 +278,285 @@ export function ChatViewer({
 
       {/* Chat messages - formatted view */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {displayMessages.map((msg, idx) => {
-            const styles = getRoleStyles(msg.role, msg.isSidechain);
-            const isLong = msg.content.length > 500;
-            const isExpanded = expandedMessages.has(idx) || !isLong;
-            // Detect "Warmup" messages specifically
-            const isWarmup = msg.isSidechain && msg.content.trim() === "Warmup";
+        {displayMessages.map((msg, idx) => {
+          const styles = getRoleStyles(msg.role, msg.isSidechain);
+          const isLong = msg.content.length > 500;
+          const isExpanded = expandedMessages.has(idx) || !isLong;
+          // Detect "Warmup" messages specifically
+          const isWarmup = msg.isSidechain && msg.content.trim() === "Warmup";
 
-            const messageId = `msg-${idx}`;
-            const existingFlag = flagsByMessage.get(messageId);
-            const isFlagging = flaggingMessageIdx === idx;
+          const messageId = `msg-${idx}`;
+          const existingFlag = flagsByMessage.get(messageId);
+          const isFlagging = flaggingMessageIdx === idx;
 
-            // Collapse warmup messages by default
-            if (isWarmup && !expandedMessages.has(idx)) {
-              return (
-                <div
-                  key={idx}
-                  onClick={() => toggleExpand(idx)}
-                  className="rounded-lg border p-2 bg-gray-800/30 border-gray-700/30 cursor-pointer hover:bg-gray-700/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span>🔀</span>
-                    <span>Sub-agent warmup</span>
-                    {msg.agentId && (
-                      <span className="px-1.5 py-0.5 bg-gray-700 rounded font-mono">
-                        {msg.agentId}
-                      </span>
-                    )}
-                    <span className="text-gray-600">
-                      {formatTimestamp(msg.timestamp)}
-                    </span>
-                    <span className="ml-auto text-gray-600">
-                      Click to expand
-                    </span>
-                  </div>
-                </div>
-              );
-            }
-
+          // Collapse warmup messages by default
+          if (isWarmup && !expandedMessages.has(idx)) {
             return (
               <div
                 key={idx}
-                className={`rounded-lg border p-3 ${styles.container} ${
-                  existingFlag ? "ring-2 ring-red-500/50" : ""
-                }`}
+                onClick={() => toggleExpand(idx)}
+                className="rounded-lg border p-2 bg-gray-800/30 border-gray-700/30 cursor-pointer hover:bg-gray-700/30 transition-colors"
               >
-                {/* Message header */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base">{styles.icon}</span>
-                    <span className={`text-sm font-medium ${styles.label}`}>
-                      {msg.isSidechain
-                        ? `Sub-agent${msg.agentId ? ` (${msg.agentId})` : ""}`
-                        : msg.role === "user"
-                          ? "You"
-                          : msg.role === "assistant"
-                            ? "Assistant"
-                            : msg.role === "tool"
-                              ? "Tool Call"
-                              : msg.role === "tool_result"
-                                ? "Result"
-                                : "System"}
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>🔀</span>
+                  <span>Sub-agent warmup</span>
+                  {msg.agentId && (
+                    <span className="px-1.5 py-0.5 bg-gray-700 rounded font-mono">
+                      {msg.agentId}
                     </span>
-                    {/* Type indicators */}
-                    {msg.hasThinking && (
-                      <span
-                        className="px-1.5 py-0.5 bg-pink-900/40 text-pink-300 text-xs rounded flex items-center gap-1"
-                        title="Contains thinking/reasoning content"
-                      >
-                        💭 thinking
-                      </span>
-                    )}
-                    {msg.toolName && (
-                      <span
-                        className="px-1.5 py-0.5 bg-yellow-900/40 text-yellow-300 text-xs rounded flex items-center gap-1 font-mono"
-                        title="Tool call - click to compare with hooks data"
-                      >
-                        🔧 {msg.toolName}
-                      </span>
-                    )}
-                    {msg.isSidechain && (
-                      <span className="px-1.5 py-0.5 bg-orange-900/30 text-orange-400 text-xs rounded">
-                        sidechain
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    {/* Flag button */}
-                    <button
-                      onClick={() => {
-                        if (existingFlag) {
-                          // Show existing flag details
-                          setFlaggingMessageIdx(idx);
-                          setFlagNotes(existingFlag.notes);
-                          setFlagConcernType(existingFlag.concernType);
-                          setFlagExclude(existingFlag.excludeFromExport);
-                        } else {
-                          setFlaggingMessageIdx(idx);
-                          setFlagNotes("");
-                          setFlagConcernType("other");
-                          setFlagExclude(false);
-                        }
-                      }}
-                      className={`p-1 rounded transition-colors ${
-                        existingFlag
-                          ? "text-red-400 hover:bg-red-900/30"
-                          : "text-gray-500 hover:text-red-400 hover:bg-gray-700"
-                      }`}
-                      title={
-                        existingFlag ? "Edit flag" : "Flag for privacy concern"
-                      }
-                    >
-                      🚩
-                    </button>
-                    {msg.meta?.model && (
-                      <span className="px-1.5 py-0.5 bg-gray-700 rounded">
-                        {msg.meta.model.split("-").slice(-2).join("-")}
-                      </span>
-                    )}
-                    {msg.meta?.inputTokens && (
-                      <span title="Input tokens">
-                        {formatTokens(msg.meta.inputTokens)} in
-                      </span>
-                    )}
-                    {msg.meta?.outputTokens && (
-                      <span title="Output tokens">
-                        {formatTokens(msg.meta.outputTokens)} out
-                      </span>
-                    )}
-                    <span>{formatTimestamp(msg.timestamp)}</span>
-                  </div>
+                  )}
+                  <span className="text-gray-600">
+                    {formatTimestamp(msg.timestamp)}
+                  </span>
+                  <span className="ml-auto text-gray-600">Click to expand</span>
                 </div>
-
-                {/* Existing flag indicator */}
-                {existingFlag && !isFlagging && (
-                  <div className="mb-2 p-2 bg-red-900/20 border border-red-700/30 rounded text-xs">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-white ${
-                          CONCERN_TYPES.find(
-                            (t) => t.value === existingFlag.concernType
-                          )?.color || "bg-gray-600"
-                        }`}
-                      >
-                        {existingFlag.concernType}
-                      </span>
-                      {existingFlag.excludeFromExport && (
-                        <span className="text-red-400">
-                          ⊖ Exclude from export
-                        </span>
-                      )}
-                    </div>
-                    {existingFlag.notes && (
-                      <p className="mt-1 text-gray-300">{existingFlag.notes}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Flag editing form */}
-                {isFlagging && (
-                  <div className="mb-3 p-3 bg-gray-900/70 border border-gray-600 rounded space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-gray-400">
-                        Concern type:
-                      </span>
-                      {CONCERN_TYPES.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => setFlagConcernType(t.value)}
-                          className={`px-2 py-0.5 text-xs rounded ${
-                            flagConcernType === t.value
-                              ? `${t.color} text-white`
-                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      value={flagNotes}
-                      onChange={(e) => setFlagNotes(e.target.value)}
-                      placeholder="Notes about privacy concern..."
-                      className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-sm text-white placeholder-gray-500 resize-none"
-                      rows={2}
-                    />
-                    <label className="flex items-center gap-2 text-xs text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={flagExclude}
-                        onChange={(e) => setFlagExclude(e.target.checked)}
-                        className="rounded bg-gray-700 border-gray-600"
-                      />
-                      Exclude this message from export
-                    </label>
-                    <div className="flex items-center gap-2">
-                      {existingFlag ? (
-                        <>
-                          <button
-                            onClick={() =>
-                              handleUpdateFlag(existingFlag.id, {
-                                notes: flagNotes,
-                                excludeFromExport: flagExclude
-                              })
-                            }
-                            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded"
-                          >
-                            Update
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFlag(existingFlag.id)}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
-                          >
-                            Remove Flag
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => handleCreateFlag(idx)}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
-                        >
-                          Add Flag
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setFlaggingMessageIdx(null)}
-                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Message content - formatted markdown */}
-                <div className="text-sm text-gray-200">
-                  <div
-                    className={`prose prose-invert prose-sm max-w-none ${!isExpanded ? "max-h-32 overflow-hidden" : ""}`}
-                  >
-                    <MarkdownRenderer
-                      content={
-                        isExpanded
-                          ? msg.content
-                          : msg.content.slice(0, 500) + "..."
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* Tool input section for tool_use messages */}
-                {msg.toolInput && (
-                  <details className="mt-2 text-xs">
-                    <summary className="cursor-pointer text-yellow-400 hover:text-yellow-300">
-                      View tool input JSON
-                    </summary>
-                    <pre className="mt-1 p-2 bg-gray-900/70 rounded overflow-x-auto font-mono text-gray-300 max-h-40 overflow-y-auto">
-                      {JSON.stringify(msg.toolInput, null, 2)}
-                    </pre>
-                  </details>
-                )}
-
-                {/* Expand button for long messages */}
-                {isLong && (
-                  <button
-                    onClick={() => toggleExpand(idx)}
-                    className="mt-2 text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    {isExpanded
-                      ? "Show less"
-                      : `Show more (${Math.round(msg.content.length / 1000)}K chars)`}
-                  </button>
-                )}
               </div>
             );
-          })}
+          }
 
-          {displayMessages.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              {sidechainCount > 0 && !showSidechain
-                ? `No main chain messages. ${sidechainCount} sub-agent messages hidden.`
-                : "No messages to display"}
+          return (
+            <div
+              key={idx}
+              className={`rounded-lg border p-3 ${styles.container} ${
+                existingFlag ? "ring-2 ring-red-500/50" : ""
+              }`}
+            >
+              {/* Message header */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base">{styles.icon}</span>
+                  <span className={`text-sm font-medium ${styles.label}`}>
+                    {msg.isSidechain
+                      ? `Sub-agent${msg.agentId ? ` (${msg.agentId})` : ""}`
+                      : msg.role === "user"
+                        ? "You"
+                        : msg.role === "assistant"
+                          ? "Assistant"
+                          : msg.role === "tool"
+                            ? "Tool Call"
+                            : msg.role === "tool_result"
+                              ? "Result"
+                              : "System"}
+                  </span>
+                  {/* Type indicators */}
+                  {msg.hasThinking && (
+                    <span
+                      className="px-1.5 py-0.5 bg-pink-900/40 text-pink-300 text-xs rounded flex items-center gap-1"
+                      title="Contains thinking/reasoning content"
+                    >
+                      💭 thinking
+                    </span>
+                  )}
+                  {msg.toolName && (
+                    <span
+                      className="px-1.5 py-0.5 bg-yellow-900/40 text-yellow-300 text-xs rounded flex items-center gap-1 font-mono"
+                      title="Tool call - click to compare with hooks data"
+                    >
+                      🔧 {msg.toolName}
+                    </span>
+                  )}
+                  {msg.isSidechain && (
+                    <span className="px-1.5 py-0.5 bg-orange-900/30 text-orange-400 text-xs rounded">
+                      sidechain
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  {/* Flag button */}
+                  <button
+                    onClick={() => {
+                      if (existingFlag) {
+                        // Show existing flag details
+                        setFlaggingMessageIdx(idx);
+                        setFlagNotes(existingFlag.notes);
+                        setFlagConcernType(existingFlag.concernType);
+                        setFlagExclude(existingFlag.excludeFromExport);
+                      } else {
+                        setFlaggingMessageIdx(idx);
+                        setFlagNotes("");
+                        setFlagConcernType("other");
+                        setFlagExclude(false);
+                      }
+                    }}
+                    className={`p-1 rounded transition-colors ${
+                      existingFlag
+                        ? "text-red-400 hover:bg-red-900/30"
+                        : "text-gray-500 hover:text-red-400 hover:bg-gray-700"
+                    }`}
+                    title={
+                      existingFlag ? "Edit flag" : "Flag for privacy concern"
+                    }
+                  >
+                    🚩
+                  </button>
+                  {msg.meta?.model && (
+                    <span className="px-1.5 py-0.5 bg-gray-700 rounded">
+                      {msg.meta.model.split("-").slice(-2).join("-")}
+                    </span>
+                  )}
+                  {msg.meta?.inputTokens && (
+                    <span title="Input tokens">
+                      {formatTokens(msg.meta.inputTokens)} in
+                    </span>
+                  )}
+                  {msg.meta?.outputTokens && (
+                    <span title="Output tokens">
+                      {formatTokens(msg.meta.outputTokens)} out
+                    </span>
+                  )}
+                  <span>{formatTimestamp(msg.timestamp)}</span>
+                </div>
+              </div>
+
+              {/* Existing flag indicator */}
+              {existingFlag && !isFlagging && (
+                <div className="mb-2 p-2 bg-red-900/20 border border-red-700/30 rounded text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-white ${
+                        CONCERN_TYPES.find(
+                          (t) => t.value === existingFlag.concernType
+                        )?.color || "bg-gray-600"
+                      }`}
+                    >
+                      {existingFlag.concernType}
+                    </span>
+                    {existingFlag.excludeFromExport && (
+                      <span className="text-red-400">
+                        ⊖ Exclude from export
+                      </span>
+                    )}
+                  </div>
+                  {existingFlag.notes && (
+                    <p className="mt-1 text-gray-300">{existingFlag.notes}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Flag editing form */}
+              {isFlagging && (
+                <div className="mb-3 p-3 bg-gray-900/70 border border-gray-600 rounded space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-gray-400">Concern type:</span>
+                    {CONCERN_TYPES.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => setFlagConcernType(t.value)}
+                        className={`px-2 py-0.5 text-xs rounded ${
+                          flagConcernType === t.value
+                            ? `${t.color} text-white`
+                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={flagNotes}
+                    onChange={(e) => setFlagNotes(e.target.value)}
+                    placeholder="Notes about privacy concern..."
+                    className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-sm text-white placeholder-gray-500 resize-none"
+                    rows={2}
+                  />
+                  <label className="flex items-center gap-2 text-xs text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={flagExclude}
+                      onChange={(e) => setFlagExclude(e.target.checked)}
+                      className="rounded bg-gray-700 border-gray-600"
+                    />
+                    Exclude this message from export
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {existingFlag ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            handleUpdateFlag(existingFlag.id, {
+                              notes: flagNotes,
+                              excludeFromExport: flagExclude
+                            })
+                          }
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded"
+                        >
+                          Update
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFlag(existingFlag.id)}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
+                        >
+                          Remove Flag
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleCreateFlag(idx)}
+                        className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
+                      >
+                        Add Flag
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setFlaggingMessageIdx(null)}
+                      className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Message content - formatted markdown */}
+              <div className="text-sm text-gray-200">
+                <div
+                  className={`prose prose-invert prose-sm max-w-none ${!isExpanded ? "max-h-32 overflow-hidden" : ""}`}
+                >
+                  <MarkdownRenderer
+                    content={
+                      isExpanded
+                        ? msg.content
+                        : msg.content.slice(0, 500) + "..."
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Tool input section for tool_use messages */}
+              {msg.toolInput && (
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer text-yellow-400 hover:text-yellow-300">
+                    View tool input JSON
+                  </summary>
+                  <pre className="mt-1 p-2 bg-gray-900/70 rounded overflow-x-auto font-mono text-gray-300 max-h-40 overflow-y-auto">
+                    {JSON.stringify(msg.toolInput, null, 2)}
+                  </pre>
+                </details>
+              )}
+
+              {/* Expand button for long messages */}
+              {isLong && (
+                <button
+                  onClick={() => toggleExpand(idx)}
+                  className="mt-2 text-xs text-blue-400 hover:text-blue-300"
+                >
+                  {isExpanded
+                    ? "Show less"
+                    : `Show more (${Math.round(msg.content.length / 1000)}K chars)`}
+                </button>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })}
+
+        {displayMessages.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            {sidechainCount > 0 && !showSidechain
+              ? `No main chain messages. ${sidechainCount} sub-agent messages hidden.`
+              : "No messages to display"}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

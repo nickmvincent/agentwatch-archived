@@ -719,7 +719,6 @@ export function SettingsPane({
             </div>
           </div>
         </div>
-
       </div>
 
       {/* External Reference - expandable section */}
