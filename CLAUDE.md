@@ -144,7 +144,7 @@ Build order matters:
 | `annotations.json` | JSON | User feedback/ratings |
 | `artifacts.json` | JSON | Session → artifact links (PRs, repos, commits) |
 
-**Audit event pattern:** All significant operations log to `events.jsonl` via `logAuditEvent(category, action, entityId, description, details)`. Events automatically appear in the Audit tab. See `packages/analyzer/src/audit-log.ts`.
+**Audit event pattern:** All significant operations log to `events.jsonl` via `logAuditEvent(category, action, entityId, description, details)`. See `packages/analyzer/src/audit-log.ts`.
 
 **Transcript index:** Full scan every 24h, incremental updates every 5min. Persists at `transcripts/index.json`. See `packages/analyzer/src/transcript-index.ts`.
 

@@ -70,22 +70,21 @@ type = "cmd_regex"
 pattern = "\\bgemini\\b"
 ```
 
-## Daemon
+## Watcher Server
 
 ```toml
-[daemon]
+[watcher]
 # Host to bind to
 host = "127.0.0.1"
 
 # Port to listen on
 port = 8420
 
-# PID file location
-pid_file = "~/.agentwatch/daemon.pid"
-
 # Log directory
 log_dir = "~/.agentwatch/logs"
 ```
+
+> **Migration note:** If you have an existing `[daemon]` section in config.toml, it will still be read for backwards compatibility. New installations should use `[watcher]`.
 
 ## API Defaults
 
@@ -538,7 +537,7 @@ include_untracked = true
 refresh_seconds = 1
 stalled_seconds = 45
 
-[daemon]
+[watcher]
 port = 8420
 
 [api]
@@ -581,18 +580,19 @@ These environment variables can override configuration:
 | Variable | Description |
 |----------|-------------|
 | `AGENTWATCH_CONFIG` | Path to config file |
-| `AGENTWATCH_PORT` | Override daemon port |
-| `AGENTWATCH_HOST` | Override daemon host |
+| `AGENTWATCH_PORT` | Override watcher port |
+| `AGENTWATCH_HOST` | Override watcher host |
 
 ## File Locations
 
 | File | Purpose |
 |------|---------|
 | `~/.config/agentwatch/config.toml` | Main configuration (includes UI prefs, sharing settings) |
+| `~/.config/agentwatch/watcher.toml` | Watcher-specific config (optional, takes precedence) |
 | `~/.config/agentwatch/ignore_repos.txt` | Repos to ignore |
 | `~/.agentwatch/events.jsonl` | Master event log |
-| `~/.agentwatch/daemon.pid` | Daemon PID file |
-| `~/.agentwatch/logs/` | Daemon logs |
+| `~/.agentwatch/watcher.pid` | Watcher PID file |
+| `~/.agentwatch/logs/` | Watcher logs |
 | `~/.agentwatch/sessions/` | Managed session data |
 | `~/.agentwatch/hooks/` | Hook event data |
 | `~/.agentwatch/transcripts/index.json` | Transcript discovery index |
@@ -611,6 +611,7 @@ For a complete file reference, see [Data Sources](data-sources.md#complete-file-
 
 | Check | Date | Who | Notes |
 |-------|------|-----|-------|
+| Update for watcher/analyzer | 2026-01-06 | Claude | Updated daemon→watcher references |
 | AI review vs external docs | 2025-12-31 | Claude | Verified against Claude Code docs; config options current |
 | Added ui/sharing sections | 2026-01-02 | Claude | UI prefs moved from localStorage to config.toml |
 | Human full read | — | — | *Awaiting review* |

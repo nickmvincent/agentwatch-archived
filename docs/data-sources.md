@@ -2,7 +2,7 @@
 
 Agentwatch accesses AI agent activity from three sources. **Understanding what agentwatch collects vs. what it simply reads is important for your privacy.**
 
-> **New to these terms?** See the [Glossary](glossary.md) for definitions of hooks, daemon, JSONL, and other terms.
+> **New to these terms?** See the [Glossary](glossary.md) for definitions of hooks, watcher, JSONL, and other terms.
 
 ## Quick Summary
 
@@ -53,7 +53,7 @@ Agentwatch reads your system's process list to detect running agents and stores 
 
 **Type: COLLECTED** — Only exists because of agentwatch
 
-[Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) are scripts that Claude Code calls during operation. When you run `aw hooks install`, it adds entries to `~/.claude/settings.json` that send events to the agentwatch daemon.
+[Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) are scripts that Claude Code calls during operation. When you run `aw hooks install`, it adds entries to `~/.claude/settings.json` that send events to the agentwatch watcher.
 
 **What is collected:**
 - Tool calls (names, inputs, outputs, success/failure, timing)
@@ -112,9 +112,9 @@ Agentwatch detects running AI agent processes and stores periodic snapshots.
 
 **Storage:** `~/.agentwatch/processes/` (daily JSONL files, rotated after 30 days)
 
-**How to enable:** Automatic when the daemon is running
+**How to enable:** Automatic when the watcher is running
 
-**How to disable:** Stop the daemon. Delete `~/.agentwatch/processes/` to remove data.
+**How to disable:** Stop the watcher. Delete `~/.agentwatch/processes/` to remove data.
 
 ---
 
@@ -122,9 +122,9 @@ Agentwatch detects running AI agent processes and stores periodic snapshots.
 
 | If you want... | Do this |
 |----------------|---------|
-| No data collection at all | Don't install hooks, don't run daemon |
+| No data collection at all | Don't install hooks, don't run watcher |
 | Read-only access to existing sessions | Enable "Scan local transcripts" only |
-| Real-time monitoring with collection | Install hooks and run daemon |
+| Real-time monitoring with collection | Install hooks and run watcher |
 | Remove all collected data | `aw hooks uninstall && rm -rf ~/.agentwatch/` |
 
 ---
@@ -132,12 +132,12 @@ Agentwatch detects running AI agent processes and stores periodic snapshots.
 ## FAQ
 
 ### Does agentwatch send data anywhere?
-No. All data stays on your machine. Hook events go to your local daemon (localhost:8420), and the web UI connects to localhost only.
+No. All data stays on your machine. Hook events go to your local watcher (localhost:8420), and the web UI connects to localhost only.
 
 ### Can I use agentwatch without collecting any new data?
-Yes. Don't install hooks and don't run the daemon. You can still view existing transcript files and use the cost calculator.
+Yes. Don't install hooks and don't run the watcher. You can still view existing transcript files and use the cost calculator.
 
-Note: Running the daemon collects process snapshots. For transcript-only access without process logging, use CLI scan commands instead.
+Note: Running the watcher collects process snapshots. For transcript-only access without process logging, use CLI scan commands instead.
 
 ### What's the difference between hook sessions and transcripts?
 - **Hook sessions**: Data agentwatch collected via hooks (in `~/.agentwatch/`)

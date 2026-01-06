@@ -1,12 +1,12 @@
 # Memory Management
 
-This document describes how agentwatch manages memory to prevent leaks during long-running daemon operation.
+This document describes how agentwatch manages memory to prevent leaks during long-running watcher operation.
 
-> **Important:** Memory cleanup does NOT delete your data. All events are permanently stored in JSONL files on disk. Cleanup only removes old entries from in-memory caches to keep the daemon responsive.
+> **Important:** Memory cleanup does NOT delete your data. All events are permanently stored in JSONL files on disk. Cleanup only removes old entries from in-memory caches to keep the watcher responsive.
 
 ## Overview
 
-The agentwatch daemon runs continuously and accumulates data from:
+The agentwatch watcher runs continuously and accumulates data from:
 - Agent processes (sessions, tool usages)
 - Git commits
 - Port scans
@@ -22,9 +22,9 @@ Agentwatch uses a two-tier storage model:
 ┌─────────────────────────────────────────────────────────────┐
 │                     DISK (Permanent)                        │
 │  ~/.agentwatch/hooks/                                       │
-│  ├── sessions.jsonl      ← All sessions, forever            │
-│  ├── tool_usages.jsonl   ← All tool calls, forever          │
-│  ├── commits.jsonl       ← All git commits, forever         │
+│  ├── sessions_*.jsonl    ← All sessions (daily files)       │
+│  ├── tool_usages_*.jsonl ← All tool calls (daily files)     │
+│  ├── commits_*.jsonl     ← All git commits (daily files)    │
 │  └── stats.json          ← Aggregated statistics            │
 └─────────────────────────────────────────────────────────────┘
                               ▲
@@ -53,7 +53,7 @@ Agentwatch uses a two-tier storage model:
 
 ### 1. HookStore Cleanup
 
-The `HookStore` class manages session data and tool usage tracking. It provides `cleanupOldData()` which is called hourly by the daemon.
+The `HookStore` class manages session data and tool usage tracking. It provides `cleanupOldData()` which is called hourly by the watcher.
 
 **What gets cleaned:**
 
@@ -67,7 +67,7 @@ The `HookStore` class manages session data and tool usage tracking. It provides 
 
 **Usage:**
 ```typescript
-// Called automatically every hour by DaemonServer
+// Called automatically every hour by WatcherServer
 hookStore.cleanupOldData(30, 10000);
 
 // Parameters:
@@ -117,7 +117,7 @@ Sessions are ended automatically if:
 - They've been inactive for >1 hour
 - They've been inactive for >5 minutes AND no matching process exists in their cwd
 
-## Daemon Cleanup Schedule
+## Watcher Cleanup Schedule
 
 | Cleanup Task | Frequency | Method |
 |--------------|-----------|--------|
@@ -168,11 +168,11 @@ Tests verify:
 ### Debugging Commands
 
 ```bash
-# Check daemon memory usage
+# Check watcher memory usage
 ps aux | grep agentwatch
 
 # View current data sizes (via API)
-curl http://localhost:8420/api/stats
+curl http://localhost:8420/api/status
 
 # Force cleanup manually (restart watcher)
 aw watcher restart
@@ -184,7 +184,7 @@ Currently cleanup parameters are hardcoded. Future versions may allow configurat
 
 ```yaml
 # Potential future config
-daemon:
+watcher:
   cleanup:
     max_days: 30
     max_tool_usages: 10000
@@ -203,6 +203,7 @@ daemon:
 
 | Check | Date | Who | Notes |
 |-------|------|-----|-------|
+| Update for watcher/analyzer | 2026-01-06 | Claude | Updated daemon→watcher references |
 | AI review vs external docs | 2025-12-31 | Claude | Internal doc; verified against codebase |
 | Human full read | — | — | *Awaiting review* |
 
