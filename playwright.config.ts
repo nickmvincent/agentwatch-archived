@@ -36,8 +36,8 @@ export default defineConfig({
       }
     },
     {
-      name: "dashboard",
-      testMatch: /dashboard.*\.spec\.ts/,
+      name: "watcher",
+      testMatch: /dashboard.*\.spec\.ts|cross-app.*watcher.*\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:8420"
@@ -49,6 +49,14 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:8421"
+      }
+    },
+    {
+      name: "cross-app",
+      testMatch: /cross-app\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"]
+        // No baseURL - tests specify full URLs for cross-app testing
       }
     }
   ],
