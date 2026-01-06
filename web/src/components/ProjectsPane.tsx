@@ -21,15 +21,6 @@ interface ProjectsPaneProps {
 
 interface ProjectWithStats extends Project {
   session_count?: number;
-  total_cost_usd?: number;
-  total_input_tokens?: number;
-  total_output_tokens?: number;
-}
-
-function formatTokens(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
-  return count.toString();
 }
 
 export function ProjectsPane({
@@ -152,15 +143,12 @@ export function ProjectsPane({
         statsMap.set(item.project_id, item);
       }
 
-      // Merge stats with projects
+      // Merge session counts with projects
       const projectsWithStats: ProjectWithStats[] = projectsData.map((p) => {
         const stats = statsMap.get(p.id);
         return {
           ...p,
-          session_count: stats?.session_count,
-          total_cost_usd: stats?.total_cost_usd,
-          total_input_tokens: stats?.total_input_tokens,
-          total_output_tokens: stats?.total_output_tokens
+          session_count: stats?.session_count
         };
       });
 
@@ -319,9 +307,8 @@ export function ProjectsPane({
             </code>
           </p>
           <p className="text-[10px] text-gray-600 mt-1">
-            Token/cost data from{" "}
-            <span className="text-green-400">hook sessions</span> only
-            (transcript-only sessions show 0 tokens)
+            Stats from hook session metadata (token tracking not yet
+            implemented)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -471,30 +458,16 @@ export function ProjectsPane({
                 );
               })()}
 
-              {/* Stats */}
-              <div className="mt-3 pt-3 border-t border-gray-800 flex items-center gap-4 text-xs text-gray-500">
-                {project.session_count !== undefined && (
-                  <span title="Sessions">
-                    {project.session_count} session
-                    {project.session_count !== 1 ? "s" : ""}
-                  </span>
-                )}
-                {project.total_cost_usd !== undefined &&
-                  project.total_input_tokens !== undefined &&
-                  project.total_output_tokens !== undefined && (
-                    <span title="Total tokens">
-                      {formatTokens(
-                        project.total_input_tokens + project.total_output_tokens
-                      )}{" "}
-                      tok{" "}
-                      {project.total_cost_usd > 0 && (
-                        <span className="text-[10px] text-gray-500">
-                          (~${project.total_cost_usd.toFixed(2)})
-                        </span>
-                      )}
+              {/* Stats - sessions only (token tracking not yet implemented) */}
+              {project.session_count !== undefined &&
+                project.session_count > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-800 text-xs text-gray-500">
+                    <span title="Hook sessions recorded for this project">
+                      {project.session_count} session
+                      {project.session_count !== 1 ? "s" : ""}
                     </span>
-                  )}
-              </div>
+                  </div>
+                )}
             </div>
           ))}
         </div>
