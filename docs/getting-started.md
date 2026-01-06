@@ -15,14 +15,16 @@ bun install
 # Link the CLI
 cd packages/cli && bun link && cd ../..
 
-# Start the daemon
-aw daemon start
+# Start the watcher (always-on monitoring)
+aw watcher start
 
-# Open the web UI
-aw web
+# Open the analyzer dashboard (browser-based analysis)
+aw analyze
 ```
 
-The daemon serves everything at **http://localhost:8420**.
+**Two servers:**
+- **Watcher** (port 8420) - Real-time monitoring, hook capture, process scanning
+- **Analyzer** (port 8421) - Session analysis, enrichments, annotations, export
 
 ## How Agentwatch Works
 
@@ -32,14 +34,14 @@ Understanding agentwatch's mental model helps you use it effectively.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     AGENTWATCH DAEMON                        │
+│                     AGENTWATCH WATCHER                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  1. HOOKS (collected)     2. TRANSCRIPTS (read)   3. PROCESSES │
 │  ┌──────────────┐        ┌──────────────┐        ┌─────────┐ │
 │  │ Claude Code  │        │ ~/.claude/   │        │ ps aux  │ │
 │  │ sends events │        │ ~/.codex/    │        │ scans   │ │
-│  │ to daemon    │        │ ~/.gemini/   │        │         │ │
+│  │ to watcher   │        │ ~/.gemini/   │        │         │ │
 │  └──────────────┘        └──────────────┘        └─────────┘ │
 │         │                       │                      │     │
 │         ▼                       ▼                      ▼     │
@@ -73,7 +75,7 @@ For real-time monitoring of Claude Code sessions:
 aw hooks install
 ```
 
-This adds hooks to `~/.claude/settings.json` that send events to the daemon.
+This adds hooks to `~/.claude/settings.json` that send events to the watcher.
 
 <details>
 <summary><strong>What do hooks collect?</strong></summary>
@@ -112,37 +114,48 @@ See [Security Guide](security.md) for threat categories and mitigations.
 
 ## Web UI Overview
 
-The dashboard has 10 tabs:
+### Watcher Dashboard (port 8420)
+
+Real-time monitoring with 4 tabs:
 
 | Tab | Purpose |
 |-----|---------|
-| **Agents** | Monitor running AI agents (state, CPU, memory) |
-| **Claude Code Hooks** | Real-time tool usage, session timelines (Claude Code) |
-| **Conversations** | Browse enriched sessions with auto-tags, quality scores, annotations |
-| **Analytics** | Success rates, cost trends, quality distribution charts |
+| **Agents** | Running AI agents (state, CPU, memory, hook sessions) |
 | **Repos** | Git repository status (dirty, conflicts) |
 | **Ports** | Listening ports linked to agent processes |
-| **Review/Share** | Export, redact, and share sessions |
-| **Agentwatch Docs** | In-app documentation |
-| **External Reference** | Format schemas, MCP servers, permissions, pricing |
-| **Settings** | Claude Code settings editor, Test Gate, hook enhancements |
+| **Timeline** | Live activity feed |
 
-**Keyboard shortcuts:** `1-9` switch tabs, `p` pause, `r` refresh, `?` help
+### Analyzer Dashboard (port 8421)
+
+Analysis and export with 7 tabs:
+
+| Tab | Purpose |
+|-----|---------|
+| **Sessions** | Browse enriched sessions with auto-tags, quality scores |
+| **Analytics** | Success rates, cost trends, quality distribution |
+| **Projects** | Organize sessions by project |
+| **Share** | Export, redact, and share sessions |
+| **Command** | Session management |
+| **Docs** | In-app documentation |
+| **Settings** | Configuration and preferences |
+
+**Keyboard shortcuts:** `1-9` switch tabs, `r` refresh
 
 ## Common Workflows
 
 ### Monitor Claude Code Sessions
 
-1. Start daemon: `aw daemon start`
+1. Start watcher: `aw watcher start`
 2. Install hooks: `aw hooks install`
-3. Open UI: `aw web`
+3. Open watcher UI: http://localhost:8420
 4. Use Claude Code normally—activity appears in real-time
 
-### View Past Sessions
+### Analyze Past Sessions
 
-1. Go to **Review/Share** tab
-2. Enable "Scan local transcripts"
-3. Browse sessions from Claude Code, Codex, Gemini
+1. Start analyzer: `aw analyze`
+2. Go to **Sessions** tab
+3. Browse sessions with quality scores and auto-tags
+4. Add annotations for sessions you want to review
 
 ### Ensure Tests Pass Before Commits
 
@@ -158,19 +171,12 @@ The dashboard has 10 tabs:
 4. The pass file expires after 5 minutes (configurable)
 </details>
 
-### Analyze Session Quality
-
-1. Go to **Conversations** tab to see all enriched sessions
-2. Each session shows auto-inferred tags (bugfix, feature, test, etc.)
-3. Quality scores help identify successful patterns
-4. Add thumbs up/down annotations to mark sessions for training data
-
 ### View Trends and Analytics
 
-1. Go to **Analytics** tab
-2. Select time range (7d, 14d, 30d)
-3. View success rate trends, cost breakdowns by task type
-4. Quality distribution shows how your sessions score overall
+1. Start analyzer: `aw analyze`
+2. Go to **Analytics** tab
+3. Select time range (7d, 14d, 30d)
+4. View success rate trends, cost breakdowns by task type
 
 ## Troubleshooting
 
@@ -185,25 +191,25 @@ aw hooks uninstall
 aw hooks install
 ```
 
-### Daemon won't start
+### Watcher won't start
 
 ```bash
 # Check if already running
-aw daemon status
+aw watcher status
 
 # Check port 8420
 lsof -i :8420
 
 # Stop and restart
-aw daemon stop
-aw daemon start
+aw watcher stop
+aw watcher start
 ```
 
 ### No sessions appearing
 
 - Ensure hooks are installed: `aw hooks status`
-- Ensure daemon is running: `aw daemon status`
-- Check the Claude Code Hooks tab—events should appear in real-time
+- Ensure watcher is running: `aw watcher status`
+- Check the Agents tab—hook sessions should appear in real-time
 
 ## Next Steps
 

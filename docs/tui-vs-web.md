@@ -91,33 +91,40 @@ This is useful for:
 
 ### Launching
 ```bash
-# Start daemon first
-aw daemon start
+# Start watcher (real-time monitoring)
+aw watcher start
 
-# Open web UI
-aw web    # Opens browser to http://127.0.0.1:8420
+# Open watcher dashboard (port 8420)
+# http://localhost:8420
+
+# Open analyzer dashboard (port 8421)
+aw analyze
 ```
 
-### Keyboard Shortcuts
+### Watcher Dashboard (port 8420)
 
-| Key | Action |
-|-----|--------|
-| `1-8` | Switch tabs |
-| `p` | Pause/resume updates |
-| `r` | Refresh data |
-| `?` | Show help |
-| `Escape` | Close modals |
+Real-time monitoring - always running:
 
-### Tabs
+| Tab | Purpose |
+|-----|---------|
+| **Agents** | Running AI agents with status and controls |
+| **Repos** | Git repository status (dirty repos only) |
+| **Ports** | Listening network ports |
+| **Timeline** | Live activity feed |
 
-1. **Agents** - Running AI agents with status and controls
-2. **Claude Code Hooks** - Claude Code tool stats, session timeline, daily charts
-3. **Repos** - Git repository status (dirty repos only)
-4. **Ports** - Listening network ports
-5. **Review/Share** - Sanitize and share transcripts, cost tracking
-6. **Agentwatch Docs** - In-app documentation
-7. **External Reference** - Format schemas, MCP servers, permissions, pricing
-8. **Settings** - Claude settings editor, Test Gate, hook enhancements
+### Analyzer Dashboard (port 8421)
+
+Analysis and export - opens in browser:
+
+| Tab | Purpose |
+|-----|---------|
+| **Sessions** | Browse enriched sessions with quality scores |
+| **Analytics** | Success rates, cost trends, quality distribution |
+| **Projects** | Organize sessions by project |
+| **Share** | Export, redact, and share sessions |
+| **Command** | Session management |
+| **Docs** | In-app documentation |
+| **Settings** | Configuration and preferences |
 
 ### Features
 
@@ -185,11 +192,10 @@ aw          # See what's running
 # Press 'q' to quit
 ```
 
-### Full Monitoring (Web UI)
+### Full Monitoring (Watcher)
 ```bash
-aw daemon start
-aw web
-# Leave browser tab open
+aw watcher start
+# Open http://localhost:8420 - leave browser tab open
 ```
 
 ### SSH Monitoring (TUI)
@@ -198,18 +204,17 @@ ssh myserver
 aw          # Works in terminal
 ```
 
-### Security Setup (Web UI only)
+### Session Analysis (Analyzer)
 ```bash
-aw daemon start
-aw web
-# Navigate to Settings tab (Test Gate) or Agentwatch Docs tab (security guides)
+aw watcher start    # Must be running for hooks
+aw analyze          # Opens analyzer dashboard
+# Navigate to Sessions tab for enriched sessions
 ```
 
-### Session Sharing (Web UI only)
+### Session Sharing (Analyzer)
 ```bash
-aw daemon start
-aw web
-# Navigate to Review/Share tab
+aw analyze
+# Navigate to Share tab
 ```
 
 <details>

@@ -174,8 +174,8 @@ ps aux | grep agentwatch
 # View current data sizes (via API)
 curl http://localhost:8420/api/stats
 
-# Force cleanup manually (restart daemon)
-aw daemon restart
+# Force cleanup manually (restart watcher)
+aw watcher restart
 ```
 
 ### Configuration

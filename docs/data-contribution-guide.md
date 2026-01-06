@@ -340,7 +340,7 @@ That's up to you. Some contributors share weekly, others monthly. More regular c
 ## Troubleshooting
 
 ### "No sessions found"
-- Ensure the daemon is running: `aw daemon status`
+- Ensure the watcher is running: `aw watcher status`
 - Check hooks are installed: `aw hooks status`
 - Enable "Scan local transcripts" in settings
 

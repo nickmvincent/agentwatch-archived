@@ -22,11 +22,16 @@ A complete record of a session, including all messages exchanged between you and
 
 ## Technical Concepts
 
-### Daemon
-A background process that runs continuously on your computer. The agentwatch daemon monitors agent activity, collects data, and serves the web dashboard. Think of it like a "background service" that's always watching.
+### Watcher
+The always-on background process that monitors agent activity in real-time. It captures hook events, scans running processes, and tracks repository status. Runs on port 8420.
 
-**To start:** `aw daemon start`
-**To stop:** `aw daemon stop`
+**To start:** `aw watcher start`
+**To stop:** `aw watcher stop`
+
+### Analyzer
+The on-demand analysis server that provides session enrichments, quality scores, annotations, and export capabilities. Opens in your browser and closes when the browser closes. Runs on port 8421.
+
+**To start:** `aw analyze`
 
 ### Hooks
 Small scripts that run automatically when certain events happen in Claude Code. For example, a "PreToolUse" hook runs right before Claude uses a tool, giving you a chance to block or modify it.

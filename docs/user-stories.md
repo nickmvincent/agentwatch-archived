@@ -41,8 +41,8 @@ Quick reference for common tasks. Each links to the relevant documentation.
 ## Quick Commands
 
 ```bash
-aw daemon start          # Start daemon
-aw web                   # Open web UI
+aw watcher start         # Start real-time monitoring
+aw analyze               # Open analyzer dashboard
 aw hooks install         # Install Claude Code hooks
 aw run "prompt"          # Launch tracked agent session
 aw sessions              # List recent sessions

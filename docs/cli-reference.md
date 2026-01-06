@@ -6,9 +6,9 @@ Complete reference for the `aw` command-line tool.
 
 | Command | Description |
 |---------|-------------|
-| `aw daemon start` | Start background daemon |
+| `aw watcher start` | Start real-time monitoring (port 8420) |
+| `aw analyze` | Open analyzer dashboard (port 8421) |
 | `aw hooks install` | Install Claude Code hooks |
-| `aw web` | Open web dashboard |
 | `aw tui` | Start terminal UI |
 | `aw run "<prompt>"` | Launch tracked agent session |
 | `aw sessions` | List managed sessions |
@@ -18,19 +18,33 @@ Complete reference for the `aw` command-line tool.
 
 ---
 
-## aw daemon
+## aw watcher
 
-Manage the daemon process.
+Manage the watcher (real-time monitoring daemon).
 
 ```bash
-aw daemon start              # Start in background
-aw daemon start -f           # Start in foreground (see logs)
-aw daemon stop               # Stop daemon
-aw daemon status             # Check status
-aw daemon restart            # Restart daemon
+aw watcher start             # Start in background
+aw watcher start -f          # Start in foreground (see logs)
+aw watcher stop              # Stop watcher
+aw watcher status            # Check status
+aw watcher restart           # Restart watcher
 ```
 
 **Options:** `-H, --host <host>` (default: 127.0.0.1), `-p, --port <port>` (default: 8420)
+
+---
+
+## aw analyze
+
+Open the analyzer dashboard (browser-based analysis).
+
+```bash
+aw analyze                   # Opens browser, closes when browser closes
+aw analyze --headless        # No browser (for scripts)
+aw analyze --port 8422       # Custom port
+```
+
+**Options:** `-p, --port <port>` (default: 8421), `--headless` (no browser)
 
 ---
 
@@ -44,7 +58,7 @@ aw hooks uninstall           # Remove hooks
 aw hooks status              # Check installation status
 ```
 
-**Options:** `--url <url>` daemon URL (default: http://127.0.0.1:8420)
+**Options:** `--url <url>` watcher URL (default: http://127.0.0.1:8420)
 
 Installs hooks for: PreToolUse, PostToolUse, SessionStart, SessionEnd, Notification, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, PreCompact.
 
@@ -64,9 +78,9 @@ aw run -p "what is 2+2?"            # Non-interactive (print mode)
 **Options:**
 - `-a, --agent <agent>` - Agent to use: `claude` (default), `codex`, `gemini`
 - `-p, --print` - Non-interactive mode (agent outputs and exits)
-- `-H, --host`, `--port` - Daemon connection
+- `-H, --host`, `--port` - Watcher connection
 
-Sessions are tracked via `/api/managed-sessions` when daemon is running.
+Sessions are tracked via `/api/managed-sessions` when watcher is running.
 
 ---
 
@@ -103,19 +117,6 @@ aw logs -n 50                # Show 50 sessions
 
 ---
 
-## aw web
-
-Open the web dashboard in browser.
-
-```bash
-aw web                       # Open dashboard
-aw web --no-open             # Don't auto-open browser
-```
-
-Auto-starts daemon if not running.
-
----
-
 ## aw tui
 
 Start the terminal UI dashboard.
@@ -124,7 +125,7 @@ Start the terminal UI dashboard.
 aw tui                       # Start TUI
 ```
 
-Auto-starts daemon if not running. See [TUI vs Web](tui-vs-web.md) for comparison.
+Auto-starts watcher if not running. See [TUI vs Web](tui-vs-web.md) for comparison.
 
 ---
 
@@ -164,8 +165,8 @@ When enabled, git commits are blocked until tests pass. Configure test command i
 ## Global Options
 
 Most commands accept:
-- `-H, --host <host>` - Daemon host (default: 127.0.0.1)
-- `-p, --port <port>` - Daemon port (default: 8420)
+- `-H, --host <host>` - Watcher host (default: 127.0.0.1)
+- `-p, --port <port>` - Watcher port (default: 8420)
 
 ---
 
