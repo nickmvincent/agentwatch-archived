@@ -93,7 +93,9 @@ Real-time monitoring — view with `aw watcher start` then open http://localhost
 | **Agents** | Monitor running agents, session status, tool usage |
 | **Repos** | Git repository status (staged, unstaged, conflicts) |
 | **Ports** | Listening ports spawned by agents |
-| **Timeline** | Real-time activity feed |
+| **Activity** | Real-time unified event feed with filtering |
+| **Command** | Launch agent sessions with `aw run` |
+| **Settings** | Notification and hook configuration |
 
 ### Analyzer Dashboard (port 8421)
 
@@ -105,11 +107,10 @@ Analysis and sharing — open with `aw analyze`
 | **Analytics** | Success rates, costs, quality trends over time |
 | **Projects** | Manage project configurations |
 | **Share** | Sanitize and export sessions for contribution |
-| **Command** | Launch agent sessions |
 | **Docs** | In-app documentation |
 | **Settings** | Claude Code settings, Test Gate configuration |
 
-**Keyboard shortcuts:** `1-7` switch tabs, `r` refresh
+**Keyboard shortcuts:** `1-6` switch tabs, `r` refresh
 
 ## Documentation
 
@@ -151,7 +152,7 @@ docs/                 # Documentation
 ```bash
 bun run dev              # Watcher + unified web with hot reload
 bun run build            # Build all packages
-bun run test             # Run all tests (831 tests)
+bun run test             # Run all tests (800+ tests)
 
 # Build split UIs
 cd web
