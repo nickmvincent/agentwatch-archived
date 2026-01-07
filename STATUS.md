@@ -2,37 +2,47 @@
 
 > Single source of truth for project status. Last updated: 2026-01-06
 
-## Architecture
-
-AgentWatch uses a **two-server architecture**:
-
-| Server | Port | Lifecycle | Purpose |
-|--------|------|-----------|---------|
-| **Watcher** | 8420 | Always-on daemon | Real-time monitoring (agents, repos, ports, hooks) |
-| **Analyzer** | 8421 | Browser-triggered | On-demand analysis (transcripts, enrichments, sharing) |
+## Package Structure
 
 ```
-Claude Code Hooks → Watcher API → WebSocket → Web UI
-Process Scanner  ↗
-Repo Scanner    ↗
-Port Scanner   ↗
+packages/
+├── core/           # Shared types, EventBus, audit logging, sanitization
+├── monitor/        # DataStore, HookStore, process/repo/port scanners
+├── shared-api/     # Dict converters (camelCase ↔ snake_case)
+├── watcher/        # Real-time daemon (port 8420)
+├── analyzer/       # On-demand analysis (port 8421)
+├── cli/            # CLI commands (aw watcher, aw analyze, etc.)
+├── tui/            # Terminal UI (Ink/React)
+├── pre-share/      # Sanitization library
+├── transcript-parser/  # Transcript discovery and parsing
+└── daemon/         # [LEGACY] Combined server, deprecated
+web/                # React dashboard (Vite)
+pages/              # Static site (Astro)
 ```
 
-**Data contract:**
+**Build order:** core → pre-share, transcript-parser, monitor, shared-api → watcher, analyzer → cli, tui
+
+## Storage Reference
+
 ```
 ~/.agentwatch/
-├── events.jsonl        # Unified audit log (all events)
-├── hooks/              # Hook sessions, tool usages, commits
-├── processes/          # Process snapshots and events
-├── enrichments/        # Quality scores, auto-tags
-├── annotations.json    # User feedback
-└── sessions/           # Managed sessions (aw run)
+├── events.jsonl           # Unified audit log (all EventBus events)
+├── hooks/
+│   ├── sessions_*.jsonl   # Hook session lifecycle
+│   ├── tool_usages_*.jsonl # Tool invocations
+│   ├── commits.jsonl      # Git commits from sessions
+│   └── stats.json         # Aggregated statistics
+├── processes/
+│   ├── snapshots_*.jsonl  # Process state snapshots
+│   └── events_*.jsonl     # Process start/end events
+├── enrichments/store.json # Quality scores, auto-tags
+├── annotations.json       # User feedback/ratings
+├── transcripts/index.json # Durable transcript index
+└── sessions/              # Managed sessions (aw run)
 
 ~/.config/agentwatch/
-└── config.toml         # Projects, settings
+└── config.toml            # Projects, settings, preferences
 ```
-
-See [CLAUDE.md](./CLAUDE.md) for full architecture details.
 
 ---
 
@@ -169,12 +179,12 @@ events.jsonl  WebSocket  Activity Feed
 - [ ] Privacy flags
 
 ### Phase 4: Advanced Features (Low Priority)
-- [ ] Audit logging everywhere (unified event stream)
+- [ ] Remaining EventBus integrations (metadata, annotations)
 - [ ] Command center run endpoints
 - [ ] Test gate
 - [ ] Rules engine
 - [ ] Cost limits
-- [ ] Notifications management
+- [ ] Cross-platform notifications (Linux, Windows)
 
 ---
 
@@ -210,17 +220,20 @@ events.jsonl  WebSocket  Activity Feed
 
 ---
 
-## Files to Know
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `packages/watcher/src/server.ts` | Watcher lifecycle |
+| `packages/core/src/events/event-bus.ts` | Unified event stream |
+| `packages/core/src/audit/audit-log.ts` | Persistent audit logging |
+| `packages/watcher/src/server.ts` | Watcher lifecycle, scanner setup |
 | `packages/watcher/src/api.ts` | Route registration |
-| `packages/monitor/src/hook-store.ts` | Hook session tracking |
+| `packages/watcher/src/routes/hooks.ts` | Hook event handlers |
+| `packages/monitor/src/hook-store.ts` | Hook session/tool tracking |
 | `packages/monitor/src/store.ts` | In-memory data store |
-| `packages/core/src/audit/audit-log.ts` | Audit logging |
-| `web/src/hooks/useWebSocket.ts` | WebSocket + Activity Feed |
-| `web/src/components/ActivityFeedPane.tsx` | Activity UI |
+| `packages/analyzer/src/enrichments/` | Quality scoring, auto-tagging |
+| `web/src/hooks/useWebSocket.ts` | WebSocket + unified events |
+| `web/src/components/ActivityFeedPane.tsx` | Activity Feed UI |
 
 ---
 
