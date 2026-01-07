@@ -31,5 +31,8 @@ export * from "./annotator";
 // Audit log (event logging)
 export * from "./audit";
 
+// EventBus (unified event stream)
+export * from "./events";
+
 // Re-export everything from @agentwatch/pre-share for backwards compatibility
 export * from "@agentwatch/pre-share";

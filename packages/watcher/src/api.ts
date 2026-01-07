@@ -81,6 +81,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { createBunWebSocket, serveStatic } from "hono/bun";
 
+import type { EventBus } from "@agentwatch/core";
 import {
   type DataStore,
   type HookStore,
@@ -142,6 +143,8 @@ export interface WatcherAppState {
   sessionStore: SessionStore;
   /** WebSocket connection manager */
   connectionManager: ConnectionManager;
+  /** Unified event bus for all agentwatch events */
+  eventBus?: EventBus;
   /** Current watcher configuration */
   config: WatcherConfig;
   /** Server start timestamp (milliseconds) */
@@ -265,6 +268,33 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     notifier,
     state.config.notifications
   );
+
+  // =========== Recent Events (from EventBus buffer) ===========
+  if (state.eventBus) {
+    const eventBus = state.eventBus;
+
+    // GET /api/events/recent - Get recent events from in-memory buffer
+    app.get("/api/events/recent", (c) => {
+      const limit = Number(c.req.query("limit")) || 50;
+      const category = c.req.query("category") as any;
+      const action = c.req.query("action") as any;
+      const since = c.req.query("since");
+
+      const events = eventBus.getRecent({
+        limit,
+        category: category || undefined,
+        action: action || undefined,
+        since: since || undefined
+      });
+
+      return c.json({ events });
+    });
+
+    // GET /api/events/stats - Get EventBus buffer statistics
+    app.get("/api/events/stats", (c) => {
+      return c.json(eventBus.getStats());
+    });
+  }
 
   // =========== WebSocket ===========
   app.get(

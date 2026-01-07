@@ -17,6 +17,8 @@ export type AuditCategory =
   | "agent" // Agent metadata (names, notes)
   | "managed_session" // User-managed agent sessions
   | "process" // Agent process lifecycle
+  | "repo" // Repository status changes
+  | "port" // Port listening changes
   | "config" // Configuration/settings changes
   | "contributor" // Contributor settings/contributions
   | "daemon" // Daemon lifecycle events

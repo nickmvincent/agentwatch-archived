@@ -212,8 +212,7 @@ export function registerManagedSessionRoutes(
         predictedTokens: body.prediction.predictedTokens ?? 50000,
         tokenConfidence: body.prediction.tokenConfidence ?? "medium",
         successConditions: body.prediction.successConditions ?? "",
-        intentions:
-          body.prediction.intentions ?? body.intentions ?? undefined,
+        intentions: body.prediction.intentions ?? body.intentions ?? "",
         selectedPrinciples:
           body.prediction.selectedPrinciples ?? body.principlesInjection,
         principlesPath: body.prediction.principlesPath
@@ -304,8 +303,7 @@ export function registerManagedSessionRoutes(
         predictedTokens: body.prediction.predictedTokens ?? 50000,
         tokenConfidence: body.prediction.tokenConfidence ?? "medium",
         successConditions: body.prediction.successConditions ?? "",
-        intentions:
-          body.prediction.intentions ?? body.intentions ?? undefined,
+        intentions: body.prediction.intentions ?? body.intentions ?? "",
         selectedPrinciples:
           body.prediction.selectedPrinciples ?? body.principlesInjection,
         principlesPath: body.prediction.principlesPath

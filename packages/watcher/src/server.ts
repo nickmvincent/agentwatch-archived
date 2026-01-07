@@ -10,6 +10,7 @@
  */
 
 import type { AgentProcess, ListeningPort, RepoStatus } from "@agentwatch/core";
+import { EventBus } from "@agentwatch/core";
 import {
   DataStore,
   HookStore,
@@ -45,6 +46,7 @@ export class WatcherServer {
   private store: DataStore;
   private hookStore: HookStore;
   private sessionStore: SessionStore;
+  private eventBus: EventBus;
   private processScanner: ProcessScanner | null = null;
   private repoScanner: RepoScanner | null = null;
   private portScanner: PortScanner | null = null;
@@ -61,9 +63,19 @@ export class WatcherServer {
     this.store = new DataStore();
     this.hookStore = new HookStore();
     this.sessionStore = new SessionStore();
+    this.eventBus = new EventBus();
     this.sessionLogger = new SessionLogger(this.config.watcher.logDir);
     this.processLogger = new ProcessLogger();
     this.connectionManager = new ConnectionManager();
+
+    // Subscribe EventBus to WebSocket broadcasts
+    // Broadcasts unified agentwatch_event alongside legacy types
+    this.eventBus.subscribe((event) => {
+      this.connectionManager.broadcast({
+        type: "agentwatch_event",
+        event
+      });
+    });
 
     this.sessionStore.setCallback((session) => {
       this.connectionManager.broadcast({
@@ -133,6 +145,9 @@ export class WatcherServer {
     // Start scanners
     this.startScanners();
 
+    // Start EventBus lifecycle
+    this.eventBus.start();
+
     // Create HTTP server
     const app = createWatcherApp({
       store: this.store,
@@ -140,6 +155,7 @@ export class WatcherServer {
       sessionLogger: this.sessionLogger,
       sessionStore: this.sessionStore,
       connectionManager: this.connectionManager,
+      eventBus: this.eventBus,
       config: this.config,
       startedAt: Date.now(),
       rescanRepos: () => this.repoScanner?.rescan(),
@@ -205,6 +221,7 @@ export class WatcherServer {
     if (!this.started) return;
 
     this.stopScanners();
+    this.eventBus.stop();
 
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);

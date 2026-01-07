@@ -167,6 +167,14 @@ describe("Watcher Integration: Scanners + WebSocket Broadcasts", () => {
             warningThreshold: 0.8
           },
           notificationHub: { enabled: false, desktop: false }
+        },
+        notifications: {
+          enable: false,
+          hookAwaitingInput: false,
+          hookSessionEnd: false,
+          hookToolFailure: false,
+          hookLongRunning: false,
+          longRunningThresholdSeconds: 300
         }
       },
       startedAt: Date.now()
