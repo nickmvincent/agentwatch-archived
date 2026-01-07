@@ -11,14 +11,19 @@ describe("Analyzer API", () => {
   let app: ReturnType<typeof createAnalyzerApp>;
   let state: AnalyzerAppState;
   let shutdownCalled: boolean;
+  let heartbeatCalled: boolean;
 
   beforeEach(() => {
     shutdownCalled = false;
+    heartbeatCalled = false;
     state = {
       startedAt: Date.now(),
       watcherUrl: "http://localhost:8420",
       shutdown: () => {
         shutdownCalled = true;
+      },
+      recordHeartbeat: () => {
+        heartbeatCalled = true;
       }
     };
 
@@ -54,6 +59,17 @@ describe("Analyzer API", () => {
       const data = await res.json();
       expect(data.status).toBe("ok");
       expect(typeof data.timestamp).toBe("number");
+    });
+
+    it("POST /api/heartbeat calls recordHeartbeat callback", async () => {
+      expect(heartbeatCalled).toBe(false);
+
+      await app.request("/api/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      expect(heartbeatCalled).toBe(true);
     });
 
     it("POST /api/shutdown triggers shutdown callback", async () => {

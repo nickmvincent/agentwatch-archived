@@ -631,4 +631,81 @@ describe("Watcher API", () => {
       expect(typeof data.exists).toBe("boolean");
     });
   });
+
+  describe("Predictions API", () => {
+    it("GET /api/predictions returns predictions list", async () => {
+      const res = await app.request("/api/predictions");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveProperty("predictions");
+      expect(Array.isArray(data.predictions)).toBe(true);
+    });
+
+    it("GET /api/predictions respects limit parameter", async () => {
+      const res = await app.request("/api/predictions?limit=5");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.predictions.length).toBeLessThanOrEqual(5);
+    });
+
+    it("POST /api/predictions requires managed_session_id", async () => {
+      const res = await app.request("/api/predictions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          predicted_duration_minutes: 30,
+          duration_confidence: "medium"
+        })
+      });
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("managed_session_id");
+    });
+
+    it("POST /api/predictions creates prediction with defaults", async () => {
+      const res = await app.request("/api/predictions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          managed_session_id: "test-session-123",
+          intentions: "Test prediction"
+        })
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.id).toBeDefined();
+      expect(data.managed_session_id).toBe("test-session-123");
+      expect(data.predicted_duration_minutes).toBe(30); // default
+      expect(data.duration_confidence).toBe("medium"); // default
+    });
+
+    it("GET /api/predictions/:id returns 404 for unknown", async () => {
+      const res = await app.request("/api/predictions/nonexistent-id");
+      expect(res.status).toBe(404);
+    });
+
+    it("GET /api/calibration returns calibration stats", async () => {
+      const res = await app.request("/api/calibration");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveProperty("totalPredictions");
+      expect(data).toHaveProperty("completedPredictions");
+      expect(data).toHaveProperty("overallCalibrationScore");
+      expect(data).toHaveProperty("recentTrend");
+      expect(data).toHaveProperty("history");
+      expect(Array.isArray(data.history)).toBe(true);
+    });
+
+    it("GET /api/command-center/tmux-available returns tmux status", async () => {
+      const res = await app.request("/api/command-center/tmux-available");
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data).toHaveProperty("available");
+      expect(typeof data.available).toBe("boolean");
+      // version may be null if tmux not installed
+      expect(data).toHaveProperty("version");
+    });
+  });
 });
