@@ -38,21 +38,21 @@ See [CLAUDE.md](./CLAUDE.md) for full architecture details.
 
 ## Current Sprint: Unified Event Stream
 
-### Problem
-10+ separate event systems, only 3 modules actually log to audit:
+### Problem (Solved)
+Previously 10+ separate event systems with inconsistent logging. Now unified via EventBus:
 
-| Source | WebSocket? | Persists? | Audit Log? |
-|--------|------------|-----------|------------|
-| Process Scanner | Yes | No | **No** |
-| Repo Scanner | Yes | No | **No** |
-| Port Scanner | Yes | No | **No** |
-| Hook Sessions | Yes | Yes | **No** |
-| Tool Usage | Yes | Yes | **No** |
-| Managed Sessions | Yes | Yes | **No** |
-| Agent Metadata | No | Yes | **No** |
-| Conversation Metadata | No | Yes | **No** |
+| Source | WebSocket? | Persists? | EventBus? |
+|--------|------------|-----------|-----------|
+| Process Scanner | Yes | Yes | ✅ Yes |
+| Repo Scanner | Yes | No | ⏳ Pending (high-frequency) |
+| Port Scanner | Yes | Yes | ✅ Yes |
+| Hook Sessions | Yes | Yes | ✅ Yes |
+| Tool Usage | Yes | Yes | ✅ Yes |
+| Managed Sessions | Yes | Yes | ✅ Yes |
+| Agent Metadata | No | Yes | Pending |
+| Conversation Metadata | No | Yes | Pending |
 | Enrichments | No | Yes | Partial |
-| Annotations | No | Yes | **No** |
+| Annotations | No | Yes | Pending |
 
 ### Solution: EventBus
 
@@ -73,14 +73,14 @@ events.jsonl  WebSocket  Activity Feed
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| A1. STATUS.md | In Progress | Consolidate docs (this file) |
-| A2. PRINCIPLES.md | Pending | Extract design principles |
+| A1. STATUS.md | ✅ Done | Consolidate docs (this file) |
+| A2. PRINCIPLES.md | ✅ Done | Extract design principles |
 | A3. API Reference | Pending | Document all 75 endpoints |
-| A4. Archive old docs | Pending | Clean up internal/ |
-| B1. EventBus | Pending | Create core infrastructure |
-| B2. Watcher integration | Pending | Replace scattered broadcasts |
-| B3. Event logging | Pending | Add to all sources |
-| B4. Activity Feed | Pending | Add filtering UI |
+| A4. Archive old docs | ✅ Done | Clean up internal/ |
+| B1. EventBus | ✅ Done | Core infrastructure in `packages/core/src/events/` |
+| B2. Watcher integration | ✅ Done | EventBus in server lifecycle, /api/events/* endpoints |
+| B3. Event logging | ✅ Done | Agents, ports, sessions, hooks, tools emit events |
+| B4. Activity Feed | Pending | Add filtering UI, use unified event stream |
 
 ### Decisions Made
 - **Event granularity**: Significant changes only (not every CPU tick)
