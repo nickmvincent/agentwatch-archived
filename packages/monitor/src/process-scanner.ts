@@ -13,6 +13,7 @@ import type { DataStore } from "./store";
 
 interface ProcessInfo {
   pid: number;
+  ppid: number;
   tty: string | null;
   exe: string;
   cmdline: string;
@@ -120,11 +121,38 @@ export class ProcessScanner {
     const agents = new Map<number, AgentProcess>();
     const seenPids: number[] = [];
 
+    // First pass: identify all matching agents with their labels
+    const matchedAgents: Array<{
+      proc: ProcessInfo;
+      label: string;
+    }> = [];
+
     for (const proc of processes) {
       seenPids.push(proc.pid);
-
       const label = this.matchLabel(proc.cmdline, proc.exe);
-      if (!label) continue;
+      if (label) {
+        matchedAgents.push({ proc, label });
+      }
+    }
+
+    // Build a set of PIDs that are agent processes by label
+    // Used for parent-child deduplication
+    const agentPidsByLabel = new Map<string, Set<number>>();
+    for (const { proc, label } of matchedAgents) {
+      if (!agentPidsByLabel.has(label)) {
+        agentPidsByLabel.set(label, new Set());
+      }
+      agentPidsByLabel.get(label)!.add(proc.pid);
+    }
+
+    // Second pass: filter out child processes whose parent is same agent type
+    // Keep the process with the smallest PID (usually the parent) when both match
+    for (const { proc, label } of matchedAgents) {
+      const sameLabelPids = agentPidsByLabel.get(label);
+      // Skip if parent process is already detected as same agent type
+      if (sameLabelPids && sameLabelPids.has(proc.ppid)) {
+        continue;
+      }
 
       const startTime = now - proc.etimeSeconds * 1000;
       const cwd = await this.resolveCwd(proc.pid, now);
@@ -330,10 +358,17 @@ export class ProcessScanner {
  * Get list of processes using `ps`.
  */
 async function psList(): Promise<ProcessInfo[]> {
+  // Include ppid for parent-child deduplication
   const formats = [
-    { format: "pid=,tty=,comm=,etime=,pcpu=,rss=,thcount=,args=", splitMax: 7 },
-    { format: "pid=,tty=,comm=,etime=,pcpu=,rss=,nlwp=,args=", splitMax: 7 },
-    { format: "pid=,tty=,comm=,etime=,pcpu=,rss=,args=", splitMax: 6 }
+    {
+      format: "pid=,ppid=,tty=,comm=,etime=,pcpu=,rss=,thcount=,args=",
+      splitMax: 8
+    },
+    {
+      format: "pid=,ppid=,tty=,comm=,etime=,pcpu=,rss=,nlwp=,args=",
+      splitMax: 8
+    },
+    { format: "pid=,ppid=,tty=,comm=,etime=,pcpu=,rss=,args=", splitMax: 7 }
   ];
 
   for (const { format, splitMax } of formats) {
@@ -359,6 +394,7 @@ async function psList(): Promise<ProcessInfo[]> {
 
 /**
  * Parse ps output into ProcessInfo objects.
+ * Format: pid, ppid, tty, comm, etime, pcpu, rss, [threads,] args
  */
 function parseOutput(output: string, splitMax: number): ProcessInfo[] {
   const processes: ProcessInfo[] = [];
@@ -373,24 +409,26 @@ function parseOutput(output: string, splitMax: number): ProcessInfo[] {
     const pid = Number.parseInt(parts[0]!, 10);
     if (isNaN(pid)) continue;
 
-    const tty = parts[1] === "?" || parts[1] === "??" ? null : parts[1]!;
-    const exe = parts[2]!;
-    const etimeSeconds = parseEtime(parts[3]!);
-    const cpuPct = Number.parseFloat(parts[4]!);
-    const rssKb = Number.parseInt(parts[5]!, 10);
+    const ppid = Number.parseInt(parts[1]!, 10);
+    const tty = parts[2] === "?" || parts[2] === "??" ? null : parts[2]!;
+    const exe = parts[3]!;
+    const etimeSeconds = parseEtime(parts[4]!);
+    const cpuPct = Number.parseFloat(parts[5]!);
+    const rssKb = Number.parseInt(parts[6]!, 10);
 
     let threads: number | null = null;
     let cmdline: string;
 
-    if (splitMax === 7) {
-      threads = Number.parseInt(parts[6]!, 10);
-      cmdline = parts.slice(7).join(" ");
+    if (splitMax === 8) {
+      threads = Number.parseInt(parts[7]!, 10);
+      cmdline = parts.slice(8).join(" ");
     } else {
-      cmdline = parts.slice(6).join(" ");
+      cmdline = parts.slice(7).join(" ");
     }
 
     processes.push({
       pid,
+      ppid: isNaN(ppid) ? 1 : ppid,
       tty,
       exe,
       cmdline,
