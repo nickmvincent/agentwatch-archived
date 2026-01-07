@@ -873,15 +873,6 @@ export function RawTerminalDiffView({
 }: RawTerminalDiffViewProps) {
   const [confirmed, setConfirmed] = useState(false);
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Raw JSON diff",
-    componentId,
-    calculations: [
-      "diff-match-patch semantic diffing",
-      "JSON stringify normalization for comparison"
-    ],
-    notes: ["Large diffs require confirmation to render."]
-  };
 
   const sizeKb = ((originalJson.length + redactedJson.length) / 1024).toFixed(
     1
@@ -907,7 +898,10 @@ export function RawTerminalDiffView({
 
   if (!confirmed && isLarge) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 space-y-3">
           <div className="flex items-start gap-3">
             <span className="text-2xl">⚠️</span>
@@ -945,7 +939,10 @@ export function RawTerminalDiffView({
 
   if (!diff) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="text-gray-500 text-sm text-center py-8">
           Unable to compute diff
         </div>
@@ -957,7 +954,7 @@ export function RawTerminalDiffView({
   const placeholderRegex = /<[A-Z_]+_\d+>/g;
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
         <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 text-xs text-gray-400 border-b border-gray-700">
           <span className="font-mono">$ diff original.json redacted.json</span>
@@ -2046,19 +2043,13 @@ export function DiffView({
   componentId = "analyzer.conversations.diff-view"
 }: DiffViewProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Diff viewer",
-    componentId,
-    calculations: [
-      "diff-match-patch diffing for inline views",
-      "Placeholder extraction for redaction summaries"
-    ],
-    notes: ["Supports full inline view or changes-only view."]
-  };
 
   if (!original || !redacted) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="text-gray-500 italic text-sm">
           Select a session to preview redactions
         </div>
@@ -2068,7 +2059,10 @@ export function DiffView({
 
   if (original === redacted) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="text-gray-400 italic text-sm">
           No changes - content is identical before and after redaction.
         </div>
@@ -2077,7 +2071,7 @@ export function DiffView({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       {mode === "full" ? (
         <FullDiffView
           original={original}

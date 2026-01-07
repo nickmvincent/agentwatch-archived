@@ -113,22 +113,7 @@ export function OutcomeModal({
       onClick={onClose}
     >
       <SelfDocumentingSection
-        title="Outcome recording"
         componentId="analyzer.analytics.outcome-modal"
-        writes={[
-          {
-            path: "POST /api/predictions/:id/outcome",
-            description: "Record run outcome and calibration data"
-          }
-        ]}
-        calculations={[
-          "Token estimate based on duration heuristic",
-          "Error percentage vs predicted duration/tokens"
-        ]}
-        notes={[
-          "Shows calibration score after submission before closing.",
-          "Defaults success state from exit code when available."
-        ]}
         visible={showSelfDocs}
         compact
       >

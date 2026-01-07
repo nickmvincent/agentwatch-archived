@@ -227,37 +227,9 @@ export function ChatViewer({
 
   // Flag count for this session
   const flagCount = flags.length;
-  const selfDocs = {
-    title: "Chat viewer",
-    componentId,
-    reads: [
-      {
-        path: "GET /api/privacy-flags",
-        description: "Existing privacy flags for the session"
-      }
-    ],
-    writes: [
-      {
-        path: "POST /api/privacy-flags",
-        description: "Create a privacy flag"
-      },
-      {
-        path: "PATCH /api/privacy-flags/:id",
-        description: "Update privacy flag notes/exclusion"
-      },
-      {
-        path: "DELETE /api/privacy-flags/:id",
-        description: "Remove a privacy flag"
-      }
-    ],
-    notes: [
-      "Sidechain messages are hidden by default.",
-      "MarkdownRenderer is used for message content."
-    ]
-  };
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">

@@ -23,27 +23,7 @@ export function ReferencePane() {
 
   return (
     <SelfDocumentingSection
-      title="Reference"
       componentId="analyzer.settings.reference-pane"
-      reads={[
-        {
-          path: "GET /api/reference/format-schemas",
-          description: "Supported and planned transcript schemas"
-        },
-        { path: "GET /api/reference/mcp-config", description: "MCP servers" },
-        {
-          path: "GET /api/reference/permissions",
-          description: "Claude Code permission modes"
-        },
-        {
-          path: "GET /api/reference/env-vars",
-          description: "Environment variables reference"
-        }
-      ]}
-      calculations={["Token cost estimation from model pricing"]}
-      notes={[
-        "Reference data is read-only and reflects current local settings."
-      ]}
       visible={showSelfDocs}
     >
       <div className="space-y-6">

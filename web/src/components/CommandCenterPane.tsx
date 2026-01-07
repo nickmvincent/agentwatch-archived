@@ -368,53 +368,7 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
 
   return (
     <SelfDocumentingSection
-      title="Command Center"
       componentId="watcher.command.pane"
-      reads={[
-        {
-          path: "GET /api/projects",
-          description: "Project list for run context"
-        },
-        {
-          path: "GET /api/principles",
-          description: "Principles from selected project path"
-        },
-        {
-          path: "GET /api/predictions",
-          description: "Recent predictions and outcomes"
-        },
-        {
-          path: "GET /api/calibration",
-          description: "Calibration stats for predictions"
-        },
-        {
-          path: "GET /api/command-center/tmux-available",
-          description: "tmux availability for interactive runs"
-        }
-      ]}
-      writes={[
-        {
-          path: "POST /api/managed-sessions/run",
-          description: "Launch a managed run (headless)"
-        },
-        {
-          path: "POST /api/managed-sessions/run-interactive",
-          description: "Launch a managed run (interactive)"
-        },
-        {
-          path: "POST /api/predictions",
-          description: "Create a prediction entry"
-        },
-        {
-          path: "POST /api/predictions/:id/outcome",
-          description: "Record run outcomes for calibration"
-        }
-      ]}
-      tests={["packages/watcher/test/integration.test.ts"]}
-      notes={[
-        "Run endpoints are still being wired in watcher.",
-        "Predictions are persisted separately from managed sessions."
-      ]}
       visible={showSelfDocs}
     >
       <div className="space-y-6">

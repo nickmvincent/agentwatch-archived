@@ -138,23 +138,7 @@ export function PortsPane({
 
   return (
     <SelfDocumentingSection
-      title="Ports"
       componentId="watcher.ports.pane"
-      reads={[
-        {
-          path: "WebSocket /ws",
-          description: "Live port scans with process correlation"
-        },
-        {
-          path: "GET /api/projects",
-          description: "Projects used to label port locations"
-        }
-      ]}
-      tests={["packages/monitor/test/scanners.test.ts"]}
-      notes={[
-        "Port detection uses lsof and associates child processes to agents.",
-        "Hidden ports are UI-only preferences in this pane."
-      ]}
       visible={showSelfDocs}
     >
       <div className="bg-gray-800 rounded-lg border border-gray-700">

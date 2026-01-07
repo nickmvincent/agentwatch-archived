@@ -240,30 +240,7 @@ export function ActivityFeedPane({
 
   return (
     <SelfDocumentingSection
-      title="Activity Feed"
       componentId="watcher.activity.pane"
-      reads={[
-        {
-          path: "WebSocket /ws (agentwatch_event)",
-          description: "Real-time unified events from EventBus"
-        },
-        {
-          path: "GET /api/events/recent",
-          description: "Historical events from EventBus buffer"
-        }
-      ]}
-      writes={[
-        {
-          path: "~/.agentwatch/events.jsonl",
-          description: "Persistent audit log of all events"
-        }
-      ]}
-      notes={[
-        "Shows all AgentWatch events from the unified EventBus",
-        "Events include: processes, ports, sessions, tools, system",
-        "Filter by category (process, tool_usage, etc.) or action (start, end, etc.)",
-        "Click any event to see full details"
-      ]}
       visible={showSelfDocs}
     >
       <div className="space-y-4">

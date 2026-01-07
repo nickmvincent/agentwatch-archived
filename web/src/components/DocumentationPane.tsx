@@ -120,20 +120,12 @@ export function DocumentationPane() {
     groupedDocs["Other"] = otherDocs;
   }
 
-  const selfDocs = {
-    title: "Docs",
-    componentId: "analyzer.docs.pane",
-    reads: [
-      { path: "GET /api/docs", description: "Documentation index" },
-      { path: "GET /api/docs/:id", description: "Markdown content for docs" }
-    ],
-    tests: ["packages/analyzer/test/api.test.ts"],
-    notes: ["Docs are served from the local docs/ directory."]
-  };
-
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.docs.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-gray-400">Loading documentation...</div>
         </div>
@@ -143,7 +135,10 @@ export function DocumentationPane() {
 
   if (error && docs.length === 0) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.docs.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-red-400">Error: {error}</div>
           <button
@@ -158,7 +153,10 @@ export function DocumentationPane() {
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.docs.pane"
+      visible={showSelfDocs}
+    >
       <div className="flex gap-6 h-[calc(100vh-200px)]">
         {/* Sidebar */}
         <div className="w-64 shrink-0 bg-gray-800 rounded-lg p-4 overflow-y-auto">

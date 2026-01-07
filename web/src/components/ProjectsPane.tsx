@@ -321,45 +321,7 @@ export function ProjectsPane({
 
   return (
     <SelfDocumentingSection
-      title="Projects"
       componentId={componentId}
-      reads={[
-        {
-          path: "GET /api/projects",
-          description: "Configured project definitions"
-        },
-        {
-          path: "GET /api/projects/config-path",
-          description: "Location of the projects config file"
-        },
-        {
-          path: "GET /api/analytics/by-project",
-          description: "Per-project analytics (when enabled)"
-        }
-      ]}
-      writes={[
-        {
-          path: "POST /api/projects",
-          description: "Create a new project"
-        },
-        {
-          path: "PATCH /api/projects/:id",
-          description: "Update project details"
-        },
-        {
-          path: "DELETE /api/projects/:id",
-          description: "Remove a project"
-        },
-        {
-          path: "POST /api/projects/infer",
-          description: "Infer projects from scanned repos"
-        }
-      ]}
-      tests={["packages/analyzer/test/api.test.ts"]}
-      notes={[
-        "Repo status comes from watcher scans and is matched to project paths.",
-        "Analytics are optional and use the configured lookback window."
-      ]}
       visible={showSelfDocs}
     >
       <div className="bg-gray-800 rounded-lg p-4">

@@ -330,34 +330,6 @@ export function AuditLogPane() {
     loadData();
   }, [activeTab, categoryFilter, limit]);
 
-  const selfDocs = {
-    title: "Audit log",
-    componentId: "analyzer.settings.audit-log",
-    reads: [
-      { path: "GET /api/audit", description: "Audit event stream" },
-      {
-        path: "GET /api/audit/categories",
-        description: "Event categories and counts"
-      },
-      {
-        path: "GET /api/audit/sources",
-        description: "Data source inventory"
-      },
-      {
-        path: "GET /api/audit/edge-cases",
-        description: "Edge case behaviors"
-      },
-      {
-        path: "GET /api/audit/calculations",
-        description: "Audit calculation definitions"
-      }
-    ],
-    notes: [
-      "Timeline updates with category filters and pagination limits.",
-      "Sources reflect local ~/.agentwatch state."
-    ]
-  };
-
   async function loadData() {
     setLoading(true);
     setError(null);
@@ -392,7 +364,10 @@ export function AuditLogPane() {
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.settings.audit-log"
+      visible={showSelfDocs}
+    >
       <div className="space-y-4">
         {/* Header */}
         <div className="bg-gray-800 rounded-lg p-4">

@@ -13,18 +13,6 @@ export function HookEnhancementsSection({
   componentId = "watcher.settings.hook-enhancements"
 }: HookEnhancementsSectionProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Hook Enhancements",
-    componentId,
-    reads: [
-      {
-        path: "GET /api/config",
-        description: "Hook enhancements configuration"
-      }
-    ],
-    tests: ["packages/watcher/test/api.test.ts"],
-    notes: ["Hook enhancements are watcher-side policies and utilities."]
-  };
   const [expanded, setExpanded] = useState(false);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +51,7 @@ export function HookEnhancementsSection({
   ].filter(Boolean).length;
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       <div className="bg-gray-800 rounded-lg border border-gray-700">
         <button
           onClick={() => setExpanded(!expanded)}

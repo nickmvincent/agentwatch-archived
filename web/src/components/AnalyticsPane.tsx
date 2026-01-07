@@ -732,33 +732,12 @@ export function AnalyticsPane({
     }
   };
 
-  const selfDocs = {
-    title: "Analytics",
-    componentId: "analyzer.analytics.pane",
-    reads: [
-      {
-        path: "GET /api/analytics/combined",
-        description: "Aggregated analytics data by timeframe"
-      },
-      {
-        path: "GET /api/hooks/stats/daily",
-        description: "Daily hook statistics"
-      },
-      {
-        path: "GET /api/hooks/tools/stats",
-        description: "Per-tool usage statistics"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts", "packages/analyzer/test/api.test.ts"],
-    notes: [
-      "Dashboard charts are derived from aggregated analytics endpoints.",
-      "Exports are generated server-side for the selected time window."
-    ]
-  };
-
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.analytics.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-8 text-center">
           <div className="text-gray-400">Loading analytics...</div>
         </div>
@@ -767,7 +746,10 @@ export function AnalyticsPane({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.analytics.pane"
+      visible={showSelfDocs}
+    >
       <div className="space-y-6">
         {/* Page Header */}
         <div className="bg-gray-800 rounded-lg p-4">

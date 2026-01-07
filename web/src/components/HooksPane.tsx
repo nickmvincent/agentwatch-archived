@@ -258,41 +258,11 @@ export function HooksPane({
     })
     .slice(0, 10);
 
-  const selfDocs = {
-    title: "Hooks",
-    componentId: "watcher.hooks.pane",
-    reads: [
-      {
-        path: "GET /api/hooks/sessions",
-        description: "Hook session snapshots"
-      },
-      {
-        path: "GET /api/hooks/tools/stats",
-        description: "Aggregated tool usage stats"
-      },
-      {
-        path: "GET /api/hooks/stats/daily",
-        description: "Daily hook statistics"
-      },
-      {
-        path: "GET /api/hook-enhancements",
-        description: "Enhancements configuration"
-      },
-      { path: "GET /api/cost/status", description: "Cost control status" },
-      { path: "GET /api/rules", description: "Automation rules list" },
-      {
-        path: "GET /api/notifications/providers",
-        description: "Notification provider status"
-      }
-    ],
-    notes: [
-      "Live sections rely on in-memory watcher state.",
-      "Historical stats are read from persisted logs."
-    ]
-  };
-
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="watcher.hooks.pane"
+      visible={showSelfDocs}
+    >
       <div className="space-y-4">
         {/* LIVE SESSION */}
         <div className="bg-gray-800 rounded-lg p-4">

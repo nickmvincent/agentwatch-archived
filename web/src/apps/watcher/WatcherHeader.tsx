@@ -44,19 +44,6 @@ export function WatcherHeader({
   sessionCount
 }: WatcherHeaderProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Watcher Header",
-    componentId: "watcher.global.header",
-    reads: [
-      {
-        path: "GET /api/sandbox/status",
-        description: "Sandbox readiness and Docker status"
-      }
-    ],
-    notes: [
-      "Watcher connectivity and counts are derived from live WebSocket data."
-    ]
-  };
   const [sandboxStatus, setSandboxStatus] = useState<SandboxStatus | null>(
     null
   );
@@ -86,7 +73,10 @@ export function WatcherHeader({
   };
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="watcher.global.header"
+      visible={showSelfDocs}
+    >
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

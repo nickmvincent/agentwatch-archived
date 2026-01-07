@@ -17,17 +17,12 @@ export function Header({
   loadingTabs = []
 }: HeaderProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Header",
-    componentId: "analyzer.global.header",
-    notes: [
-      "Displays watcher connectivity and aggregate counts from props.",
-      "Tab loading state is provided by the loading context."
-    ]
-  };
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.global.header"
+      visible={showSelfDocs}
+    >
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

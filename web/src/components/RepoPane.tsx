@@ -88,25 +88,7 @@ export function RepoPane({ repos }: RepoPaneProps) {
 
   return (
     <SelfDocumentingSection
-      title="Repositories"
       componentId="watcher.repos.repo-pane"
-      reads={[
-        { path: "GET /api/repos", description: "Repository status snapshots" },
-        {
-          path: "WebSocket /ws",
-          description: "Repo updates (repos_update)"
-        }
-      ]}
-      writes={[
-        {
-          path: "POST /api/repos/rescan",
-          description: "Trigger an immediate repository rescan"
-        }
-      ]}
-      notes={[
-        "Only dirty repos are shown by default; clean repos can be included via query.",
-        "Special states include conflict, rebase, merge, cherry-pick, and revert."
-      ]}
       visible={showSelfDocs}
     >
       <div className="bg-gray-800 rounded-lg border border-gray-700">

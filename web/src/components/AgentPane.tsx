@@ -416,44 +416,7 @@ export function AgentPane({
 
   return (
     <SelfDocumentingSection
-      title="Agents"
       componentId="watcher.agents.pane"
-      reads={[
-        {
-          path: "WebSocket /ws",
-          description: "Live agent snapshots and session updates"
-        },
-        {
-          path: "GET /api/managed-sessions",
-          description: "Managed sessions launched via aw run"
-        },
-        {
-          path: "GET /api/hooks/sessions",
-          description: "Hook sessions for activity correlation"
-        }
-      ]}
-      writes={[
-        {
-          path: "POST /api/agents/:pid/signal",
-          description: "Send process signals to agents"
-        },
-        {
-          path: "POST /api/agents/:pid/kill",
-          description: "Terminate a running agent"
-        },
-        {
-          path: "POST /api/agents/:pid/metadata",
-          description: "Persist agent naming and notes"
-        }
-      ]}
-      tests={[
-        "packages/watcher/test/api.test.ts",
-        "packages/monitor/test/scanners.test.ts"
-      ]}
-      notes={[
-        "State uses CPU heuristics with wrapper data when available.",
-        "Conversation links are inferred from working directory and timing."
-      ]}
       visible={showSelfDocs}
       detailsClassName="px-4"
       contentClassName="pl-0"

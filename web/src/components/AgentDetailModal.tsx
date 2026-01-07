@@ -50,43 +50,6 @@ export function AgentDetailModal({
   onMetadataUpdate
 }: AgentDetailModalProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Agent Detail",
-    componentId: "watcher.agents.detail-modal",
-    reads: [
-      {
-        path: "GET /api/agents/:pid/metadata",
-        description: "Agent metadata for naming and annotations"
-      },
-      {
-        path: "GET /api/enrichments/:sessionId",
-        description: "Session enrichments and annotations"
-      }
-    ],
-    writes: [
-      {
-        path: "POST /api/agents/:pid/metadata",
-        description: "Persist agent metadata updates"
-      },
-      {
-        path: "POST /api/agents/:pid/signal",
-        description: "Send SIGINT/SIGTSTP/SIGCONT/SIGTERM/SIGKILL"
-      },
-      {
-        path: "POST /api/agents/:pid/kill",
-        description: "Terminate agent process"
-      },
-      {
-        path: "PATCH /api/conversation-metadata/:id",
-        description: "Persist conversation naming and notes"
-      }
-    ],
-    tests: ["packages/watcher/test/api.test.ts"],
-    notes: [
-      "Conversation context is inferred from hook sessions and transcripts.",
-      "Agent output capture is only available in wrapped mode."
-    ]
-  };
   const [tab, setTab] = useState<Tab>(hookSession ? "overview" : "output");
   const [output, setOutput] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<ToolUsage[]>(recentToolUsages);
@@ -304,7 +267,10 @@ export function AgentDetailModal({
   );
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="watcher.agents.detail-modal"
+      visible={showSelfDocs}
+    >
       <div
         className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
         onClick={onClose}

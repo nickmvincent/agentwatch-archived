@@ -29,28 +29,6 @@ export function ConversationAnnotationPanel({
   onAnnotationSaved
 }: ConversationAnnotationPanelProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Annotation Panel",
-    componentId,
-    reads: [
-      {
-        path: STORE_PATH,
-        description: "Manual annotation store"
-      },
-      {
-        path: NAME_STORE_PATH,
-        description: "Conversation naming metadata"
-      }
-    ],
-    writes: [
-      {
-        path: "POST /api/enrichments/:sessionId/annotation",
-        description: "Persist annotation updates"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts"],
-    notes: ["Annotations are stored locally and surfaced across tools."]
-  };
   const [nameValue, setNameValue] = useState(conversationName || "");
   const [isEditingName, setIsEditingName] = useState(false);
   const [feedback, setFeedback] = useState<
@@ -147,7 +125,7 @@ export function ConversationAnnotationPanel({
   };
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       <div className="space-y-6">
         {onConversationNameSave && (
           <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-4">

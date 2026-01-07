@@ -103,42 +103,12 @@ export function SettingsPane({
     }
   };
 
-  const selfDocs = {
-    title: "Settings",
-    componentId: "analyzer.settings.pane",
-    reads: [
-      { path: "GET /api/config", description: "Watcher and analyzer config" },
-      {
-        path: "GET /api/claude/settings",
-        description: "Claude Code settings.json"
-      },
-      {
-        path: "GET /api/claude/reference/env-vars",
-        description: "Env var reference"
-      },
-      {
-        path: "GET /api/claude/reference/permissions",
-        description: "Permission reference"
-      }
-    ],
-    writes: [
-      { path: "PATCH /api/config", description: "Update configuration values" },
-      {
-        path: "PATCH /api/claude/settings",
-        description: "Merge Claude settings"
-      },
-      {
-        path: "PUT /api/claude/settings",
-        description: "Replace Claude settings"
-      }
-    ],
-    tests: ["packages/watcher/test/api.test.ts"],
-    notes: ["Settings changes persist to TOML and JSON files on disk."]
-  };
-
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.settings.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-center py-8 text-gray-500">
             Loading configuration...
@@ -150,7 +120,10 @@ export function SettingsPane({
 
   if (error) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.settings.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="p-3 bg-red-900/30 border border-red-700 rounded text-red-400">
             {error}
@@ -185,7 +158,10 @@ export function SettingsPane({
   ];
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.settings.pane"
+      visible={showSelfDocs}
+    >
       <div className="space-y-6">
         <Toast message={saveMessage} onDismiss={() => setSaveMessage(null)} />
 

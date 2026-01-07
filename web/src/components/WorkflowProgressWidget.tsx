@@ -15,18 +15,6 @@ export function WorkflowProgressWidget({
   refreshTrigger
 }: WorkflowProgressWidgetProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Workflow Progress",
-    componentId: "analyzer.conversations.workflow-widget",
-    reads: [
-      {
-        path: "GET /api/enrichments/workflow-stats",
-        description: "Workflow status totals"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts"],
-    notes: ["Counts are derived from enrichment workflow status values."]
-  };
   const [stats, setStats] = useState<WorkflowStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +36,10 @@ export function WorkflowProgressWidget({
 
   if (loading || !stats) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.conversations.workflow-widget"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-gray-500 text-sm">Loading progress...</div>
         </div>
@@ -61,7 +52,10 @@ export function WorkflowProgressWidget({
     stats.total > 0 ? Math.round((reviewedCount / stats.total) * 100) : 0;
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.conversations.workflow-widget"
+      visible={showSelfDocs}
+    >
       <div className="bg-gray-800 rounded-lg p-4">
         <h3 className="text-sm font-medium text-gray-300 mb-3">
           Review Progress

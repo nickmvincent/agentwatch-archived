@@ -391,19 +391,6 @@ export function FieldTree({
   onSaveAsProfile
 }: FieldTreeProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Field selection",
-    componentId: "analyzer.share.field-tree",
-    calculations: [
-      "Tree construction from dot-path fields",
-      "Tri-state selection for parent nodes",
-      "Sensitive/content-heavy field classification"
-    ],
-    notes: [
-      "Essential fields cannot be removed.",
-      "Profiles apply pre-built field selections."
-    ]
-  };
   const [expandedSources, setExpandedSources] = useState<Set<string>>(
     new Set(["cc_hook", "cc_transcript"])
   );
@@ -454,7 +441,10 @@ export function FieldTree({
 
   if (!fieldsBySource || Object.keys(fieldsBySource).length === 0) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.share.field-tree"
+        visible={showSelfDocs}
+      >
         <div className="p-3 bg-gray-900/50 rounded">
           <div className="text-sm font-medium text-gray-300 mb-2">Fields</div>
           <div className="text-xs text-gray-500">
@@ -475,7 +465,10 @@ export function FieldTree({
   );
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.share.field-tree"
+      visible={showSelfDocs}
+    >
       <div className="p-3 bg-gray-900/50 rounded">
         {/* Header with profile selector */}
         <div className="flex items-center justify-between mb-2">

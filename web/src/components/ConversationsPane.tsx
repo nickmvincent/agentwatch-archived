@@ -710,51 +710,12 @@ export function ConversationsPane({
       s.session.hook_session?.session_id === selectedSessionId
   );
 
-  const selfDocs = {
-    title: "Conversations",
-    componentId: "analyzer.conversations.pane",
-    reads: [
-      {
-        path: "GET /api/contrib/correlated",
-        description: "Correlated sessions + transcripts"
-      },
-      {
-        path: "GET /api/enrichments",
-        description: "Enrichment summary for sessions"
-      },
-      {
-        path: "GET /api/enrichments/:sessionId",
-        description: "Detailed enrichment payload"
-      },
-      {
-        path: "GET /api/projects",
-        description: "Project metadata for filtering"
-      }
-    ],
-    writes: [
-      {
-        path: "POST /api/enrichments/:sessionId/annotation",
-        description: "Manual annotation and workflow status"
-      },
-      {
-        path: "POST /api/enrichments/compute",
-        description: "Bulk enrichment computation"
-      },
-      {
-        path: "POST /api/enrichments/analyze-transcript",
-        description: "Run enrichment analysis for a transcript"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts", "packages/analyzer/test/api.test.ts"],
-    notes: [
-      "Transcript lookback window is controlled by analyzer config.",
-      "Session links are built from hook data plus transcript discovery."
-    ]
-  };
-
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.conversations.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="text-gray-400">Loading Conversations...</div>
         </div>
@@ -763,7 +724,10 @@ export function ConversationsPane({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.conversations.pane"
+      visible={showSelfDocs}
+    >
       <div className="space-y-4">
         {/* Data sources info */}
         <div className="text-xs text-gray-500 flex items-center justify-between">

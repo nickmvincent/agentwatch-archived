@@ -212,17 +212,6 @@ export function ResearchProfileSelector({
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Research profiles",
-    componentId: "analyzer.share.research-profile-selector",
-    reads: [
-      {
-        path: "GET /api/contrib/research-profiles",
-        description: "Profile definitions and kept field lists"
-      }
-    ],
-    notes: ["Selection passes kept_fields to export configuration."]
-  };
 
   // Fetch research profiles from API
   useEffect(() => {
@@ -244,7 +233,10 @@ export function ResearchProfileSelector({
 
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.share.research-profile-selector"
+        visible={showSelfDocs}
+      >
         <div className="text-gray-400 text-sm p-4">Loading profiles...</div>
       </SelfDocumentingSection>
     );
@@ -252,7 +244,10 @@ export function ResearchProfileSelector({
 
   if (error) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="analyzer.share.research-profile-selector"
+        visible={showSelfDocs}
+      >
         <div className="text-red-400 text-sm p-4">
           Failed to load profiles: {error}
         </div>
@@ -261,7 +256,10 @@ export function ResearchProfileSelector({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.share.research-profile-selector"
+      visible={showSelfDocs}
+    >
       <div className="space-y-3">
         {/* Header */}
         <div className="text-sm text-gray-400">
@@ -346,14 +344,7 @@ export function ResearchProfileSelectorCompact({
   if (loading) {
     return (
       <SelfDocumentingSection
-        title="Research profiles (compact)"
         componentId="analyzer.share.research-profile-selector"
-        reads={[
-          {
-            path: "GET /api/contrib/research-profiles",
-            description: "Profile definitions and kept field lists"
-          }
-        ]}
         visible={showSelfDocs}
         compact
         inline
@@ -365,15 +356,7 @@ export function ResearchProfileSelectorCompact({
 
   return (
     <SelfDocumentingSection
-      title="Research profiles (compact)"
       componentId="analyzer.share.research-profile-selector"
-      reads={[
-        {
-          path: "GET /api/contrib/research-profiles",
-          description: "Profile definitions and kept field lists"
-        }
-      ]}
-      notes={["Inline picker variant for settings panels."]}
       visible={showSelfDocs}
       compact
       inline

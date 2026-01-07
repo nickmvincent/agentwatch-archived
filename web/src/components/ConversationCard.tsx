@@ -104,22 +104,6 @@ export function ConversationCard({
   compact = false
 }: ConversationCardProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Conversation Card",
-    componentId: "analyzer.conversations.card",
-    reads: [
-      {
-        path: "GET /api/contrib/correlated",
-        description: "Conversation summary + transcript linkage"
-      },
-      {
-        path: "GET /api/enrichments",
-        description: "Enrichment summary for quality/task tags"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts"],
-    notes: ["Card content is derived from correlated session metadata."]
-  };
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameValue, setNameValue] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -156,7 +140,11 @@ export function ConversationCard({
   if (compact) {
     // Compact variant for inline display
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs} compact>
+      <SelfDocumentingSection
+        componentId="analyzer.conversations.card"
+        visible={showSelfDocs}
+        compact
+      >
         <div
           onClick={onSelect}
           className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
@@ -196,7 +184,11 @@ export function ConversationCard({
 
   // Full card variant
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs} compact>
+    <SelfDocumentingSection
+      componentId="analyzer.conversations.card"
+      visible={showSelfDocs}
+      compact
+    >
       <div
         onClick={onSelect}
         className={`group p-3 rounded cursor-pointer transition-colors ${

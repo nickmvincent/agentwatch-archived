@@ -42,20 +42,6 @@ export function HookTimelineSection({
   sessionTokens: _sessionTokens
 }: HookTimelineSectionProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Hook Timeline",
-    componentId: "watcher.agents.hook-timeline",
-    reads: [
-      { path: "GET /api/hooks/sessions", description: "Hook sessions list" },
-      { path: "GET /api/hooks/tools/recent", description: "Recent tool calls" },
-      { path: "GET /api/hooks/stats/daily", description: "Daily hook stats" }
-    ],
-    tests: ["packages/watcher/test/api.test.ts"],
-    notes: [
-      "Timeline data is derived from in-memory hook store snapshots.",
-      "Token counts are aggregated from Stop hook events."
-    ]
-  };
   const [expanded, setExpanded] = useState(true);
 
   // Activity summary (last hour)
@@ -105,7 +91,10 @@ export function HookTimelineSection({
   const activeSessions = hookSessions.filter((s) => s.active);
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="watcher.agents.hook-timeline"
+      visible={showSelfDocs}
+    >
       <div className="bg-gray-800 rounded-lg border border-gray-700">
         <button
           onClick={() => setExpanded(!expanded)}

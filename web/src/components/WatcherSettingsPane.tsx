@@ -79,21 +79,6 @@ export function WatcherSettingsPane() {
   const [hookUpdating, setHookUpdating] = useState<string | null>(null);
   const [hookMessage, setHookMessage] = useState<string | null>(null);
 
-  const selfDocs = {
-    title: "Watcher Settings",
-    componentId: "watcher.settings.pane",
-    reads: [
-      { path: "GET /api/config/raw", description: "Raw watcher config file" }
-    ],
-    writes: [
-      { path: "PUT /api/config/raw", description: "Persist watcher config" }
-    ],
-    tests: ["packages/watcher/test/api.test.ts"],
-    notes: [
-      "Changes take effect after restarting the watcher process.",
-      "The watcher config lives under ~/.config/agentwatch/."
-    ]
-  };
 
   const loadConfig = async () => {
     setLoading(true);
@@ -309,7 +294,10 @@ export function WatcherSettingsPane() {
 
   if (loading) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId="watcher.settings.pane"
+        visible={showSelfDocs}
+      >
         <div className="bg-gray-800 rounded-lg p-4 text-gray-400">
           Loading watcher settings...
         </div>
@@ -318,7 +306,10 @@ export function WatcherSettingsPane() {
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="watcher.settings.pane"
+      visible={showSelfDocs}
+    >
       <div className="space-y-4">
         {/* Quick Settings */}
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 space-y-4">

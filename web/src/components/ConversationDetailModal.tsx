@@ -68,32 +68,6 @@ export function ConversationDetailModal({
   onClose
 }: ConversationDetailModalProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Conversation Detail",
-    componentId: "analyzer.conversations.detail-modal",
-    reads: [
-      {
-        path: "GET /api/enrichments/:sessionId",
-        description: "Session enrichments and annotations"
-      },
-      {
-        path: "GET /api/enrichments/privacy-risk/:id",
-        description: "Privacy risk analysis"
-      }
-    ],
-    writes: [
-      {
-        path: "POST /api/enrichments/:sessionId/annotation",
-        description: "Update manual annotations"
-      },
-      {
-        path: "POST /api/enrichments/:sessionId/tags",
-        description: "Update user tags"
-      }
-    ],
-    tests: ["e2e/analyzer-flow.spec.ts"],
-    notes: ["Detail view aggregates hooks, transcript, and enrichment data."]
-  };
   const { getConversationName, updateConversationName, setAnnotation } =
     useConversations();
 
@@ -262,7 +236,10 @@ export function ConversationDetailModal({
   }, [conversation.transcript?.id]);
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.conversations.detail-modal"
+      visible={showSelfDocs}
+    >
       <div
         className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         onClick={onClose}

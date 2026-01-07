@@ -223,16 +223,13 @@ export function DiffView({
   componentId = "static.share.diff-view"
 }: DiffViewProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Diff viewer",
-    componentId,
-    calculations: ["diff-match-patch semantic diffing"],
-    notes: ["Supports full inline view or changes-only view."]
-  };
 
   if (!original || !redacted) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="text-gray-500 italic text-sm">
           Select a session to preview redactions
         </div>
@@ -242,7 +239,10 @@ export function DiffView({
 
   if (original === redacted) {
     return (
-      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <SelfDocumentingSection
+        componentId={componentId}
+        visible={showSelfDocs}
+      >
         <div className="text-gray-400 italic text-sm">
           No changes - content is identical before and after redaction.
         </div>
@@ -251,7 +251,7 @@ export function DiffView({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection componentId={componentId} visible={showSelfDocs}>
       {mode === "full" ? (
         <FullDiffView original={original} redacted={redacted} />
       ) : (
