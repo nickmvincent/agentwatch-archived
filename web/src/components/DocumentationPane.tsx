@@ -6,6 +6,10 @@ import {
   fetchDocs
 } from "../api/client";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // Define the order and grouping of docs for better navigation
 const DOC_ORDER = [
@@ -35,6 +39,7 @@ const DOC_ORDER = [
 ];
 
 export function DocumentationPane() {
+  const showSelfDocs = useSelfDocumentingVisible();
   const [docs, setDocs] = useState<DocInfo[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [docContent, setDocContent] = useState<DocContent | null>(null);
@@ -114,6 +119,16 @@ export function DocumentationPane() {
   if (otherDocs.length > 0) {
     groupedDocs["Other"] = otherDocs;
   }
+
+  const selfDocs = {
+    title: "Docs",
+    reads: [
+      { path: "GET /api/docs", description: "Documentation index" },
+      { path: "GET /api/docs/:id", description: "Markdown content for docs" }
+    ],
+    tests: ["packages/analyzer/test/api.test.ts"],
+    notes: ["Docs are served from the local docs/ directory."]
+  };
 
   if (loading) {
     return (

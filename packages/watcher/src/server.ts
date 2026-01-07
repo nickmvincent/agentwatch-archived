@@ -119,7 +119,8 @@ export class WatcherServer {
 
     // Mark any previously "running" sessions as stale on startup
     // (handles case where watcher restarted and processes have exited)
-    this.sessionStore.markStaleSessions(new Set());
+    // Use 0ms threshold to immediately mark all PID-less sessions as stale
+    this.sessionStore.markStaleSessions(new Set(), 0);
 
     // Start scanners
     this.startScanners();

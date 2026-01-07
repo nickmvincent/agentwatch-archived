@@ -14,7 +14,10 @@
 
 import { useState, useMemo } from "react";
 import type { ActivityEvent } from "../api/types";
-import { SelfDocumentingSection } from "./ui/SelfDocumentingSection";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // Event type colors
 const EVENT_COLORS: Record<string, string> = {
@@ -180,6 +183,7 @@ export function ActivityFeedPane({
   activityEvents,
   compact = false
 }: ActivityFeedPaneProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
   const [filterType, setFilterType] = useState<string>("");
   const [showSessionIds, setShowSessionIds] = useState(false);
   const [limit, setLimit] = useState(50);
@@ -235,6 +239,7 @@ export function ActivityFeedPane({
         "Events include sessions, tools, prompts, responses",
         "Click any event to see full details"
       ]}
+      visible={showSelfDocs}
     >
       <div className="space-y-4">
         {/* Header */}

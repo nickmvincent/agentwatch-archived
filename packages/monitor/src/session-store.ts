@@ -173,16 +173,30 @@ export class SessionStore {
   /**
    * Mark stale running sessions as failed.
    * Called when process scanner indicates a PID is no longer running.
+   *
+   * Sessions are marked stale if:
+   * - They have a PID that's not in the live PIDs set, OR
+   * - They have no PID and are older than staleThresholdMs (default 1 hour)
    */
-  markStaleSessions(livePids: Set<number>): string[] {
+  markStaleSessions(livePids: Set<number>, staleThresholdMs = 3600000): string[] {
     const ended: string[] = [];
+    const now = Date.now();
 
     for (const session of this.sessions.values()) {
       if (session.status !== "running") continue;
-      if (session.pid === undefined) continue;
 
-      if (!livePids.has(session.pid)) {
-        session.endedAt = Date.now();
+      let isStale = false;
+
+      if (session.pid !== undefined) {
+        // Has PID - check if process is still running
+        isStale = !livePids.has(session.pid);
+      } else {
+        // No PID - consider stale if older than threshold
+        isStale = now - session.startedAt > staleThresholdMs;
+      }
+
+      if (isStale) {
+        session.endedAt = now;
         session.status = "failed";
         session.exitCode = -1; // Unknown exit
         this.persistSession(session);

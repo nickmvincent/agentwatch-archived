@@ -31,8 +31,11 @@ export function getProjectsConfigPath(): string {
 
 function parseProjects(content: string): ProjectConfig[] {
   const projects: ProjectConfig[] = [];
+
+  // Match [[projects]] sections - stop at next section header or end of file
+  // Use \n\[ to avoid matching [ inside values like paths = [...]
   const projectsMatch = content.match(
-    /\[\[projects(?:\.projects)?\]\][\s\S]*?(?=\[\[|\[(?!\[)|$)/g
+    /\[\[projects(?:\.projects)?\]\][\s\S]*?(?=\n\[(?!\[)|\n\[\[|$)/g
   );
 
   if (!projectsMatch) return projects;

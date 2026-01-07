@@ -114,6 +114,10 @@ import {
   RedactionSummary
 } from "./DiffView";
 import { FieldTree, type RedactionProfile } from "./FieldTree";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // Built-in redaction profiles (also defined server-side)
 // Order: Most permissive → Most restrictive
@@ -350,8 +354,71 @@ function PrivacyFlagsSection({
 }
 
 export function ContribPane({ onNavigateToTab }: ContribPaneProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Share",
+    reads: [
+      {
+        path: "GET /api/contrib/correlated",
+        description: "Correlated sessions and transcripts"
+      },
+      {
+        path: "GET /api/contrib/fields",
+        description: "Redaction field schemas"
+      },
+      {
+        path: "GET /api/contrib/profiles",
+        description: "Saved redaction profiles"
+      },
+      {
+        path: "GET /api/contrib/research-profiles",
+        description: "Research profile presets"
+      },
+      {
+        path: "GET /api/contrib/destinations",
+        description: "Share destinations"
+      },
+      {
+        path: "GET /api/share/status",
+        description: "HuggingFace auth status"
+      }
+    ],
+    writes: [
+      {
+        path: "POST /api/contrib/prepare",
+        description: "Prepare sanitized sessions for export"
+      },
+      {
+        path: "POST /api/contrib/export",
+        description: "Export prepared sessions"
+      },
+      {
+        path: "POST /api/contrib/settings",
+        description: "Persist contributor settings"
+      },
+      {
+        path: "POST /api/contrib/profiles",
+        description: "Save redaction profiles"
+      },
+      {
+        path: "PUT /api/contrib/profiles/active",
+        description: "Select active redaction profile"
+      },
+      {
+        path: "POST /api/share/huggingface",
+        description: "Upload exports to HuggingFace"
+      }
+    ],
+    tests: ["e2e/contrib-flow.spec.ts", "e2e/analyzer-flow.spec.ts"],
+    notes: [
+      "Redaction settings persist through analyzer config and contributor settings.",
+      "Exports remain local until you explicitly upload them."
+    ]
+  };
+
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="bg-gray-800 rounded-lg p-4">
       {/* Research Preview + Safety Warning Banner */}
       <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700/50 rounded-lg space-y-2">
         <div className="flex items-start gap-2">
@@ -392,7 +459,8 @@ export function ContribPane({ onNavigateToTab }: ContribPaneProps) {
       <MyDataSection />
 
       <UnifiedShareFlow onNavigateToTab={onNavigateToTab} />
-    </div>
+      </div>
+    </SelfDocumentingSection>
   );
 }
 
