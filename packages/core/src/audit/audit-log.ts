@@ -18,12 +18,7 @@ import type {
   ReadAuditLogOptions
 } from "./types";
 import { AUDIT_LOG_FILE, DATA_DIR } from "../storage/paths";
-import {
-  expandPath,
-  ensureDir,
-  appendJsonl,
-  readJsonl
-} from "../storage";
+import { expandPath, ensureDir, appendJsonl, readJsonl } from "../storage";
 
 const LEGACY_AUDIT_LOG_PATH = `${DATA_DIR}/audit.jsonl`;
 

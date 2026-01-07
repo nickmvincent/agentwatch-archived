@@ -18,10 +18,7 @@ import {
   setAgentMetadataById
 } from "@agentwatch/core";
 
-export function registerAgentMetadataRoutes(
-  app: Hono,
-  store: DataStore
-): void {
+export function registerAgentMetadataRoutes(app: Hono, store: DataStore): void {
   app.get("/api/agent-metadata", (c) => {
     return c.json(getAllAgentMetadata());
   });

@@ -462,7 +462,9 @@ export function registerAnalyticsRoutes(app: Hono): void {
       // By-project analytics (reuse /analytics/by-project logic)
       const cutoffByProject = Date.now() - days * 24 * 60 * 60 * 1000;
       const config = loadAnalyzerConfig();
-      const filtered = transcripts.filter((t) => t.modifiedAt >= cutoffByProject);
+      const filtered = transcripts.filter(
+        (t) => t.modifiedAt >= cutoffByProject
+      );
 
       const byProject = new Map<
         string,
@@ -705,7 +707,9 @@ export function registerAnalyticsRoutes(app: Hono): void {
           (conv.hookSession
             ? enrichments[`hook:${conv.hookSession.sessionId}`]
             : undefined) ||
-          (conv.transcript ? enrichments[`transcript:${conv.transcript.id}`] : undefined);
+          (conv.transcript
+            ? enrichments[`transcript:${conv.transcript.id}`]
+            : undefined);
 
         const qualityScore = enrichment?.qualityScore?.overall ?? null;
         const feedback = enrichment?.manualAnnotation?.feedback ?? null;

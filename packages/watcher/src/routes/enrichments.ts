@@ -3,7 +3,11 @@
  */
 
 import type { Hono } from "hono";
-import type { WorkflowStatus, SessionEnrichments, SessionRef } from "@agentwatch/core";
+import type {
+  WorkflowStatus,
+  SessionEnrichments,
+  SessionRef
+} from "@agentwatch/core";
 import {
   getAllEnrichments,
   getEnrichmentStats,

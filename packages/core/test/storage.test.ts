@@ -186,10 +186,7 @@ describe("storage/jsonl-store", () => {
 
   describe("readJsonl", () => {
     test("reads all records from file", () => {
-      writeFileSync(
-        testFile,
-        '{"id":1}\n{"id":2}\n{"id":3}\n'
-      );
+      writeFileSync(testFile, '{"id":1}\n{"id":2}\n{"id":3}\n');
 
       const records = readJsonl<{ id: number }>(testFile);
       expect(records.length).toBe(3);
@@ -203,20 +200,14 @@ describe("storage/jsonl-store", () => {
     });
 
     test("skips invalid JSON lines", () => {
-      writeFileSync(
-        testFile,
-        '{"id":1}\ninvalid\n{"id":3}\n'
-      );
+      writeFileSync(testFile, '{"id":1}\ninvalid\n{"id":3}\n');
 
       const records = readJsonl<{ id: number }>(testFile);
       expect(records.length).toBe(2);
     });
 
     test("handles empty lines gracefully", () => {
-      writeFileSync(
-        testFile,
-        '{"id":1}\n\n{"id":2}\n\n'
-      );
+      writeFileSync(testFile, '{"id":1}\n\n{"id":2}\n\n');
 
       const records = readJsonl<{ id: number }>(testFile);
       expect(records.length).toBe(2);

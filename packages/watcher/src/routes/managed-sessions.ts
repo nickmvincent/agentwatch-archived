@@ -74,10 +74,7 @@ export function registerManagedSessionRoutes(
     };
 
     if (!body.prompt || !body.agent || !body.cwd) {
-      return c.json(
-        { error: "prompt, agent, and cwd are required" },
-        400
-      );
+      return c.json({ error: "prompt, agent, and cwd are required" }, 400);
     }
 
     const session = sessionStore.createSession(

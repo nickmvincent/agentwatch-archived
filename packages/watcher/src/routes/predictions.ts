@@ -61,7 +61,12 @@ export function registerPredictionRoutes(
 
     const results = predictionStore.listPredictions({
       limit,
-      hasOutcome: hasOutcome === "true" ? true : hasOutcome === "false" ? false : undefined
+      hasOutcome:
+        hasOutcome === "true"
+          ? true
+          : hasOutcome === "false"
+            ? false
+            : undefined
     });
 
     return c.json({

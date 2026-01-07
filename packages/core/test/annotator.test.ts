@@ -27,7 +27,11 @@ describe("annotator/agent-metadata", () => {
   });
 
   test("loads empty store when file missing", () => {
-    const store = loadJson(metadataFile, { metadata: {}, updatedAt: "", version: 1 });
+    const store = loadJson(metadataFile, {
+      metadata: {},
+      updatedAt: "",
+      version: 1
+    });
     expect(store.metadata).toEqual({});
   });
 
@@ -47,7 +51,11 @@ describe("annotator/agent-metadata", () => {
     };
 
     saveJson(metadataFile, data);
-    const loaded = loadJson(metadataFile, { metadata: {}, updatedAt: "", version: 1 });
+    const loaded = loadJson(metadataFile, {
+      metadata: {},
+      updatedAt: "",
+      version: 1
+    });
 
     expect(loaded.metadata["claude-code"].customName).toBe("My Claude");
     expect(loaded.metadata["claude-code"].tags).toContain("primary");
@@ -68,7 +76,10 @@ describe("annotator/conversation-metadata", () => {
   });
 
   test("stores conversation custom names", () => {
-    const store: Record<string, { customName: string | null; updatedAt: string }> = {};
+    const store: Record<
+      string,
+      { customName: string | null; updatedAt: string }
+    > = {};
 
     store["conv-123"] = {
       customName: "Bug Fix Session",
@@ -82,7 +93,10 @@ describe("annotator/conversation-metadata", () => {
   });
 
   test("handles null custom names", () => {
-    const store: Record<string, { customName: string | null; updatedAt: string }> = {};
+    const store: Record<
+      string,
+      { customName: string | null; updatedAt: string }
+    > = {};
 
     store["conv-456"] = {
       customName: null,

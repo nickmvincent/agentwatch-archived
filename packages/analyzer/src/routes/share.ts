@@ -9,7 +9,11 @@
  */
 
 import type { Hono } from "hono";
-import { createSanitizer, createBundle, scoreText } from "@agentwatch/pre-share";
+import {
+  createSanitizer,
+  createBundle,
+  scoreText
+} from "@agentwatch/pre-share";
 import type {
   ContribSession,
   ContributorMeta,
@@ -29,7 +33,10 @@ import {
   validateHuggingFaceToken,
   type HFOAuthConfig
 } from "../huggingface";
-import { loadContributorSettings, saveContributorSettings } from "../contributor-settings";
+import {
+  loadContributorSettings,
+  saveContributorSettings
+} from "../contributor-settings";
 
 /**
  * Register share routes.

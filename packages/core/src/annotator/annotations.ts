@@ -91,7 +91,10 @@ export function loadAnnotations(): AnnotationsStore {
     version: 1
   };
 
-  const data = loadJson<Partial<AnnotationsStore>>(ANNOTATIONS_FILE, defaultStore);
+  const data = loadJson<Partial<AnnotationsStore>>(
+    ANNOTATIONS_FILE,
+    defaultStore
+  );
 
   return {
     annotations: data.annotations || {},

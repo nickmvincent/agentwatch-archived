@@ -16,10 +16,7 @@ interface WatcherState {
   refresh: () => void;
 }
 
-export function useWatcher(
-  watcherUrl: string,
-  paused: boolean
-): WatcherState {
+export function useWatcher(watcherUrl: string, paused: boolean): WatcherState {
   const [connected, setConnected] = useState(false);
   const [agents, setAgents] = useState<AgentProcess[]>([]);
   const [repos, setRepos] = useState<RepoStatus[]>([]);

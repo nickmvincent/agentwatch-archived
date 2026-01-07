@@ -909,7 +909,6 @@ export function AgentDetailModal({
                   </div>
                 )}
               </div>
-
             </div>
           )}
 

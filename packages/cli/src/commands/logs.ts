@@ -35,9 +35,7 @@ export const logsCommand = new Command("logs")
 
         for (const entry of timeline) {
           const tsValue =
-            entry.timestamp > 1e12
-              ? entry.timestamp
-              : entry.timestamp * 1000;
+            entry.timestamp > 1e12 ? entry.timestamp : entry.timestamp * 1000;
           const ts = new Date(tsValue).toLocaleTimeString();
           const success =
             entry.success === null

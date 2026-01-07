@@ -259,7 +259,7 @@ export const runCommand = new Command("run")
 
     // Single agent mode - validate agent
     if (!AGENT_COMMANDS[agent]) {
-          console.log(pc.red(`Unknown agent: ${agent}`));
+      console.log(pc.red(`Unknown agent: ${agent}`));
       console.log(
         pc.gray(`Supported agents: ${Object.keys(AGENT_COMMANDS).join(", ")}`)
       );
@@ -282,7 +282,11 @@ export const runCommand = new Command("run")
         sessionId = session.id;
         console.log(pc.gray(`Session ${sessionId} created`));
       } else {
-        console.log(pc.yellow("Warning: Could not create session (watcher may not be running)"));
+        console.log(
+          pc.yellow(
+            "Warning: Could not create session (watcher may not be running)"
+          )
+        );
       }
     } catch {
       console.log(

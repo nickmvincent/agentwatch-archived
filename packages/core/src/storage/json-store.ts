@@ -54,7 +54,9 @@ export function saveJson<T>(
   const expanded = expandPath(filePath);
   ensureDir(expanded);
 
-  const content = pretty ? JSON.stringify(data, null, indent) : JSON.stringify(data);
+  const content = pretty
+    ? JSON.stringify(data, null, indent)
+    : JSON.stringify(data);
   writeFileAtomic(expanded, content);
 }
 

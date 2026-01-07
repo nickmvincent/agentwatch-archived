@@ -104,8 +104,9 @@ function formatEventDescription(event: ActivityEvent): string {
     case "prompt":
       return `${data.prompt_length || 0} characters`;
     case "response": {
-      const tokens = (data.input_tokens || 0) + (data.output_tokens || 0);
-      return `${data.stop_reason || "completed"} (${tokens} tokens)`;
+      const inputTokens = Number(data.input_tokens) || 0;
+      const outputTokens = Number(data.output_tokens) || 0;
+      return `${data.stop_reason || "completed"} (${inputTokens + outputTokens} tokens)`;
     }
     case "subagent":
       return `${data.subagent_id || "Unknown"} - ${data.stop_reason || "completed"}`;
@@ -240,7 +241,9 @@ export function ActivityFeedPane({
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">Activity Feed</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Activity Feed
+              </h2>
               <p className="text-xs text-gray-400">
                 Real-time stream of all watcher events
               </p>

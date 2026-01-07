@@ -18,9 +18,7 @@ export const webCommand = new Command("web")
       if (!res.ok) {
         const health = await fetch(`${watcherUrl}/api/health`);
         if (!health.ok) {
-          console.log(
-            pc.yellow("Watcher not responding. Starting watcher...")
-          );
+          console.log(pc.yellow("Watcher not responding. Starting watcher..."));
           await startWatcher(options.host, options.port);
         }
       }

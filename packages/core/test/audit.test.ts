@@ -7,11 +7,7 @@ import { existsSync, mkdirSync, rmSync, readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import type {
-  AuditCategory,
-  AuditAction,
-  AuditEntry
-} from "../src/audit";
+import type { AuditCategory, AuditAction, AuditEntry } from "../src/audit";
 
 import { logAuditEventStub } from "../src/audit";
 

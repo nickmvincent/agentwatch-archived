@@ -87,9 +87,11 @@ export function registerConfigRoutes(app: Hono, config: WatcherConfig): void {
       hook_enhancements: {
         cost_controls: {
           enabled: config.hookEnhancements.costControls.enabled,
-          session_limit_usd: config.hookEnhancements.costControls.sessionLimitUsd,
+          session_limit_usd:
+            config.hookEnhancements.costControls.sessionLimitUsd,
           daily_limit_usd: config.hookEnhancements.costControls.dailyLimitUsd,
-          warning_threshold: config.hookEnhancements.costControls.warningThreshold
+          warning_threshold:
+            config.hookEnhancements.costControls.warningThreshold
         },
         notification_hub: {
           enabled: config.hookEnhancements.notificationHub.enabled,
@@ -118,7 +120,8 @@ export function registerConfigRoutes(app: Hono, config: WatcherConfig): void {
             config.hookEnhancements.stopBlocking.requireTestsPass,
           require_no_lint_errors:
             config.hookEnhancements.stopBlocking.requireNoLintErrors,
-          max_block_attempts: config.hookEnhancements.stopBlocking.maxBlockAttempts
+          max_block_attempts:
+            config.hookEnhancements.stopBlocking.maxBlockAttempts
         }
       }
     });

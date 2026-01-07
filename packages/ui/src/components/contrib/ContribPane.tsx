@@ -411,9 +411,7 @@ export function ContribPane({
         filtered.sort((a, b) => (b.sizeBytes ?? 0) - (a.sizeBytes ?? 0));
         break;
       case "size_asc":
-        filtered.sort(
-          (a, b) => (a.sizeBytes ?? 1e12) - (b.sizeBytes ?? 1e12)
-        );
+        filtered.sort((a, b) => (a.sizeBytes ?? 1e12) - (b.sizeBytes ?? 1e12));
         break;
       case "newest":
       default:

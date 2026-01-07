@@ -464,8 +464,7 @@ function parseWatcherConfig(content: string): WatcherConfig {
     "on_lint_errors"
   );
   if (autoContinueLintErrors !== null)
-    config.hookEnhancements.autoContinue.onLintErrors =
-      autoContinueLintErrors;
+    config.hookEnhancements.autoContinue.onLintErrors = autoContinueLintErrors;
 
   const autoContinueAttempts = parseNumberField(
     content,

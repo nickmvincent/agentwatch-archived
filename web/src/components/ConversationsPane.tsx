@@ -1055,7 +1055,8 @@ export function ConversationsPane({
                   );
                   const toolCount =
                     session.tool_count || session.hook_session?.tool_count || 0;
-                  const messageCount = session.transcript?.message_count ?? null;
+                  const messageCount =
+                    session.transcript?.message_count ?? null;
                   const transcriptSizeKb = session.transcript?.size_bytes
                     ? Math.round(session.transcript.size_bytes / 1024)
                     : null;

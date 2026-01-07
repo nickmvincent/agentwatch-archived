@@ -64,7 +64,9 @@ export function HookEnhancementsSection() {
       {expanded && (
         <div className="border-t border-gray-700 p-4 space-y-4">
           {loading && (
-            <div className="text-xs text-gray-500">Loading hook settings...</div>
+            <div className="text-xs text-gray-500">
+              Loading hook settings...
+            </div>
           )}
 
           {/* Feature Toggles Summary */}
@@ -126,8 +128,7 @@ export function HookEnhancementsSection() {
                 <div>
                   <span className="text-gray-400">Warn at:</span>{" "}
                   <span className="text-white">
-                    {(costControls.warning_threshold * 100).toFixed(0)}
-                    %
+                    {(costControls.warning_threshold * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
@@ -178,9 +179,7 @@ function FeatureCard({
       </div>
       <div className="text-xs text-gray-400">{description}</div>
       {detail && (
-        <div className="mt-1 text-[10px] text-gray-500 truncate">
-          {detail}
-        </div>
+        <div className="mt-1 text-[10px] text-gray-500 truncate">{detail}</div>
       )}
     </div>
   );
