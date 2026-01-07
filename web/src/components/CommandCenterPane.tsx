@@ -149,7 +149,38 @@ export function CommandCenterPane({ managedSessions }: CommandCenterPaneProps) {
       const res = await fetch(`${API_BASE}/api/predictions?limit=20`);
       if (res.ok) {
         const data = await res.json();
-        setPredictions(data.predictions || []);
+        // Convert snake_case API response to camelCase
+        const converted: PredictionWithOutcome[] = (data.predictions || []).map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (p: any) => ({
+            prediction: {
+              id: p.id,
+              managedSessionId: p.managed_session_id,
+              createdAt: p.created_at,
+              predictedDurationMinutes: p.predicted_duration_minutes,
+              durationConfidence: p.duration_confidence,
+              predictedTokens: p.predicted_tokens,
+              tokenConfidence: p.token_confidence,
+              successConditions: p.success_conditions,
+              intentions: p.intentions,
+              selectedPrinciples: p.selected_principles,
+              principlesPath: p.principles_path
+            },
+            outcome: p.outcome
+              ? {
+                  predictionId: p.outcome.prediction_id,
+                  managedSessionId: p.outcome.managed_session_id,
+                  recordedAt: p.outcome.recorded_at,
+                  actualDurationMinutes: p.outcome.actual_duration_minutes,
+                  actualTokens: p.outcome.actual_tokens,
+                  exitCode: p.outcome.exit_code,
+                  userMarkedSuccess: p.outcome.user_marked_success,
+                  outcomeNotes: p.outcome.outcome_notes
+                }
+              : undefined
+          })
+        );
+        setPredictions(converted);
       }
     } catch {
       // Ignore errors

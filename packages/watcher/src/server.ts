@@ -78,12 +78,9 @@ export class WatcherServer {
           agents: agents.map((a) => agentToDict(a))
         });
 
-        // Align managed sessions with live PIDs when we have data
-        if (agents.length > 0) {
-          this.sessionStore.markStaleSessions(
-            new Set(agents.map((a) => a.pid))
-          );
-        }
+        // Align managed sessions with live PIDs
+        // Always call this - when agents is empty, all running sessions become stale
+        this.sessionStore.markStaleSessions(new Set(agents.map((a) => a.pid)));
 
         // Log process snapshots
         const agentMap = new Map(agents.map((a) => [a.pid, a]));
@@ -119,6 +116,10 @@ export class WatcherServer {
 
     const bindHost = host ?? this.config.watcher.host;
     const bindPort = port ?? this.config.watcher.port;
+
+    // Mark any previously "running" sessions as stale on startup
+    // (handles case where watcher restarted and processes have exited)
+    this.sessionStore.markStaleSessions(new Set());
 
     // Start scanners
     this.startScanners();

@@ -60,12 +60,17 @@ export function registerProjectRoutes(app: Hono, store?: DataStore): void {
       return c.json({ error: "Project with this ID already exists" }, 409);
     }
 
-    addProject({
-      id: body.id,
-      name: body.name,
-      paths: body.paths,
-      description: body.description
-    });
+    try {
+      addProject({
+        id: body.id,
+        name: body.name,
+        paths: body.paths,
+        description: body.description
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      return c.json({ error: `Failed to save project: ${message}` }, 500);
+    }
 
     return c.json({ success: true, project: body }, 201);
   });
