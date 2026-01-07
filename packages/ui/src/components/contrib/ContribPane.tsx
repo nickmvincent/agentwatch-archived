@@ -442,26 +442,7 @@ export function ContribPane({
 
   return (
     <SelfDocumentingSection
-      title="Share flow"
       componentId="static.share.pane"
-      reads={[
-        {
-          path: "adapter.getFieldSchemas",
-          description: "Field schema definitions and defaults"
-        },
-        {
-          path: "adapter.prepareSessions",
-          description: "Redaction and preview preparation"
-        },
-        {
-          path: "adapter.exportBundle",
-          description: "Bundle export and share data"
-        }
-      ]}
-      notes={[
-        "Supports both daemon API and worker-based adapters.",
-        "Sections map to select, prepare, and export steps."
-      ]}
       visible={showSelfDocs}
     >
       <div className="bg-gray-800 rounded-lg p-4">
@@ -487,12 +468,7 @@ export function ContribPane({
         <div className="space-y-4">
           {/* Step 1: Sessions */}
           <SelfDocumentingSection
-            title="Select Sessions"
             componentId="static.share.sessions-section"
-            notes={[
-              "Session list supports search, sort, and multi-select.",
-              "Session loader can be injected for uploads."
-            ]}
             visible={showSelfDocs}
             compact
           >
@@ -683,12 +659,7 @@ export function ContribPane({
 
           {/* Step 2: Prepare & Preview */}
           <SelfDocumentingSection
-            title="Prepare & Preview"
             componentId="static.share.prepare-section"
-            notes={[
-              "Redaction config and field selection update live previews.",
-              "Preview modes include diffs and raw JSON."
-            ]}
             visible={showSelfDocs}
             compact
           >
@@ -750,12 +721,7 @@ export function ContribPane({
 
           {/* Step 3: Contributor & Export */}
           <SelfDocumentingSection
-            title="Contributor & Export"
             componentId="static.share.export-section"
-            notes={[
-              "Contributor metadata and licensing live here.",
-              "Export requires rights and review confirmations."
-            ]}
             visible={showSelfDocs}
             compact
           >

@@ -32,12 +32,7 @@ export function RedactionConfig({ config, onChange }: RedactionConfigProps) {
 
   return (
     <SelfDocumentingSection
-      title="Redaction config"
       componentId="static.share.redaction-config"
-      notes={[
-        "Toggles redact secrets, PII, and paths.",
-        "Custom regex patterns are appended to the rule set."
-      ]}
       visible={showSelfDocs}
     >
       <div className="p-3 bg-gray-900/50 rounded">

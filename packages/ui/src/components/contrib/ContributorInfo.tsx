@@ -40,12 +40,7 @@ export function ContributorInfo({
 
   return (
     <SelfDocumentingSection
-      title="Contributor info"
       componentId="static.share.contributor-info"
-      notes={[
-        "Captures contributor ID, license, and AI preference.",
-        "Attestations are required before export."
-      ]}
       visible={showSelfDocs}
     >
       <div className="p-3 bg-gray-700/30 rounded space-y-3">

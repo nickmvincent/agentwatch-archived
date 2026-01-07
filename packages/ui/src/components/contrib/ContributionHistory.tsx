@@ -23,9 +23,7 @@ export function ContributionHistory({ entries }: ContributionHistoryProps) {
 
   return (
     <SelfDocumentingSection
-      title="Contribution history"
       componentId="static.share.contribution-history"
-      notes={["Shows recent export destinations and counts."]}
       visible={showSelfDocs}
     >
       <div className="p-3 bg-gray-700/30 rounded space-y-3">

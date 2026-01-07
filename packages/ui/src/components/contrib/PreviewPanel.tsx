@@ -37,9 +37,7 @@ export function PreviewPanel({
   if (loading) {
     return (
       <SelfDocumentingSection
-        title="Preview panel"
         componentId="static.share.preview-panel"
-        notes={["Preview content is generated from prepared sessions."]}
         visible={showSelfDocs}
       >
         <div className="bg-gray-900 rounded border border-gray-700 p-8 text-center text-gray-500">
@@ -52,9 +50,7 @@ export function PreviewPanel({
   if (!sessions.length) {
     return (
       <SelfDocumentingSection
-        title="Preview panel"
         componentId="static.share.preview-panel"
-        notes={["Preview content is generated from prepared sessions."]}
         visible={showSelfDocs}
       >
         <div className="bg-gray-900 rounded border border-gray-700 p-8 text-center text-gray-500">
@@ -66,12 +62,7 @@ export function PreviewPanel({
 
   return (
     <SelfDocumentingSection
-      title="Preview panel"
       componentId="static.share.preview-panel"
-      notes={[
-        "Supports full diff, changes-only, original, and raw JSON modes.",
-        "Field stripping and warnings are shown below the preview."
-      ]}
       visible={showSelfDocs}
     >
       <div className="space-y-3">

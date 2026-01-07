@@ -23,12 +23,7 @@ export function MarkdownRenderer({
 
   return (
     <SelfDocumentingSection
-      title="Markdown renderer"
       componentId="static.share.markdown-renderer"
-      calculations={[
-        "Custom markdown parsing with code block preservation",
-        "HTML tag escaping for safety"
-      ]}
       visible={showSelfDocs}
     >
       <div

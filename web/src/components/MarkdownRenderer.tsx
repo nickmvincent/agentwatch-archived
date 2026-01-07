@@ -23,15 +23,7 @@ export function MarkdownRenderer({
 
   return (
     <SelfDocumentingSection
-      title="Markdown rendering"
       componentId="analyzer.docs.markdown-renderer"
-      calculations={[
-        "Custom markdown parsing with code block preservation",
-        "HTML tag escaping for safety"
-      ]}
-      notes={[
-        "Uses dangerouslySetInnerHTML after sanitizing unsupported tags."
-      ]}
       visible={showSelfDocs}
     >
       <div

@@ -60,12 +60,7 @@ export function FieldSelector({
 
   return (
     <SelfDocumentingSection
-      title="Field selector"
       componentId="static.share.field-selector"
-      notes={[
-        "Groups fields by category and highlights privacy risks.",
-        "Essential fields are always included."
-      ]}
       visible={showSelfDocs}
     >
       <div className="p-3 bg-gray-900/50 rounded">

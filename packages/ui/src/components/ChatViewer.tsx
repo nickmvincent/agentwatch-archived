@@ -124,9 +124,7 @@ export function ChatViewer({
 
   return (
     <SelfDocumentingSection
-      title="Chat viewer"
       componentId={componentId}
-      notes={["Renders transcripts with role-based styling."]}
       visible={showSelfDocs}
     >
       <div className="flex flex-col h-full">

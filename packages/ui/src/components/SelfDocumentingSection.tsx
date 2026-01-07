@@ -151,7 +151,7 @@ export function SelfDocumentingSection({
       >
         <summary className="cursor-pointer text-gray-500 hover:text-gray-400 select-none flex items-center gap-1">
           <span className="text-gray-600">{isExpanded ? "▼" : "▶"}</span>
-          <span>More</span>
+          <span>more</span>
         </summary>
         <div className={`mt-2 pl-4 ${contentClassName ?? ""}`}>
           <DocumentationContent

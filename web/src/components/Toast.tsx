@@ -51,12 +51,7 @@ export function Toast({
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <SelfDocumentingSection
-        title="Toast notifications"
         componentId="analyzer.settings.toast"
-        notes={[
-          "Auto-dismisses after a timeout unless manually closed.",
-          "Used for async notifications across tools."
-        ]}
         visible={showSelfDocs}
         compact
       >

@@ -167,13 +167,7 @@ export function AIPreferenceWizard({
 
   return (
     <SelfDocumentingSection
-      title="AI preference"
       componentId="static.share.ai-preference-wizard"
-      calculations={["Parse and build W3C TDM preference strings"]}
-      notes={[
-        "Supports preset and advanced modes.",
-        "Advanced mode toggles conditions and attribution."
-      ]}
       visible={showSelfDocs}
     >
       <div className="p-2 bg-gray-900/50 rounded space-y-2">
