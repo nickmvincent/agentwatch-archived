@@ -50,7 +50,8 @@ export class AnalyzerServer {
     const state: AnalyzerAppState = {
       startedAt: Date.now(),
       watcherUrl: this.options.watcherUrl,
-      shutdown: () => this.stop()
+      shutdown: () => this.stop(),
+      recordHeartbeat: () => this.recordHeartbeat()
     };
 
     const app = createAnalyzerApp(state);

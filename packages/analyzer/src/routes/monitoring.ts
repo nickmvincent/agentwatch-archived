@@ -141,6 +141,8 @@ export function registerMonitoringRoutes(
    * @returns { status: "ok", timestamp: number }
    */
   app.post("/api/heartbeat", (c) => {
+    // Record heartbeat to prevent auto-shutdown
+    state.recordHeartbeat?.();
     return c.json({ status: "ok", timestamp: Date.now() });
   });
 

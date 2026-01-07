@@ -126,6 +126,7 @@ import {
  * - Server start timestamp for uptime calculation
  * - Watcher URL for proxying requests
  * - Shutdown callback for graceful termination
+ * - Heartbeat callback for browser lifecycle
  */
 export interface AnalyzerAppState {
   /** Server start timestamp (milliseconds) */
@@ -134,6 +135,8 @@ export interface AnalyzerAppState {
   watcherUrl: string;
   /** Callback to trigger graceful shutdown */
   shutdown?: () => void;
+  /** Callback to record browser heartbeat */
+  recordHeartbeat?: () => void;
 }
 
 /**
