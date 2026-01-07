@@ -2323,6 +2323,7 @@ export function ConversationsPane({
                       {/* Manual Annotation Section */}
                       <section className="border-t border-gray-700 pt-6">
                         <ConversationAnnotationPanel
+                          componentId="analyzer.conversations.annotation-panel"
                           sessionId={getEnrichmentId(selectedSessionId)}
                           manualAnnotation={
                             selectedEnrichments?.manual_annotation ?? null

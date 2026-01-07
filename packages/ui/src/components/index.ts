@@ -46,3 +46,9 @@ export {
   type ChatTranscript,
   type ChatMessage
 } from "./ChatViewer";
+export {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible,
+  getSelfDocumentingPreference,
+  setSelfDocumentingPreference
+} from "./SelfDocumentingSection";

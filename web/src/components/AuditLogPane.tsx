@@ -16,6 +16,10 @@ import type {
   EdgeCase,
   EdgeCasesResult
 } from "../api/types";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // Category colors for the timeline
 const CATEGORY_COLORS: Record<string, string> = {
@@ -295,6 +299,7 @@ function TimelineEvent({ event }: { event: AuditEntry }) {
 }
 
 export function AuditLogPane() {
+  const showSelfDocs = useSelfDocumentingVisible();
   const [activeTab, setActiveTab] = useState<
     "timeline" | "sources" | "edge-cases" | "calculations"
   >("timeline");
@@ -324,6 +329,34 @@ export function AuditLogPane() {
   useEffect(() => {
     loadData();
   }, [activeTab, categoryFilter, limit]);
+
+  const selfDocs = {
+    title: "Audit log",
+    componentId: "analyzer.settings.audit-log",
+    reads: [
+      { path: "GET /api/audit", description: "Audit event stream" },
+      {
+        path: "GET /api/audit/categories",
+        description: "Event categories and counts"
+      },
+      {
+        path: "GET /api/audit/sources",
+        description: "Data source inventory"
+      },
+      {
+        path: "GET /api/audit/edge-cases",
+        description: "Edge case behaviors"
+      },
+      {
+        path: "GET /api/audit/calculations",
+        description: "Audit calculation definitions"
+      }
+    ],
+    notes: [
+      "Timeline updates with category filters and pagination limits.",
+      "Sources reflect local ~/.agentwatch state."
+    ]
+  };
 
   async function loadData() {
     setLoading(true);
@@ -359,468 +392,474 @@ export function AuditLogPane() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-gray-800 rounded-lg p-4">
-        <h2 className="text-xl font-bold text-white mb-2">Activity Log</h2>
-        <p className="text-gray-400 text-sm">
-          Complete transparency into how AgentWatch discovers, stores, and
-          computes data. All data is file-based and stateless - this view is
-          reconstructed from file timestamps and stored records.
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "timeline"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setActiveTab("timeline")}
-        >
-          Timeline
-        </button>
-        <button
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "sources"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setActiveTab("sources")}
-        >
-          Data Sources
-        </button>
-        <button
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "calculations"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setActiveTab("calculations")}
-        >
-          Calculations
-        </button>
-        <button
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "edge-cases"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => setActiveTab("edge-cases")}
-        >
-          Edge Cases
-        </button>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 text-red-300">
-          {error}
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="bg-gray-800 rounded-lg p-4">
+          <h2 className="text-xl font-bold text-white mb-2">Activity Log</h2>
+          <p className="text-gray-400 text-sm">
+            Complete transparency into how AgentWatch discovers, stores, and
+            computes data. All data is file-based and stateless - this view is
+            reconstructed from file timestamps and stored records.
+          </p>
         </div>
-      )}
 
-      {/* Loading */}
-      {loading && (
-        <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <div className="text-gray-400">Loading...</div>
+        {/* Tabs */}
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "timeline"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => setActiveTab("timeline")}
+          >
+            Timeline
+          </button>
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "sources"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => setActiveTab("sources")}
+          >
+            Data Sources
+          </button>
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "calculations"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => setActiveTab("calculations")}
+          >
+            Calculations
+          </button>
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "edge-cases"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => setActiveTab("edge-cases")}
+          >
+            Edge Cases
+          </button>
         </div>
-      )}
 
-      {/* Timeline Tab */}
-      {!loading && activeTab === "timeline" && auditLog && (
-        <div className="space-y-4">
-          {/* Filters */}
-          <div className="bg-gray-800 rounded-lg p-4 flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-gray-400 text-sm">Category:</label>
-              <select
-                className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="">All</option>
-                {categories &&
-                  Object.entries(categories.categories).map(([key, cat]) => (
-                    <option key={key} value={key}>
-                      {key} - {cat.description}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-gray-400 text-sm">Limit:</label>
-              <select
-                className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
-                value={limit}
-                onChange={(e) => setLimit(Number(e.target.value))}
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-              </select>
-            </div>
-            <div className="flex-1" />
-            <div className="text-sm text-gray-500">
-              Showing {auditLog.events.length} of {auditLog.stats.total_events}{" "}
-              events
-              {auditLog.sources.inferred > 0 && (
-                <span className="text-yellow-500 ml-2">
-                  ({auditLog.sources.inferred} inferred)
-                </span>
-              )}
-            </div>
+        {/* Error */}
+        {error && (
+          <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 text-red-300">
+            {error}
           </div>
+        )}
 
-          {/* Stats Summary */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  {auditLog.stats.total_events}
-                </div>
-                <div className="text-gray-400 text-sm">Total Events</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  {Object.keys(auditLog.stats.by_category || {}).length}
-                </div>
-                <div className="text-gray-400 text-sm">Categories</div>
-              </div>
-              <div>
-                <div className="text-lg text-gray-300">
-                  {auditLog.stats.oldest_event
-                    ? formatRelativeTime(auditLog.stats.oldest_event)
-                    : "N/A"}
-                </div>
-                <div className="text-gray-400 text-sm">Oldest Event</div>
-              </div>
-              <div>
-                <div className="text-lg text-gray-300">
-                  {auditLog.stats.newest_event
-                    ? formatRelativeTime(auditLog.stats.newest_event)
-                    : "N/A"}
-                </div>
-                <div className="text-gray-400 text-sm">Newest Event</div>
-              </div>
-            </div>
-
-            {/* Category breakdown */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {Object.entries(auditLog.stats.by_category || {})
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, count]) => (
-                  <span
-                    key={cat}
-                    className={`px-2 py-1 rounded text-xs text-white ${
-                      CATEGORY_COLORS[cat] || "bg-gray-500"
-                    }`}
-                  >
-                    {cat}: {count}
-                  </span>
-                ))}
-            </div>
+        {/* Loading */}
+        {loading && (
+          <div className="bg-gray-800 rounded-lg p-8 text-center">
+            <div className="text-gray-400">Loading...</div>
           </div>
+        )}
 
-          {/* Timeline */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            {auditLog.events.length === 0 ? (
-              <div className="text-gray-400 text-center py-8">
-                No events found. Events are inferred from data files and logged
-                during watcher operation.
-              </div>
-            ) : (
-              <div className="space-y-0">
-                {auditLog.events.map((event, i) => (
-                  <TimelineEvent
-                    key={`${event.timestamp}-${i}`}
-                    event={event}
-                  />
-                ))}
-              </div>
-            )}
-
-            {auditLog.pagination.has_more && (
-              <div className="mt-4 text-center">
-                <button
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-                  onClick={() => setLimit(limit + 50)}
+        {/* Timeline Tab */}
+        {!loading && activeTab === "timeline" && auditLog && (
+          <div className="space-y-4">
+            {/* Filters */}
+            <div className="bg-gray-800 rounded-lg p-4 flex flex-wrap gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-gray-400 text-sm">Category:</label>
+                <select
+                  className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
                 >
-                  Load More
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Data Sources Tab */}
-      {!loading && activeTab === "sources" && dataSources && (
-        <div className="space-y-4">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-2">
-              Data Directory
-            </h3>
-            <p className="font-mono text-gray-400 text-sm mb-4">
-              {dataSources.data_dir}
-            </p>
-            <p className="text-gray-500 text-sm">
-              Last checked: {new Date(dataSources.timestamp).toLocaleString()}
-            </p>
-          </div>
-
-          {/* Hook Data */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Hook Data (Real-time from Claude Code)
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.hooks).map(([key, info]) => (
-                <DataSourceCard key={key} name={key} info={info} />
-              ))}
-            </div>
-          </div>
-
-          {/* Enrichments */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Enrichments (Computed at Session End)
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.enrichments).map(
-                ([key, info]) => (
-                  <DataSourceCard key={key} name={key} info={info} />
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Local Transcripts */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Local Transcripts (Discovered from Filesystem)
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.local_transcripts).map(
-                ([key, info]) => (
-                  <DataSourceCard key={key} name={key} info={info} />
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Metadata */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Metadata (User-Defined Names & Notes)
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.metadata).map(
-                ([key, info]) => (
-                  <DataSourceCard key={key} name={key} info={info} />
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Process & Logs */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Process Logs & Session Logs
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.processes).map(
-                ([key, info]) => (
-                  <DataSourceCard
-                    key={key}
-                    name={`processes/${key}`}
-                    info={info}
-                  />
-                )
-              )}
-              {Object.entries(dataSources.sources.logs).map(([key, info]) => (
-                <DataSourceCard key={key} name={`logs/${key}`} info={info} />
-              ))}
-            </div>
-          </div>
-
-          {/* Config */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Configuration
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.config).map(([key, info]) => (
-                <DataSourceCard key={key} name={key} info={info} />
-              ))}
-            </div>
-          </div>
-
-          {/* Contributor */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-3">
-              Contributor Settings
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(dataSources.sources.contributor).map(
-                ([key, info]) => (
-                  <DataSourceCard key={key} name={key} info={info} />
-                )
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Calculations Tab */}
-      {!loading && activeTab === "calculations" && calculations && (
-        <div className="space-y-6">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-white mb-2">
-              Quality Score Logic
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              {calculations.quality_score.description}
-            </p>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">
-                  Dimension Weights
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {Object.entries(
-                    calculations.quality_score.dimension_weights
-                  ).map(([dim, weight]) => (
-                    <div key={dim} className="flex justify-between">
-                      <span className="text-gray-400 capitalize">
-                        {dim.replace(/([A-Z])/g, " $1")}
-                      </span>
-                      <span className="text-white font-mono">{weight}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">
-                  Signal Weights
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {Object.entries(
-                    calculations.quality_score.signal_weights
-                  ).map(([signal, weight]) => (
-                    <div key={signal} className="flex justify-between">
-                      <span className="text-gray-400 capitalize">
-                        {signal.replace(/([A-Z])/g, " $1")}
-                      </span>
-                      <span className="text-white font-mono">{weight}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid md:grid-cols-2 gap-4">
-              <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-gray-200 mb-2">
-                  Scoring Rules
-                </h4>
-                <ul className="list-disc list-inside space-y-1 text-sm text-gray-400">
-                  {calculations.quality_score.scoring_rules.map((rule, i) => (
-                    <li key={i}>{rule}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-gray-700 rounded p-3">
-                <h4 className="font-medium text-red-300 mb-2">Penalties</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm text-gray-400">
-                  {calculations.quality_score.penalties.map((rule, i) => (
-                    <li key={i}>{rule}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-white mb-2">
-              Cost Estimation Logic
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              {calculations.cost_estimation.description}
-            </p>
-
-            <div className="bg-gray-700 rounded p-3 mb-4">
-              <h4 className="font-medium text-gray-200 mb-2">
-                Pricing Table (USD per Million Tokens)
-              </h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-gray-500 border-b border-gray-600">
-                    <tr>
-                      <th className="py-1">Model</th>
-                      <th className="py-1 text-right">Input</th>
-                      <th className="py-1 text-right">Output</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-300">
-                    {Object.entries(
-                      calculations.cost_estimation.pricing_table
-                    ).map(([model, pricing]) => (
-                      <tr key={model} className="border-b border-gray-600/50">
-                        <td className="py-1 font-mono">{model}</td>
-                        <td className="py-1 text-right">
-                          ${pricing.inputPerMillion}
-                        </td>
-                        <td className="py-1 text-right">
-                          ${pricing.outputPerMillion}
-                        </td>
-                      </tr>
+                  <option value="">All</option>
+                  {categories &&
+                    Object.entries(categories.categories).map(([key, cat]) => (
+                      <option key={key} value={key}>
+                        {key} - {cat.description}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-gray-400 text-sm">Limit:</label>
+                <select
+                  className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
+                  value={limit}
+                  onChange={(e) => setLimit(Number(e.target.value))}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                </select>
+              </div>
+              <div className="flex-1" />
+              <div className="text-sm text-gray-500">
+                Showing {auditLog.events.length} of{" "}
+                {auditLog.stats.total_events} events
+                {auditLog.sources.inferred > 0 && (
+                  <span className="text-yellow-500 ml-2">
+                    ({auditLog.sources.inferred} inferred)
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="bg-gray-700 rounded p-3">
-              <h4 className="font-medium text-gray-200 mb-2">Formulas</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-400 font-mono">
-                {calculations.cost_estimation.formulas.map((formula, i) => (
-                  <li key={i}>{formula}</li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs text-yellow-500/80 italic">
-                {calculations.cost_estimation.disclaimer}
+            {/* Stats Summary */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    {auditLog.stats.total_events}
+                  </div>
+                  <div className="text-gray-400 text-sm">Total Events</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    {Object.keys(auditLog.stats.by_category || {}).length}
+                  </div>
+                  <div className="text-gray-400 text-sm">Categories</div>
+                </div>
+                <div>
+                  <div className="text-lg text-gray-300">
+                    {auditLog.stats.oldest_event
+                      ? formatRelativeTime(auditLog.stats.oldest_event)
+                      : "N/A"}
+                  </div>
+                  <div className="text-gray-400 text-sm">Oldest Event</div>
+                </div>
+                <div>
+                  <div className="text-lg text-gray-300">
+                    {auditLog.stats.newest_event
+                      ? formatRelativeTime(auditLog.stats.newest_event)
+                      : "N/A"}
+                  </div>
+                  <div className="text-gray-400 text-sm">Newest Event</div>
+                </div>
+              </div>
+
+              {/* Category breakdown */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.entries(auditLog.stats.by_category || {})
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, count]) => (
+                    <span
+                      key={cat}
+                      className={`px-2 py-1 rounded text-xs text-white ${
+                        CATEGORY_COLORS[cat] || "bg-gray-500"
+                      }`}
+                    >
+                      {cat}: {count}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              {auditLog.events.length === 0 ? (
+                <div className="text-gray-400 text-center py-8">
+                  No events found. Events are inferred from data files and
+                  logged during watcher operation.
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {auditLog.events.map((event, i) => (
+                    <TimelineEvent
+                      key={`${event.timestamp}-${i}`}
+                      event={event}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {auditLog.pagination.has_more && (
+                <div className="mt-4 text-center">
+                  <button
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+                    onClick={() => setLimit(limit + 50)}
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Data Sources Tab */}
+        {!loading && activeTab === "sources" && dataSources && (
+          <div className="space-y-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-2">
+                Data Directory
+              </h3>
+              <p className="font-mono text-gray-400 text-sm mb-4">
+                {dataSources.data_dir}
+              </p>
+              <p className="text-gray-500 text-sm">
+                Last checked: {new Date(dataSources.timestamp).toLocaleString()}
               </p>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Edge Cases Tab */}
-      {!loading && activeTab === "edge-cases" && edgeCases && (
-        <div className="space-y-4">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-white mb-2">
-              Known Edge Cases & Behaviors
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Understanding these edge cases helps debug unexpected behavior and
-              explains how AgentWatch handles various scenarios.
-            </p>
-          </div>
+            {/* Hook Data */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Hook Data (Real-time from Claude Code)
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.hooks).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
 
-          <div className="bg-gray-800 rounded-lg p-4 space-y-3">
-            {Object.entries(edgeCases.edge_cases).map(([id, edgeCase]) => (
-              <EdgeCaseCard key={id} edgeCase={edgeCase} />
-            ))}
+            {/* Enrichments */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Enrichments (Computed at Session End)
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.enrichments).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Local Transcripts */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Local Transcripts (Discovered from Filesystem)
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.local_transcripts).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Metadata */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Metadata (User-Defined Names & Notes)
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.metadata).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Process & Logs */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Process Logs & Session Logs
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.processes).map(
+                  ([key, info]) => (
+                    <DataSourceCard
+                      key={key}
+                      name={`processes/${key}`}
+                      info={info}
+                    />
+                  )
+                )}
+                {Object.entries(dataSources.sources.logs).map(([key, info]) => (
+                  <DataSourceCard key={key} name={`logs/${key}`} info={info} />
+                ))}
+              </div>
+            </div>
+
+            {/* Config */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Configuration
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.config).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Contributor */}
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-3">
+                Contributor Settings
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(dataSources.sources.contributor).map(
+                  ([key, info]) => (
+                    <DataSourceCard key={key} name={key} info={info} />
+                  )
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Calculations Tab */}
+        {!loading && activeTab === "calculations" && calculations && (
+          <div className="space-y-6">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-bold text-white mb-2">
+                Quality Score Logic
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                {calculations.quality_score.description}
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-gray-700 rounded p-3">
+                  <h4 className="font-medium text-gray-200 mb-2">
+                    Dimension Weights
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    {Object.entries(
+                      calculations.quality_score.dimension_weights
+                    ).map(([dim, weight]) => (
+                      <div key={dim} className="flex justify-between">
+                        <span className="text-gray-400 capitalize">
+                          {dim.replace(/([A-Z])/g, " $1")}
+                        </span>
+                        <span className="text-white font-mono">{weight}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-700 rounded p-3">
+                  <h4 className="font-medium text-gray-200 mb-2">
+                    Signal Weights
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    {Object.entries(
+                      calculations.quality_score.signal_weights
+                    ).map(([signal, weight]) => (
+                      <div key={signal} className="flex justify-between">
+                        <span className="text-gray-400 capitalize">
+                          {signal.replace(/([A-Z])/g, " $1")}
+                        </span>
+                        <span className="text-white font-mono">{weight}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid md:grid-cols-2 gap-4">
+                <div className="bg-gray-700 rounded p-3">
+                  <h4 className="font-medium text-gray-200 mb-2">
+                    Scoring Rules
+                  </h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-400">
+                    {calculations.quality_score.scoring_rules.map((rule, i) => (
+                      <li key={i}>{rule}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-gray-700 rounded p-3">
+                  <h4 className="font-medium text-red-300 mb-2">Penalties</h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-400">
+                    {calculations.quality_score.penalties.map((rule, i) => (
+                      <li key={i}>{rule}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-bold text-white mb-2">
+                Cost Estimation Logic
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                {calculations.cost_estimation.description}
+              </p>
+
+              <div className="bg-gray-700 rounded p-3 mb-4">
+                <h4 className="font-medium text-gray-200 mb-2">
+                  Pricing Table (USD per Million Tokens)
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-gray-500 border-b border-gray-600">
+                      <tr>
+                        <th className="py-1">Model</th>
+                        <th className="py-1 text-right">Input</th>
+                        <th className="py-1 text-right">Output</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-300">
+                      {Object.entries(
+                        calculations.cost_estimation.pricing_table
+                      ).map(([model, pricing]) => (
+                        <tr key={model} className="border-b border-gray-600/50">
+                          <td className="py-1 font-mono">{model}</td>
+                          <td className="py-1 text-right">
+                            ${pricing.inputPerMillion}
+                          </td>
+                          <td className="py-1 text-right">
+                            ${pricing.outputPerMillion}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="bg-gray-700 rounded p-3">
+                <h4 className="font-medium text-gray-200 mb-2">Formulas</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-400 font-mono">
+                  {calculations.cost_estimation.formulas.map((formula, i) => (
+                    <li key={i}>{formula}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-yellow-500/80 italic">
+                  {calculations.cost_estimation.disclaimer}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edge Cases Tab */}
+        {!loading && activeTab === "edge-cases" && edgeCases && (
+          <div className="space-y-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-2">
+                Known Edge Cases & Behaviors
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Understanding these edge cases helps debug unexpected behavior
+                and explains how AgentWatch handles various scenarios.
+              </p>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              {Object.entries(edgeCases.edge_cases).map(([id, edgeCase]) => (
+                <EdgeCaseCard key={id} edgeCase={edgeCase} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </SelfDocumentingSection>
   );
 }

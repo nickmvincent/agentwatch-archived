@@ -7,6 +7,10 @@
 
 import { useEffect, useState } from "react";
 import { HelpIcon } from "../HelpText";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "../SelfDocumentingSection";
 
 export interface AIPreferenceWizardProps {
   value: string;
@@ -123,6 +127,7 @@ export function AIPreferenceWizard({
 }: AIPreferenceWizardProps) {
   const [advancedMode, setAdvancedMode] = useState(false);
   const [parsed, setParsed] = useState(() => parsePreference(value));
+  const showSelfDocs = useSelfDocumentingVisible();
 
   // Sync parsed state when value changes externally
   useEffect(() => {
@@ -161,124 +166,137 @@ export function AIPreferenceWizard({
   };
 
   return (
-    <div className="p-2 bg-gray-900/50 rounded space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-medium text-gray-300 flex items-center gap-1">
-          AI Training Preference
-          <HelpIcon tooltip="Choose how your data can be used for AI/ML purposes. This preference is embedded in your contribution and follows the W3C TDM Repertoire standard." />
-        </div>
-        <button
-          onClick={() => setAdvancedMode(!advancedMode)}
-          className="text-[10px] text-gray-500 hover:text-gray-300"
-        >
-          {advancedMode ? "Simple" : "Advanced"}
-        </button>
-      </div>
-
-      {!advancedMode ? (
-        // Simple mode: 5 presets
-        <div className="grid grid-cols-5 gap-1">
-          {PRESETS.map((preset) => (
-            <button
-              key={preset.value}
-              onClick={() => handlePresetClick(preset.value)}
-              title={preset.description}
-              className={`p-1.5 rounded text-center text-xs transition-colors ${
-                value === preset.value
-                  ? colorClasses[preset.color]
-                  : "bg-gray-800 border border-gray-700 text-gray-400 hover:border-gray-500"
-              } border`}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        // Advanced mode: customization wizard
-        <div className="space-y-3">
-          {/* Base permission */}
-          <div>
-            <div className="text-[10px] text-gray-500 mb-1">
-              Base Permission
-            </div>
-            <div className="flex gap-1">
-              {(["ok", "conditional", "no"] as const).map((base) => (
-                <button
-                  key={base}
-                  onClick={() => handleAdvancedChange({ ...parsed, base })}
-                  className={`px-2 py-1 text-xs rounded ${
-                    parsed.base === base
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-400 hover:bg-gray-600"
-                  }`}
-                >
-                  {base === "ok"
-                    ? "Allow"
-                    : base === "conditional"
-                      ? "Conditional"
-                      : "Deny"}
-                </button>
-              ))}
-            </div>
+    <SelfDocumentingSection
+      title="AI preference"
+      componentId="static.share.ai-preference-wizard"
+      calculations={["Parse and build W3C TDM preference strings"]}
+      notes={[
+        "Supports preset and advanced modes.",
+        "Advanced mode toggles conditions and attribution."
+      ]}
+      visible={showSelfDocs}
+    >
+      <div className="p-2 bg-gray-900/50 rounded space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-medium text-gray-300 flex items-center gap-1">
+            AI Training Preference
+            <HelpIcon tooltip="Choose how your data can be used for AI/ML purposes. This preference is embedded in your contribution and follows the W3C TDM Repertoire standard." />
           </div>
+          <button
+            onClick={() => setAdvancedMode(!advancedMode)}
+            className="text-[10px] text-gray-500 hover:text-gray-300"
+          >
+            {advancedMode ? "Simple" : "Advanced"}
+          </button>
+        </div>
 
-          {/* Conditions (only if conditional or ok) */}
-          {parsed.base !== "no" && (
+        {!advancedMode ? (
+          // Simple mode: 5 presets
+          <div className="grid grid-cols-5 gap-1">
+            {PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handlePresetClick(preset.value)}
+                title={preset.description}
+                className={`p-1.5 rounded text-center text-xs transition-colors ${
+                  value === preset.value
+                    ? colorClasses[preset.color]
+                    : "bg-gray-800 border border-gray-700 text-gray-400 hover:border-gray-500"
+                } border`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          // Advanced mode: customization wizard
+          <div className="space-y-3">
+            {/* Base permission */}
             <div>
-              <div className="text-[10px] text-gray-500 mb-1">Conditions</div>
-              <div className="flex flex-wrap gap-1">
-                {[
-                  { id: "open-weights-only", label: "Open Weights" },
-                  { id: "research-only", label: "Research Only" },
-                  { id: "eval-only", label: "Eval Only" },
-                  { id: "no-synthetic", label: "No Synthetic" }
-                ].map(({ id, label }) => (
+              <div className="text-[10px] text-gray-500 mb-1">
+                Base Permission
+              </div>
+              <div className="flex gap-1">
+                {(["ok", "conditional", "no"] as const).map((base) => (
                   <button
-                    key={id}
-                    onClick={() => toggleCondition(id)}
-                    className={`px-1.5 py-0.5 text-xs rounded ${
-                      parsed.conditions.includes(id)
-                        ? "bg-purple-600 text-white"
+                    key={base}
+                    onClick={() => handleAdvancedChange({ ...parsed, base })}
+                    className={`px-2 py-1 text-xs rounded ${
+                      parsed.base === base
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-700 text-gray-400 hover:bg-gray-600"
                     }`}
                   >
-                    {label}
+                    {base === "ok"
+                      ? "Allow"
+                      : base === "conditional"
+                        ? "Conditional"
+                        : "Deny"}
                   </button>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Attribution */}
-          <div>
-            <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={parsed.attribution}
-                onChange={(e) =>
-                  handleAdvancedChange({
-                    ...parsed,
-                    attribution: e.target.checked
-                  })
-                }
-                className="rounded"
-              />
-              Require attribution
-            </label>
-          </div>
+            {/* Conditions (only if conditional or ok) */}
+            {parsed.base !== "no" && (
+              <div>
+                <div className="text-[10px] text-gray-500 mb-1">Conditions</div>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { id: "open-weights-only", label: "Open Weights" },
+                    { id: "research-only", label: "Research Only" },
+                    { id: "eval-only", label: "Eval Only" },
+                    { id: "no-synthetic", label: "No Synthetic" }
+                  ].map(({ id, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => toggleCondition(id)}
+                      className={`px-1.5 py-0.5 text-xs rounded ${
+                        parsed.conditions.includes(id)
+                          ? "bg-purple-600 text-white"
+                          : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          {/* Raw value display */}
-          <div className="p-1.5 bg-gray-800 rounded">
-            <div className="text-[10px] text-gray-500 mb-0.5">Signal</div>
-            <code className="text-[10px] text-gray-400 break-all">{value}</code>
+            {/* Attribution */}
+            <div>
+              <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={parsed.attribution}
+                  onChange={(e) =>
+                    handleAdvancedChange({
+                      ...parsed,
+                      attribution: e.target.checked
+                    })
+                  }
+                  className="rounded"
+                />
+                Require attribution
+              </label>
+            </div>
+
+            {/* Raw value display */}
+            <div className="p-1.5 bg-gray-800 rounded">
+              <div className="text-[10px] text-gray-500 mb-0.5">Signal</div>
+              <code className="text-[10px] text-gray-400 break-all">
+                {value}
+              </code>
+            </div>
           </div>
+        )}
+
+        {/* Description of current selection */}
+        <div className="text-[10px] text-gray-500">
+          {matchedPreset?.description || "Custom preference configuration"}
         </div>
-      )}
-
-      {/* Description of current selection */}
-      <div className="text-[10px] text-gray-500">
-        {matchedPreset?.description || "Custom preference configuration"}
       </div>
-    </div>
+    </SelfDocumentingSection>
   );
 }

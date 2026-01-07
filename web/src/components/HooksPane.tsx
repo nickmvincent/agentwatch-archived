@@ -13,6 +13,10 @@ import type {
 } from "../api/types";
 import { useData } from "../context/DataProvider";
 import { HOOK_DESCRIPTIONS, HookTypeInfo } from "./ui/InfoTooltip";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 interface SessionTokens {
   inputTokens: number;
@@ -51,6 +55,7 @@ export function HooksPane({
   sessionTokens
 }: HooksPaneProps) {
   const { getConfig } = useData();
+  const showSelfDocs = useSelfDocumentingVisible();
   const [toolStats, setToolStats] = useState<ToolStats[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [showHistorical, setShowHistorical] = useState(false);
@@ -253,331 +258,371 @@ export function HooksPane({
     })
     .slice(0, 10);
 
-  return (
-    <div className="space-y-4">
-      {/* LIVE SESSION */}
-      <div className="bg-gray-800 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <h2 className="text-lg font-semibold text-white">Live Session</h2>
-          <span className="text-xs text-gray-500">Real-time from watcher</span>
-        </div>
+  const selfDocs = {
+    title: "Hooks",
+    componentId: "watcher.hooks.pane",
+    reads: [
+      {
+        path: "GET /api/hooks/sessions",
+        description: "Hook session snapshots"
+      },
+      {
+        path: "GET /api/hooks/tools/stats",
+        description: "Aggregated tool usage stats"
+      },
+      {
+        path: "GET /api/hooks/stats/daily",
+        description: "Daily hook statistics"
+      },
+      {
+        path: "GET /api/hook-enhancements",
+        description: "Enhancements configuration"
+      },
+      { path: "GET /api/cost/status", description: "Cost control status" },
+      { path: "GET /api/rules", description: "Automation rules list" },
+      {
+        path: "GET /api/notifications/providers",
+        description: "Notification provider status"
+      }
+    ],
+    notes: [
+      "Live sections rely on in-memory watcher state.",
+      "Historical stats are read from persisted logs."
+    ]
+  };
 
-        {/* Info banner */}
-        <details className="mb-4 text-xs text-gray-400">
-          <summary className="cursor-pointer hover:text-gray-300">
-            ℹ️ About this data
-          </summary>
-          <div className="mt-2 p-3 bg-gray-700/50 rounded space-y-3">
-            <div className="space-y-1">
-              <p>
-                <strong>Source:</strong> Claude Code hooks
-              </p>
-              <p>
-                <strong>Requirements:</strong> Install agentwatch hooks via{" "}
-                <code className="bg-gray-800 px-1 rounded">
-                  aw hooks install
-                </code>
-              </p>
-              <p>
-                <strong>Persistent logs:</strong>{" "}
-                <code className="bg-gray-800 px-1 rounded">
-                  ~/.agentwatch/hooks/
-                </code>
-              </p>
+  return (
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="space-y-4">
+        {/* LIVE SESSION */}
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <h2 className="text-lg font-semibold text-white">Live Session</h2>
+            <span className="text-xs text-gray-500">
+              Real-time from watcher
+            </span>
+          </div>
+
+          {/* Info banner */}
+          <details className="mb-4 text-xs text-gray-400">
+            <summary className="cursor-pointer hover:text-gray-300">
+              ℹ️ About this data
+            </summary>
+            <div className="mt-2 p-3 bg-gray-700/50 rounded space-y-3">
+              <div className="space-y-1">
+                <p>
+                  <strong>Source:</strong> Claude Code hooks
+                </p>
+                <p>
+                  <strong>Requirements:</strong> Install agentwatch hooks via{" "}
+                  <code className="bg-gray-800 px-1 rounded">
+                    aw hooks install
+                  </code>
+                </p>
+                <p>
+                  <strong>Persistent logs:</strong>{" "}
+                  <code className="bg-gray-800 px-1 rounded">
+                    ~/.agentwatch/hooks/
+                  </code>
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-300 mb-2">Hook Types:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {Object.entries(HOOK_DESCRIPTIONS).map(([type, info]) => (
+                    <div
+                      key={type}
+                      className="flex items-start gap-2 p-1.5 bg-gray-800/50 rounded"
+                    >
+                      <span className="text-blue-400 font-mono text-[11px] shrink-0 w-24">
+                        {type}
+                      </span>
+                      <span className="text-gray-400 text-[11px]">
+                        {info.summary}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-gray-300 mb-2">Hook Types:</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {Object.entries(HOOK_DESCRIPTIONS).map(([type, info]) => (
+          </details>
+
+          {/* Active Sessions */}
+          {activeSessions.length > 0 && (
+            <div className="mb-4 p-3 bg-green-900/20 border border-green-800 rounded">
+              <div className="text-green-400 text-sm font-medium mb-2">
+                {activeSessions.length} Active Session
+                {activeSessions.length > 1 ? "s" : ""}
+              </div>
+              <div className="space-y-1">
+                {activeSessions.map((s) => (
                   <div
-                    key={type}
-                    className="flex items-start gap-2 p-1.5 bg-gray-800/50 rounded"
+                    key={s.session_id}
+                    className="text-xs text-gray-400 flex items-center gap-2"
                   >
-                    <span className="text-blue-400 font-mono text-[11px] shrink-0 w-24">
-                      {type}
+                    <span className="font-mono truncate max-w-[200px]">
+                      {s.cwd.split("/").slice(-2).join("/")}
                     </span>
-                    <span className="text-gray-400 text-[11px]">
-                      {info.summary}
+                    <span>·</span>
+                    <span>{s.tool_count} tools</span>
+                    {s.total_input_tokens !== undefined &&
+                      s.total_input_tokens > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-cyan-400">
+                            {formatTokens(s.total_input_tokens)}/
+                            {formatTokens(s.total_output_tokens || 0)} tok
+                            {s.estimated_cost_usd !== undefined &&
+                              s.estimated_cost_usd > 0 && (
+                                <span className="ml-1 text-[10px] text-gray-500">
+                                  (~${s.estimated_cost_usd.toFixed(3)})
+                                </span>
+                              )}
+                          </span>
+                        </>
+                      )}
+                    {s.awaiting_user && (
+                      <span className="text-yellow-400">⏳ awaiting</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Sessions (inactive but from last hour) */}
+          {activeSessions.length === 0 && recentInactiveSessions.length > 0 && (
+            <div className="mb-4 p-3 bg-gray-700/30 border border-gray-600 rounded">
+              <div className="text-gray-300 text-sm font-medium mb-2">
+                Recent Sessions (last hour)
+              </div>
+              <div className="space-y-1">
+                {recentInactiveSessions.map((s) => (
+                  <div
+                    key={s.session_id}
+                    className="text-xs text-gray-400 flex items-center gap-2"
+                  >
+                    <span className="font-mono truncate max-w-[200px]">
+                      {s.cwd.split("/").slice(-2).join("/")}
+                    </span>
+                    <span>·</span>
+                    <span>{s.tool_count} tools</span>
+                    {s.total_input_tokens !== undefined &&
+                      s.total_input_tokens > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-cyan-400">
+                            {formatTokens(s.total_input_tokens)}/
+                            {formatTokens(s.total_output_tokens || 0)} tok
+                            {s.estimated_cost_usd !== undefined &&
+                              s.estimated_cost_usd > 0 && (
+                                <span className="ml-1 text-[10px] text-gray-500">
+                                  (~${s.estimated_cost_usd.toFixed(3)})
+                                </span>
+                              )}
+                          </span>
+                        </>
+                      )}
+                    <span className="text-gray-500">·</span>
+                    <span className="text-gray-500">
+                      {formatTime(s.start_time)}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </details>
+          )}
 
-        {/* Active Sessions */}
-        {activeSessions.length > 0 && (
-          <div className="mb-4 p-3 bg-green-900/20 border border-green-800 rounded">
-            <div className="text-green-400 text-sm font-medium mb-2">
-              {activeSessions.length} Active Session
-              {activeSessions.length > 1 ? "s" : ""}
-            </div>
-            <div className="space-y-1">
-              {activeSessions.map((s) => (
-                <div
-                  key={s.session_id}
-                  className="text-xs text-gray-400 flex items-center gap-2"
-                >
-                  <span className="font-mono truncate max-w-[200px]">
-                    {s.cwd.split("/").slice(-2).join("/")}
-                  </span>
-                  <span>·</span>
-                  <span>{s.tool_count} tools</span>
-                  {s.total_input_tokens !== undefined &&
-                    s.total_input_tokens > 0 && (
-                      <>
-                        <span>·</span>
-                        <span className="text-cyan-400">
-                          {formatTokens(s.total_input_tokens)}/
-                          {formatTokens(s.total_output_tokens || 0)} tok
-                          {s.estimated_cost_usd !== undefined &&
-                            s.estimated_cost_usd > 0 && (
-                              <span className="ml-1 text-[10px] text-gray-500">
-                                (~${s.estimated_cost_usd.toFixed(3)})
-                              </span>
-                            )}
-                        </span>
-                      </>
-                    )}
-                  {s.awaiting_user && (
-                    <span className="text-yellow-400">⏳ awaiting</span>
-                  )}
+          {/* No activity message */}
+          {activeSessions.length === 0 &&
+            recentInactiveSessions.length === 0 &&
+            hookSessions.length === 0 && (
+              <div className="mb-4 p-3 bg-gray-700/30 border border-gray-600 rounded text-center">
+                <div className="text-gray-400 text-sm">
+                  No hook sessions detected
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent Sessions (inactive but from last hour) */}
-        {activeSessions.length === 0 && recentInactiveSessions.length > 0 && (
-          <div className="mb-4 p-3 bg-gray-700/30 border border-gray-600 rounded">
-            <div className="text-gray-300 text-sm font-medium mb-2">
-              Recent Sessions (last hour)
-            </div>
-            <div className="space-y-1">
-              {recentInactiveSessions.map((s) => (
-                <div
-                  key={s.session_id}
-                  className="text-xs text-gray-400 flex items-center gap-2"
-                >
-                  <span className="font-mono truncate max-w-[200px]">
-                    {s.cwd.split("/").slice(-2).join("/")}
-                  </span>
-                  <span>·</span>
-                  <span>{s.tool_count} tools</span>
-                  {s.total_input_tokens !== undefined &&
-                    s.total_input_tokens > 0 && (
-                      <>
-                        <span>·</span>
-                        <span className="text-cyan-400">
-                          {formatTokens(s.total_input_tokens)}/
-                          {formatTokens(s.total_output_tokens || 0)} tok
-                          {s.estimated_cost_usd !== undefined &&
-                            s.estimated_cost_usd > 0 && (
-                              <span className="ml-1 text-[10px] text-gray-500">
-                                (~${s.estimated_cost_usd.toFixed(3)})
-                              </span>
-                            )}
-                        </span>
-                      </>
-                    )}
-                  <span className="text-gray-500">·</span>
-                  <span className="text-gray-500">
-                    {formatTime(s.start_time)}
-                  </span>
+                <div className="text-gray-500 text-xs mt-1">
+                  Start a Claude Code session to see live activity here
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* No activity message */}
-        {activeSessions.length === 0 &&
-          recentInactiveSessions.length === 0 &&
-          hookSessions.length === 0 && (
-            <div className="mb-4 p-3 bg-gray-700/30 border border-gray-600 rounded text-center">
-              <div className="text-gray-400 text-sm">
-                No hook sessions detected
               </div>
-              <div className="text-gray-500 text-xs mt-1">
-                Start a Claude Code session to see live activity here
+            )}
+
+          {/* Activity Summary */}
+          <div className="mb-2 p-2 bg-gray-700/30 rounded text-xs text-gray-400">
+            <div className="flex items-center gap-2">
+              <span>📊 Live activity summary</span>
+            </div>
+            <div className="mt-1 text-[10px] text-gray-500 space-y-0.5">
+              <div>
+                • Stats show{" "}
+                <span className="text-gray-400">last hour only</span> — older
+                data is in Historical Stats below
+              </div>
+              <div>
+                • Shows up to{" "}
+                <span className="text-gray-400">500 tool calls</span> — see
+                ~/.agentwatch/hooks/ for complete logs
+              </div>
+            </div>
+          </div>
+          <div className="mb-4 grid grid-cols-5 gap-2 text-center">
+            <div className="bg-gray-700/50 p-2 rounded">
+              <div className="text-lg font-semibold text-white">
+                {activitySummary.sessions}
+              </div>
+              <div className="text-xs text-gray-400">Sessions (1h)</div>
+            </div>
+            <div className="bg-gray-700/50 p-2 rounded">
+              <div className="text-lg font-semibold text-white">
+                {activitySummary.toolCalls}
+              </div>
+              <div className="text-xs text-gray-400">Tool Calls</div>
+            </div>
+            <div
+              className={`p-2 rounded ${activitySummary.failures > 0 ? "bg-red-900/30" : "bg-gray-700/50"}`}
+            >
+              <div
+                className={`text-lg font-semibold ${activitySummary.failures > 0 ? "text-red-400" : "text-white"}`}
+              >
+                {activitySummary.failures}
+              </div>
+              <div className="text-xs text-gray-400">Failures</div>
+            </div>
+            <div className="bg-gray-700/50 p-2 rounded">
+              <div className="text-lg font-semibold text-green-400">
+                {formatTokens(
+                  activitySummary.totalInputTokens +
+                    activitySummary.totalOutputTokens
+                )}{" "}
+                tok{" "}
+                {activitySummary.totalCostUsd > 0 && (
+                  <span className="text-[10px] text-gray-500">
+                    (~${activitySummary.totalCostUsd.toFixed(2)})
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-gray-400">Tokens (1h)</div>
+            </div>
+            <div className="bg-gray-700/50 p-2 rounded">
+              <div className="text-lg font-semibold text-blue-400 truncate">
+                {activitySummary.topTool || "-"}
+              </div>
+              <div className="text-xs text-gray-400">Top Tool</div>
+            </div>
+          </div>
+
+          {/* Token Usage */}
+          <TokenSummary sessionTokens={sessionTokens} />
+
+          {/* Activity Feed - Pure chronological timeline of all hooks */}
+          <ActivityFeed
+            events={activityEvents}
+            formatTime={formatTime}
+            recentToolUsages={recentToolUsages}
+            sessionMap={sessionMap}
+          />
+        </div>
+
+        {/* HISTORICAL STATS */}
+        <div className="bg-gray-800 rounded-lg p-4">
+          <button
+            onClick={() => setShowHistorical(!showHistorical)}
+            className="flex items-center gap-2 w-full text-left"
+          >
+            <span className="text-gray-500">{showHistorical ? "▼" : "▶"}</span>
+            <h2 className="text-lg font-semibold text-gray-400">
+              Historical Stats
+            </h2>
+            <span className="text-xs text-gray-600">
+              From persisted logs (~/.agentwatch/hooks/)
+            </span>
+          </button>
+
+          {showHistorical && (
+            <div className="mt-4 space-y-6">
+              {/* Tool Stats */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-300 mb-3">
+                  Tool Usage (All Time)
+                </h3>
+                <ToolStatsView
+                  toolStats={toolStats}
+                  formatDuration={formatDuration}
+                />
+              </div>
+
+              {/* Daily Chart */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-300 mb-3">
+                  Activity Chart (14 Days)
+                </h3>
+                <DailyStatsView dailyStats={dailyStats} />
               </div>
             </div>
           )}
-
-        {/* Activity Summary */}
-        <div className="mb-2 p-2 bg-gray-700/30 rounded text-xs text-gray-400">
-          <div className="flex items-center gap-2">
-            <span>📊 Live activity summary</span>
-          </div>
-          <div className="mt-1 text-[10px] text-gray-500 space-y-0.5">
-            <div>
-              • Stats show <span className="text-gray-400">last hour only</span>{" "}
-              — older data is in Historical Stats below
-            </div>
-            <div>
-              • Shows up to{" "}
-              <span className="text-gray-400">500 tool calls</span> — see
-              ~/.agentwatch/hooks/ for complete logs
-            </div>
-          </div>
         </div>
-        <div className="mb-4 grid grid-cols-5 gap-2 text-center">
-          <div className="bg-gray-700/50 p-2 rounded">
-            <div className="text-lg font-semibold text-white">
-              {activitySummary.sessions}
-            </div>
-            <div className="text-xs text-gray-400">Sessions (1h)</div>
-          </div>
-          <div className="bg-gray-700/50 p-2 rounded">
-            <div className="text-lg font-semibold text-white">
-              {activitySummary.toolCalls}
-            </div>
-            <div className="text-xs text-gray-400">Tool Calls</div>
-          </div>
-          <div
-            className={`p-2 rounded ${activitySummary.failures > 0 ? "bg-red-900/30" : "bg-gray-700/50"}`}
+
+        {/* HOOK ENHANCEMENTS */}
+        <div className="bg-gray-800 rounded-lg p-4">
+          <button
+            onClick={() => setShowEnhancements(!showEnhancements)}
+            className="flex items-center gap-2 w-full text-left"
           >
-            <div
-              className={`text-lg font-semibold ${activitySummary.failures > 0 ? "text-red-400" : "text-white"}`}
-            >
-              {activitySummary.failures}
-            </div>
-            <div className="text-xs text-gray-400">Failures</div>
-          </div>
-          <div className="bg-gray-700/50 p-2 rounded">
-            <div className="text-lg font-semibold text-green-400">
-              {formatTokens(
-                activitySummary.totalInputTokens +
-                  activitySummary.totalOutputTokens
-              )}{" "}
-              tok{" "}
-              {activitySummary.totalCostUsd > 0 && (
-                <span className="text-[10px] text-gray-500">
-                  (~${activitySummary.totalCostUsd.toFixed(2)})
-                </span>
+            <span className="text-gray-500">
+              {showEnhancements ? "▼" : "▶"}
+            </span>
+            <h2 className="text-lg font-semibold text-purple-400">
+              Hook Enhancements
+            </h2>
+            <span className="text-xs text-gray-600">
+              Advanced hook features and controls
+            </span>
+          </button>
+
+          {showEnhancements && (
+            <div className="mt-4 space-y-4">
+              {/* Configuration Overview */}
+              {enhancementsConfig && (
+                <HookEnhancementsOverview config={enhancementsConfig} />
               )}
+
+              {/* Cost Status */}
+              {costStatus && costStatus.enabled && (
+                <CostStatusView costStatus={costStatus} />
+              )}
+
+              {/* Rules Overview */}
+              {rules && rules.total > 0 && <RulesOverview rules={rules} />}
+
+              {/* Notification Providers */}
+              {notificationProviders && notificationProviders.available && (
+                <NotificationProvidersView providers={notificationProviders} />
+              )}
+
+              {/* Hook Notifications Config */}
+              {notificationsConfig && notificationsConfig.enable && (
+                <HookNotificationsView config={notificationsConfig} />
+              )}
+
+              {/* No enhancements enabled message */}
+              {enhancementsConfig &&
+                !enhancementsConfig.rules.enabled &&
+                !enhancementsConfig.cost_controls.enabled &&
+                !enhancementsConfig.stop_blocking.enabled &&
+                !enhancementsConfig.auto_permissions.enabled && (
+                  <div className="text-gray-500 text-sm text-center py-4">
+                    <p>No hook enhancements are currently enabled.</p>
+                    <p className="text-xs mt-1">
+                      Configure in ~/.config/agentwatch/config.toml
+                    </p>
+                  </div>
+                )}
             </div>
-            <div className="text-xs text-gray-400">Tokens (1h)</div>
-          </div>
-          <div className="bg-gray-700/50 p-2 rounded">
-            <div className="text-lg font-semibold text-blue-400 truncate">
-              {activitySummary.topTool || "-"}
-            </div>
-            <div className="text-xs text-gray-400">Top Tool</div>
-          </div>
+          )}
         </div>
-
-        {/* Token Usage */}
-        <TokenSummary sessionTokens={sessionTokens} />
-
-        {/* Activity Feed - Pure chronological timeline of all hooks */}
-        <ActivityFeed
-          events={activityEvents}
-          formatTime={formatTime}
-          recentToolUsages={recentToolUsages}
-          sessionMap={sessionMap}
-        />
       </div>
-
-      {/* HISTORICAL STATS */}
-      <div className="bg-gray-800 rounded-lg p-4">
-        <button
-          onClick={() => setShowHistorical(!showHistorical)}
-          className="flex items-center gap-2 w-full text-left"
-        >
-          <span className="text-gray-500">{showHistorical ? "▼" : "▶"}</span>
-          <h2 className="text-lg font-semibold text-gray-400">
-            Historical Stats
-          </h2>
-          <span className="text-xs text-gray-600">
-            From persisted logs (~/.agentwatch/hooks/)
-          </span>
-        </button>
-
-        {showHistorical && (
-          <div className="mt-4 space-y-6">
-            {/* Tool Stats */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-300 mb-3">
-                Tool Usage (All Time)
-              </h3>
-              <ToolStatsView
-                toolStats={toolStats}
-                formatDuration={formatDuration}
-              />
-            </div>
-
-            {/* Daily Chart */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-300 mb-3">
-                Activity Chart (14 Days)
-              </h3>
-              <DailyStatsView dailyStats={dailyStats} />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* HOOK ENHANCEMENTS */}
-      <div className="bg-gray-800 rounded-lg p-4">
-        <button
-          onClick={() => setShowEnhancements(!showEnhancements)}
-          className="flex items-center gap-2 w-full text-left"
-        >
-          <span className="text-gray-500">{showEnhancements ? "▼" : "▶"}</span>
-          <h2 className="text-lg font-semibold text-purple-400">
-            Hook Enhancements
-          </h2>
-          <span className="text-xs text-gray-600">
-            Advanced hook features and controls
-          </span>
-        </button>
-
-        {showEnhancements && (
-          <div className="mt-4 space-y-4">
-            {/* Configuration Overview */}
-            {enhancementsConfig && (
-              <HookEnhancementsOverview config={enhancementsConfig} />
-            )}
-
-            {/* Cost Status */}
-            {costStatus && costStatus.enabled && (
-              <CostStatusView costStatus={costStatus} />
-            )}
-
-            {/* Rules Overview */}
-            {rules && rules.total > 0 && <RulesOverview rules={rules} />}
-
-            {/* Notification Providers */}
-            {notificationProviders && notificationProviders.available && (
-              <NotificationProvidersView providers={notificationProviders} />
-            )}
-
-            {/* Hook Notifications Config */}
-            {notificationsConfig && notificationsConfig.enable && (
-              <HookNotificationsView config={notificationsConfig} />
-            )}
-
-            {/* No enhancements enabled message */}
-            {enhancementsConfig &&
-              !enhancementsConfig.rules.enabled &&
-              !enhancementsConfig.cost_controls.enabled &&
-              !enhancementsConfig.stop_blocking.enabled &&
-              !enhancementsConfig.auto_permissions.enabled && (
-                <div className="text-gray-500 text-sm text-center py-4">
-                  <p>No hook enhancements are currently enabled.</p>
-                  <p className="text-xs mt-1">
-                    Configure in ~/.config/agentwatch/config.toml
-                  </p>
-                </div>
-              )}
-          </div>
-        )}
-      </div>
-    </div>
+    </SelfDocumentingSection>
   );
 }
 

@@ -178,7 +178,10 @@ export class SessionStore {
    * - They have a PID that's not in the live PIDs set, OR
    * - They have no PID and are older than staleThresholdMs (default 1 hour)
    */
-  markStaleSessions(livePids: Set<number>, staleThresholdMs = 3600000): string[] {
+  markStaleSessions(
+    livePids: Set<number>,
+    staleThresholdMs = 3600000
+  ): string[] {
     const ended: string[] = [];
     const now = Date.now();
 

@@ -420,46 +420,46 @@ export function ContribPane({ onNavigateToTab }: ContribPaneProps) {
   return (
     <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
       <div className="bg-gray-800 rounded-lg p-4">
-      {/* Research Preview + Safety Warning Banner */}
-      <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700/50 rounded-lg space-y-2">
-        <div className="flex items-start gap-2">
-          <span className="text-amber-400 text-lg">&#x26A0;</span>
-          <div>
-            <div className="text-sm font-medium text-amber-300">
-              Research Preview
+        {/* Research Preview + Safety Warning Banner */}
+        <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700/50 rounded-lg space-y-2">
+          <div className="flex items-start gap-2">
+            <span className="text-amber-400 text-lg">&#x26A0;</span>
+            <div>
+              <div className="text-sm font-medium text-amber-300">
+                Research Preview
+              </div>
+              <p className="text-xs text-amber-200/70 mt-0.5">
+                This feature is in active development. Sharing formats and
+                destinations may change.
+              </p>
             </div>
-            <p className="text-xs text-amber-200/70 mt-0.5">
-              This feature is in active development. Sharing formats and
-              destinations may change.
-            </p>
+          </div>
+          <div className="text-xs text-amber-200/60 pl-6 border-l-2 border-amber-700/50 ml-2">
+            <strong className="text-amber-300">
+              Sharing transcripts carries risk.
+            </strong>{" "}
+            Coding agent transcripts may contain sensitive information including
+            API keys, file paths, internal code, and personal data. Review your
+            redaction settings and preview carefully before sharing.
           </div>
         </div>
-        <div className="text-xs text-amber-200/60 pl-6 border-l-2 border-amber-700/50 ml-2">
-          <strong className="text-amber-300">
-            Sharing transcripts carries risk.
-          </strong>{" "}
-          Coding agent transcripts may contain sensitive information including
-          API keys, file paths, internal code, and personal data. Review your
-          redaction settings and preview carefully before sharing.
+
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-white">Share</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Select sessions, configure redaction, preview, and export.
+          </p>
+          <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+            Redacting and stripping fields from chat transcripts can be
+            challenging - start with a small test chat first. If you set up
+            these rules now, you can re-use them in future. Sandboxing can make
+            it easier to have "safe" transcripts.
+          </p>
         </div>
-      </div>
 
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-white">Share</h2>
-        <p className="text-sm text-gray-400 mt-1">
-          Select sessions, configure redaction, preview, and export.
-        </p>
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-          Redacting and stripping fields from chat transcripts can be
-          challenging - start with a small test chat first. If you set up these
-          rules now, you can re-use them in future. Sandboxing can make it
-          easier to have "safe" transcripts.
-        </p>
-      </div>
+        <MyDataSection />
 
-      <MyDataSection />
-
-      <UnifiedShareFlow onNavigateToTab={onNavigateToTab} />
+        <UnifiedShareFlow onNavigateToTab={onNavigateToTab} />
       </div>
     </SelfDocumentingSection>
   );

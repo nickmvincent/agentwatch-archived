@@ -9,6 +9,10 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // Field categories for visual styling
 const ESSENTIAL_FIELDS = new Set([
@@ -386,6 +390,20 @@ export function FieldTree({
   onSelectProfile,
   onSaveAsProfile
 }: FieldTreeProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Field selection",
+    componentId: "analyzer.share.field-tree",
+    calculations: [
+      "Tree construction from dot-path fields",
+      "Tri-state selection for parent nodes",
+      "Sensitive/content-heavy field classification"
+    ],
+    notes: [
+      "Essential fields cannot be removed.",
+      "Profiles apply pre-built field selections."
+    ]
+  };
   const [expandedSources, setExpandedSources] = useState<Set<string>>(
     new Set(["cc_hook", "cc_transcript"])
   );
@@ -436,12 +454,14 @@ export function FieldTree({
 
   if (!fieldsBySource || Object.keys(fieldsBySource).length === 0) {
     return (
-      <div className="p-3 bg-gray-900/50 rounded">
-        <div className="text-sm font-medium text-gray-300 mb-2">Fields</div>
-        <div className="text-xs text-gray-500">
-          Select sessions to see available fields
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="p-3 bg-gray-900/50 rounded">
+          <div className="text-sm font-medium text-gray-300 mb-2">Fields</div>
+          <div className="text-xs text-gray-500">
+            Select sessions to see available fields
+          </div>
         </div>
-      </div>
+      </SelfDocumentingSection>
     );
   }
 
@@ -455,176 +475,178 @@ export function FieldTree({
   );
 
   return (
-    <div className="p-3 bg-gray-900/50 rounded">
-      {/* Header with profile selector */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium text-gray-300">
-          Fields ({totalSelected}/{totalFields})
-        </div>
-        <div className="flex gap-1">
-          {/* Profile dropdown */}
-          {profiles && profiles.length > 0 && onSelectProfile && (
-            <select
-              value={activeProfileId || ""}
-              onChange={(e) => onSelectProfile(e.target.value)}
-              className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-            >
-              <option value="" disabled>
-                Select profile...
-              </option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.isDefault ? " (default)" : ""}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            onClick={onSelectAll}
-            className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-            title="Select all fields"
-          >
-            All
-          </button>
-          <button
-            onClick={onSelectNone}
-            className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-            title="Keep only essential fields"
-          >
-            Essential
-          </button>
-          {onSaveAsProfile && (
-            <button
-              onClick={onSaveAsProfile}
-              className="px-2 py-0.5 text-xs bg-blue-700 text-white rounded hover:bg-blue-600"
-              title="Save current selection as a profile"
-            >
-              Save
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Source type sections */}
-      <div className="space-y-2 max-h-[350px] overflow-y-auto">
-        {Object.entries(trees).map(([source, tree]) => {
-          const counts = sourceCounts[source];
-          const isExpanded = expandedSources.has(source);
-          const label = SOURCE_TYPE_LABELS[source] || source;
-
-          return (
-            <div
-              key={source}
-              className="border border-gray-700 rounded overflow-hidden"
-            >
-              <button
-                onClick={() => toggleSource(source)}
-                className="w-full px-2 py-1.5 bg-gray-800 flex items-center justify-between hover:bg-gray-750 text-left"
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="p-3 bg-gray-900/50 rounded">
+        {/* Header with profile selector */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm font-medium text-gray-300">
+            Fields ({totalSelected}/{totalFields})
+          </div>
+          <div className="flex gap-1">
+            {/* Profile dropdown */}
+            {profiles && profiles.length > 0 && onSelectProfile && (
+              <select
+                value={activeProfileId || ""}
+                onChange={(e) => onSelectProfile(e.target.value)}
+                className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      source.includes("hook")
-                        ? "bg-green-500"
-                        : source.includes("claude") || source.includes("cc_")
-                          ? "bg-purple-500"
-                          : source.includes("codex")
-                            ? "bg-blue-500"
-                            : "bg-gray-500"
-                    }`}
-                  />
-                  <span className="text-xs font-medium text-gray-300">
-                    {label}
-                  </span>
-                  <span className="text-[10px] text-gray-500">
-                    ({counts?.selected || 0}/{counts?.total || 0})
-                  </span>
-                </div>
-                <span className="text-gray-500 text-xs">
-                  {isExpanded ? "▼" : "▶"}
-                </span>
+                <option value="" disabled>
+                  Select profile...
+                </option>
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.isDefault ? " (default)" : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={onSelectAll}
+              className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+              title="Select all fields"
+            >
+              All
+            </button>
+            <button
+              onClick={onSelectNone}
+              className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+              title="Keep only essential fields"
+            >
+              Essential
+            </button>
+            {onSaveAsProfile && (
+              <button
+                onClick={onSaveAsProfile}
+                className="px-2 py-0.5 text-xs bg-blue-700 text-white rounded hover:bg-blue-600"
+                title="Save current selection as a profile"
+              >
+                Save
               </button>
-
-              {isExpanded && (
-                <div className="bg-gray-900/50 py-1">
-                  {Array.from(tree.children.values()).map((child) => (
-                    <TreeNodeComponent
-                      key={child.path}
-                      node={child}
-                      selectedFields={selectedFields}
-                      onToggleField={onToggleField}
-                      getFieldThreatInfo={getFieldThreatInfo}
-                      depth={1}
-                      expandedPaths={expandedPaths}
-                      onToggleExpand={toggleExpand}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="mt-2 pt-2 border-t border-gray-700 flex flex-wrap gap-3 text-[10px] text-gray-500">
-        <span className="flex items-center gap-1">
-          <span className="px-1 bg-green-900/50 text-green-300 rounded">
-            REQ
-          </span>
-          Essential
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="px-1 bg-orange-900/50 text-orange-300 rounded">
-            CONTENT
-          </span>
-          Large content
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="px-1 bg-yellow-900/50 text-yellow-300 rounded">
-            SENSITIVE
-          </span>
-          May contain PII
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="text-blue-400">☑</span>
-          Selected
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="text-blue-400/50">◧</span>
-          Partial
-        </span>
-      </div>
-
-      {/* Help */}
-      <details className="mt-2">
-        <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
-          How field selection works
-        </summary>
-        <div className="mt-2 p-2 bg-gray-800 rounded text-xs text-gray-400 space-y-1">
-          <div>
-            Click parent nodes to toggle all children. Click individual fields
-            to toggle them.
-          </div>
-          <div>
-            <span className="text-orange-400">CONTENT</span> fields contain file
-            contents, command outputs, or large data.
-          </div>
-          <div>
-            <span className="text-yellow-400">SENSITIVE</span> fields may
-            contain paths with usernames or other PII.
-          </div>
-          <div>
-            <span className="text-green-400">REQ</span> fields are essential and
-            cannot be removed.
-          </div>
-          <div className="pt-1 border-t border-gray-700">
-            Use profiles to quickly apply common configurations. "Safe Default"
-            excludes content-heavy fields.
+            )}
           </div>
         </div>
-      </details>
-    </div>
+
+        {/* Source type sections */}
+        <div className="space-y-2 max-h-[350px] overflow-y-auto">
+          {Object.entries(trees).map(([source, tree]) => {
+            const counts = sourceCounts[source];
+            const isExpanded = expandedSources.has(source);
+            const label = SOURCE_TYPE_LABELS[source] || source;
+
+            return (
+              <div
+                key={source}
+                className="border border-gray-700 rounded overflow-hidden"
+              >
+                <button
+                  onClick={() => toggleSource(source)}
+                  className="w-full px-2 py-1.5 bg-gray-800 flex items-center justify-between hover:bg-gray-750 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        source.includes("hook")
+                          ? "bg-green-500"
+                          : source.includes("claude") || source.includes("cc_")
+                            ? "bg-purple-500"
+                            : source.includes("codex")
+                              ? "bg-blue-500"
+                              : "bg-gray-500"
+                      }`}
+                    />
+                    <span className="text-xs font-medium text-gray-300">
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-gray-500">
+                      ({counts?.selected || 0}/{counts?.total || 0})
+                    </span>
+                  </div>
+                  <span className="text-gray-500 text-xs">
+                    {isExpanded ? "▼" : "▶"}
+                  </span>
+                </button>
+
+                {isExpanded && (
+                  <div className="bg-gray-900/50 py-1">
+                    {Array.from(tree.children.values()).map((child) => (
+                      <TreeNodeComponent
+                        key={child.path}
+                        node={child}
+                        selectedFields={selectedFields}
+                        onToggleField={onToggleField}
+                        getFieldThreatInfo={getFieldThreatInfo}
+                        depth={1}
+                        expandedPaths={expandedPaths}
+                        onToggleExpand={toggleExpand}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="mt-2 pt-2 border-t border-gray-700 flex flex-wrap gap-3 text-[10px] text-gray-500">
+          <span className="flex items-center gap-1">
+            <span className="px-1 bg-green-900/50 text-green-300 rounded">
+              REQ
+            </span>
+            Essential
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="px-1 bg-orange-900/50 text-orange-300 rounded">
+              CONTENT
+            </span>
+            Large content
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="px-1 bg-yellow-900/50 text-yellow-300 rounded">
+              SENSITIVE
+            </span>
+            May contain PII
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-blue-400">☑</span>
+            Selected
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-blue-400/50">◧</span>
+            Partial
+          </span>
+        </div>
+
+        {/* Help */}
+        <details className="mt-2">
+          <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
+            How field selection works
+          </summary>
+          <div className="mt-2 p-2 bg-gray-800 rounded text-xs text-gray-400 space-y-1">
+            <div>
+              Click parent nodes to toggle all children. Click individual fields
+              to toggle them.
+            </div>
+            <div>
+              <span className="text-orange-400">CONTENT</span> fields contain
+              file contents, command outputs, or large data.
+            </div>
+            <div>
+              <span className="text-yellow-400">SENSITIVE</span> fields may
+              contain paths with usernames or other PII.
+            </div>
+            <div>
+              <span className="text-green-400">REQ</span> fields are essential
+              and cannot be removed.
+            </div>
+            <div className="pt-1 border-t border-gray-700">
+              Use profiles to quickly apply common configurations. "Safe
+              Default" excludes content-heavy fields.
+            </div>
+          </div>
+        </details>
+      </div>
+    </SelfDocumentingSection>
   );
 }

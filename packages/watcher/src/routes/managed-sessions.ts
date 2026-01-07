@@ -8,7 +8,11 @@
 import { execSync } from "child_process";
 import { existsSync } from "fs";
 import type { Hono } from "hono";
-import type { ManagedSession, PredictionStore, SessionStore } from "@agentwatch/monitor";
+import type {
+  ManagedSession,
+  PredictionStore,
+  SessionStore
+} from "@agentwatch/monitor";
 
 const AGENT_COMMANDS: Record<
   string,
@@ -207,7 +211,8 @@ export function registerManagedSessionRoutes(
     if (predictionStore && body.prediction) {
       predictionStore.createPrediction({
         managedSessionId: session.id,
-        predictedDurationMinutes: body.prediction.predictedDurationMinutes ?? 30,
+        predictedDurationMinutes:
+          body.prediction.predictedDurationMinutes ?? 30,
         durationConfidence: body.prediction.durationConfidence ?? "medium",
         predictedTokens: body.prediction.predictedTokens ?? 50000,
         tokenConfidence: body.prediction.tokenConfidence ?? "medium",
@@ -298,7 +303,8 @@ export function registerManagedSessionRoutes(
     if (predictionStore && body.prediction) {
       predictionStore.createPrediction({
         managedSessionId: session.id,
-        predictedDurationMinutes: body.prediction.predictedDurationMinutes ?? 30,
+        predictedDurationMinutes:
+          body.prediction.predictedDurationMinutes ?? 30,
         durationConfidence: body.prediction.durationConfidence ?? "medium",
         predictedTokens: body.prediction.predictedTokens ?? 50000,
         tokenConfidence: body.prediction.tokenConfidence ?? "medium",

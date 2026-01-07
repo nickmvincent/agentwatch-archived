@@ -4,6 +4,10 @@
  */
 
 import { useMemo } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 interface MarkdownRendererProps {
   content: string;
@@ -15,12 +19,26 @@ export function MarkdownRenderer({
   className = ""
 }: MarkdownRendererProps) {
   const html = useMemo(() => renderMarkdown(content), [content]);
+  const showSelfDocs = useSelfDocumentingVisible();
 
   return (
-    <div
-      className={`markdown-content ${className}`}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <SelfDocumentingSection
+      title="Markdown rendering"
+      componentId="analyzer.docs.markdown-renderer"
+      calculations={[
+        "Custom markdown parsing with code block preservation",
+        "HTML tag escaping for safety"
+      ]}
+      notes={[
+        "Uses dangerouslySetInnerHTML after sanitizing unsupported tags."
+      ]}
+      visible={showSelfDocs}
+    >
+      <div
+        className={`markdown-content ${className}`}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </SelfDocumentingSection>
   );
 }
 

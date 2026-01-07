@@ -5,7 +5,12 @@
  * which fans out to: audit log (persistent) + WebSocket (realtime) + memory (Activity Feed).
  */
 
-import type { AuditCategory, AuditAction, AuditSource, AuditEntry } from "../audit/types";
+import type {
+  AuditCategory,
+  AuditAction,
+  AuditSource,
+  AuditEntry
+} from "../audit/types";
 
 /**
  * A unified agentwatch event.

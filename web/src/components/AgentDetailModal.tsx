@@ -20,6 +20,10 @@ import type {
 } from "../api/types";
 import { ConversationAnnotationPanel } from "./ConversationAnnotationPanel";
 import { getProjectName } from "./ConversationCard";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 interface AgentDetailModalProps {
   agent: AgentProcess;
   hookSession: HookSession | null;
@@ -45,6 +49,44 @@ export function AgentDetailModal({
   onClose,
   onMetadataUpdate
 }: AgentDetailModalProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Agent Detail",
+    componentId: "watcher.agents.detail-modal",
+    reads: [
+      {
+        path: "GET /api/agents/:pid/metadata",
+        description: "Agent metadata for naming and annotations"
+      },
+      {
+        path: "GET /api/enrichments/:sessionId",
+        description: "Session enrichments and annotations"
+      }
+    ],
+    writes: [
+      {
+        path: "POST /api/agents/:pid/metadata",
+        description: "Persist agent metadata updates"
+      },
+      {
+        path: "POST /api/agents/:pid/signal",
+        description: "Send SIGINT/SIGTSTP/SIGCONT/SIGTERM/SIGKILL"
+      },
+      {
+        path: "POST /api/agents/:pid/kill",
+        description: "Terminate agent process"
+      },
+      {
+        path: "PATCH /api/conversation-metadata/:id",
+        description: "Persist conversation naming and notes"
+      }
+    ],
+    tests: ["packages/watcher/test/api.test.ts"],
+    notes: [
+      "Conversation context is inferred from hook sessions and transcripts.",
+      "Agent output capture is only available in wrapped mode."
+    ]
+  };
   const [tab, setTab] = useState<Tab>(hookSession ? "overview" : "output");
   const [output, setOutput] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<ToolUsage[]>(recentToolUsages);
@@ -262,838 +304,850 @@ export function AgentDetailModal({
   );
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
       <div
-        className="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+        onClick={onClose}
       >
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                agent.heuristic_state?.state === "WORKING"
-                  ? "bg-green-400"
-                  : agent.wrapper_state?.awaiting_user
-                    ? "bg-yellow-400"
-                    : "bg-gray-400"
-              }`}
-              style={
-                metadata?.color
-                  ? { backgroundColor: metadata.color }
-                  : undefined
-              }
-            />
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                {metadata?.customName || agent.label}
-                {metadata?.customName && (
-                  <span className="ml-2 text-sm text-gray-500">
-                    ({agent.label})
+        <div
+          className="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  agent.heuristic_state?.state === "WORKING"
+                    ? "bg-green-400"
+                    : agent.wrapper_state?.awaiting_user
+                      ? "bg-yellow-400"
+                      : "bg-gray-400"
+                }`}
+                style={
+                  metadata?.color
+                    ? { backgroundColor: metadata.color }
+                    : undefined
+                }
+              />
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  {metadata?.customName || agent.label}
+                  {metadata?.customName && (
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({agent.label})
+                    </span>
+                  )}
+                  <span className="ml-2 text-sm text-gray-400 font-mono">
+                    PID {agent.pid}
                   </span>
-                )}
-                <span className="ml-2 text-sm text-gray-400 font-mono">
-                  PID {agent.pid}
-                </span>
-              </h2>
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-gray-400">{agent.cwd}</p>
-                {metadata?.tags && metadata.tags.length > 0 && (
-                  <div className="flex gap-1">
-                    {metadata.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-700 px-4">
-          <button
-            onClick={() => setTab("overview")}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === "overview"
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            Overview
-          </button>
-          {agent.wrapper_state && (
-            <button
-              onClick={() => setTab("output")}
-              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-                tab === "output"
-                  ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              Output
-            </button>
-          )}
-          {hookSession && (
-            <>
-              <button
-                onClick={() => setTab("tools")}
-                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-                  tab === "tools"
-                    ? "border-blue-500 text-blue-400"
-                    : "border-transparent text-gray-400 hover:text-gray-300"
-                }`}
-              >
-                Tools ({hookSession.tool_count})
-              </button>
-              <button
-                onClick={() => setTab("timeline")}
-                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-                  tab === "timeline"
-                    ? "border-blue-500 text-blue-400"
-                    : "border-transparent text-gray-400 hover:text-gray-300"
-                }`}
-              >
-                Timeline
-              </button>
-            </>
-          )}
-          {(linkedConversation || hookSession) && (
-            <button
-              onClick={() => setTab("conversation")}
-              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-                tab === "conversation"
-                  ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-gray-400 hover:text-gray-300"
-              }`}
-            >
-              Conversation
-            </button>
-          )}
-          <button
-            onClick={() => setTab("settings")}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === "settings"
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            Settings
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-4">
-          {tab === "overview" && (
-            <div className="grid grid-cols-2 gap-6">
-              {/* Agent Info */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-                  Agent Info
-                </h3>
-                <div className="bg-gray-750 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Status</span>
-                    <span
-                      className={
-                        agent.heuristic_state?.state === "WORKING"
-                          ? "text-green-400"
-                          : agent.wrapper_state?.awaiting_user
-                            ? "text-yellow-400"
-                            : agent.heuristic_state?.state === "STALLED"
-                              ? "text-red-400"
-                              : "text-gray-300"
-                      }
-                    >
-                      {agent.wrapper_state?.awaiting_user
-                        ? "Awaiting Input"
-                        : agent.heuristic_state?.state ||
-                          agent.wrapper_state?.state ||
-                          "Unknown"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Uptime</span>
-                    <span className="text-gray-300">
-                      {formatUptime(agent.start_time)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">CPU</span>
-                    <span className="text-gray-300">
-                      {agent.cpu_pct.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Memory</span>
-                    <span className="text-gray-300">
-                      {Math.round(agent.rss_kb / 1024)}MB
-                    </span>
-                  </div>
-                  {agent.tty && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">TTY</span>
-                      <span className="text-gray-300 font-mono text-sm">
-                        {agent.tty}
-                      </span>
+                </h2>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-400">{agent.cwd}</p>
+                  {metadata?.tags && metadata.tags.length > 0 && (
+                    <div className="flex gap-1">
+                      {metadata.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white text-xl"
+            >
+              ×
+            </button>
+          </div>
 
-              {/* Hook Session Info */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-                  {hookSession ? "Hook Session" : "No Hook Session"}
-                </h3>
-                {hookSession ? (
+          {/* Tabs */}
+          <div className="flex border-b border-gray-700 px-4">
+            <button
+              onClick={() => setTab("overview")}
+              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                tab === "overview"
+                  ? "border-blue-500 text-blue-400"
+                  : "border-transparent text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              Overview
+            </button>
+            {agent.wrapper_state && (
+              <button
+                onClick={() => setTab("output")}
+                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                  tab === "output"
+                    ? "border-blue-500 text-blue-400"
+                    : "border-transparent text-gray-400 hover:text-gray-300"
+                }`}
+              >
+                Output
+              </button>
+            )}
+            {hookSession && (
+              <>
+                <button
+                  onClick={() => setTab("tools")}
+                  className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                    tab === "tools"
+                      ? "border-blue-500 text-blue-400"
+                      : "border-transparent text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  Tools ({hookSession.tool_count})
+                </button>
+                <button
+                  onClick={() => setTab("timeline")}
+                  className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                    tab === "timeline"
+                      ? "border-blue-500 text-blue-400"
+                      : "border-transparent text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  Timeline
+                </button>
+              </>
+            )}
+            {(linkedConversation || hookSession) && (
+              <button
+                onClick={() => setTab("conversation")}
+                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                  tab === "conversation"
+                    ? "border-blue-500 text-blue-400"
+                    : "border-transparent text-gray-400 hover:text-gray-300"
+                }`}
+              >
+                Conversation
+              </button>
+            )}
+            <button
+              onClick={() => setTab("settings")}
+              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                tab === "settings"
+                  ? "border-blue-500 text-blue-400"
+                  : "border-transparent text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              Settings
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-auto p-4">
+            {tab === "overview" && (
+              <div className="grid grid-cols-2 gap-6">
+                {/* Agent Info */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                    Agent Info
+                  </h3>
                   <div className="bg-gray-750 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Session ID</span>
-                      <span className="text-gray-300 font-mono text-sm">
-                        {hookSession.session_id.slice(0, 8)}
+                      <span className="text-gray-400">Status</span>
+                      <span
+                        className={
+                          agent.heuristic_state?.state === "WORKING"
+                            ? "text-green-400"
+                            : agent.wrapper_state?.awaiting_user
+                              ? "text-yellow-400"
+                              : agent.heuristic_state?.state === "STALLED"
+                                ? "text-red-400"
+                                : "text-gray-300"
+                        }
+                      >
+                        {agent.wrapper_state?.awaiting_user
+                          ? "Awaiting Input"
+                          : agent.heuristic_state?.state ||
+                            agent.wrapper_state?.state ||
+                            "Unknown"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Started</span>
+                      <span className="text-gray-400">Uptime</span>
                       <span className="text-gray-300">
-                        {formatTime(hookSession.start_time)}
+                        {formatUptime(agent.start_time)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Tool Calls</span>
+                      <span className="text-gray-400">CPU</span>
                       <span className="text-gray-300">
-                        {hookSession.tool_count}
+                        {agent.cpu_pct.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Permission</span>
+                      <span className="text-gray-400">Memory</span>
                       <span className="text-gray-300">
-                        {hookSession.permission_mode}
+                        {Math.round(agent.rss_kb / 1024)}MB
                       </span>
                     </div>
-                    {hookSession.commit_count &&
-                      hookSession.commit_count > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Commits</span>
-                          <span className="text-green-400">
-                            {hookSession.commit_count}
-                          </span>
-                        </div>
-                      )}
-                  </div>
-                ) : (
-                  <div className="bg-gray-750 rounded-lg p-4 text-gray-500 text-center">
-                    <p>No hook data available</p>
-                    <p className="text-xs mt-1">
-                      Install hooks with: agentwatch hooks install
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Top Tools (if hook session) */}
-              {hookSession &&
-                Object.keys(hookSession.tools_used || {}).length > 0 && (
-                  <div className="col-span-2 space-y-4">
-                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-                      Tools Used
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(hookSession.tools_used || {})
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([tool, count]) => (
-                          <span
-                            key={tool}
-                            className="px-2 py-1 bg-gray-700 rounded text-sm"
-                          >
-                            <span className="text-gray-300">{tool}</span>
-                            <span className="ml-1 text-gray-500">{count}</span>
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                )}
-            </div>
-          )}
-
-          {tab === "output" && (
-            <div className="font-mono text-xs bg-black/30 rounded p-3 max-h-96 overflow-auto">
-              {loading ? (
-                <div className="text-gray-500">Loading...</div>
-              ) : output.length === 0 ? (
-                <div className="text-gray-500">No output available</div>
-              ) : (
-                output.map((line, i) => (
-                  <div key={i} className="text-gray-300 whitespace-pre-wrap">
-                    {line}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {tab === "tools" && hookSession && (
-            <div className="space-y-4">
-              {loading ? (
-                <div className="text-gray-500">Loading...</div>
-              ) : Object.keys(toolStats).length === 0 ? (
-                <div className="text-gray-500">No tool usage recorded</div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="text-gray-400 text-left">
-                    <tr>
-                      <th className="pb-2">Tool</th>
-                      <th className="pb-2">Calls</th>
-                      <th className="pb-2">Success</th>
-                      <th className="pb-2">Failed</th>
-                      <th className="pb-2">Avg Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(toolStats)
-                      .sort((a, b) => b[1].calls - a[1].calls)
-                      .map(([tool, stats]) => (
-                        <tr key={tool} className="border-t border-gray-700">
-                          <td className="py-2 text-white font-medium">
-                            {tool}
-                          </td>
-                          <td className="py-2 text-gray-300">{stats.calls}</td>
-                          <td className="py-2 text-green-400">
-                            {stats.successes}
-                          </td>
-                          <td className="py-2 text-red-400">
-                            {stats.failures || "-"}
-                          </td>
-                          <td className="py-2 text-gray-400">
-                            {stats.calls > 0
-                              ? formatDuration(stats.totalMs / stats.calls)
-                              : "-"}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {tab === "timeline" && hookSession && (
-            <div className="space-y-2">
-              {loading ? (
-                <div className="text-gray-500">Loading...</div>
-              ) : timeline.length === 0 ? (
-                <div className="text-gray-500">No timeline data</div>
-              ) : (
-                timeline.slice(0, 50).map((usage, i) => (
-                  <div
-                    key={usage.tool_use_id || i}
-                    className="flex items-center gap-3 px-3 py-2 bg-gray-750 rounded"
-                  >
-                    <span className="text-gray-500 text-xs w-16">
-                      {formatTime(usage.timestamp)}
-                    </span>
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        usage.success === true
-                          ? "bg-green-400"
-                          : usage.success === false
-                            ? "bg-red-400"
-                            : "bg-yellow-400"
-                      }`}
-                    />
-                    <span className="text-white font-medium">
-                      {usage.tool_name}
-                    </span>
-                    {usage.duration_ms && (
-                      <span className="text-gray-500 text-xs">
-                        {formatDuration(usage.duration_ms)}
-                      </span>
+                    {agent.tty && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">TTY</span>
+                        <span className="text-gray-300 font-mono text-sm">
+                          {agent.tty}
+                        </span>
+                      </div>
                     )}
                   </div>
-                ))
-              )}
-            </div>
-          )}
+                </div>
 
-          {tab === "conversation" && (linkedConversation || hookSession) && (
-            <div className="space-y-6">
-              {/* Conversation Name */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                  Conversation Name
-                </h3>
-                {(() => {
-                  const currentName = conversationName;
-                  if (conversationNameLoading) {
-                    return (
-                      <div className="text-sm text-gray-500">
-                        Loading conversation name...
+                {/* Hook Session Info */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                    {hookSession ? "Hook Session" : "No Hook Session"}
+                  </h3>
+                  {hookSession ? (
+                    <div className="bg-gray-750 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Session ID</span>
+                        <span className="text-gray-300 font-mono text-sm">
+                          {hookSession.session_id.slice(0, 8)}
+                        </span>
                       </div>
-                    );
-                  }
-                  return editingConversationName ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={conversationNameValue}
-                        onChange={(e) =>
-                          setConversationNameValue(e.target.value)
-                        }
-                        placeholder={conversationNamePlaceholder}
-                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Started</span>
+                        <span className="text-gray-300">
+                          {formatTime(hookSession.start_time)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tool Calls</span>
+                        <span className="text-gray-300">
+                          {hookSession.tool_count}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Permission</span>
+                        <span className="text-gray-300">
+                          {hookSession.permission_mode}
+                        </span>
+                      </div>
+                      {hookSession.commit_count &&
+                        hookSession.commit_count > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Commits</span>
+                            <span className="text-green-400">
+                              {hookSession.commit_count}
+                            </span>
+                          </div>
+                        )}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-750 rounded-lg p-4 text-gray-500 text-center">
+                      <p>No hook data available</p>
+                      <p className="text-xs mt-1">
+                        Install hooks with: agentwatch hooks install
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Top Tools (if hook session) */}
+                {hookSession &&
+                  Object.keys(hookSession.tools_used || {}).length > 0 && (
+                    <div className="col-span-2 space-y-4">
+                      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                        Tools Used
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(hookSession.tools_used || {})
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([tool, count]) => (
+                            <span
+                              key={tool}
+                              className="px-2 py-1 bg-gray-700 rounded text-sm"
+                            >
+                              <span className="text-gray-300">{tool}</span>
+                              <span className="ml-1 text-gray-500">
+                                {count}
+                              </span>
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {tab === "output" && (
+              <div className="font-mono text-xs bg-black/30 rounded p-3 max-h-96 overflow-auto">
+                {loading ? (
+                  <div className="text-gray-500">Loading...</div>
+                ) : output.length === 0 ? (
+                  <div className="text-gray-500">No output available</div>
+                ) : (
+                  output.map((line, i) => (
+                    <div key={i} className="text-gray-300 whitespace-pre-wrap">
+                      {line}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {tab === "tools" && hookSession && (
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="text-gray-500">Loading...</div>
+                ) : Object.keys(toolStats).length === 0 ? (
+                  <div className="text-gray-500">No tool usage recorded</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="text-gray-400 text-left">
+                      <tr>
+                        <th className="pb-2">Tool</th>
+                        <th className="pb-2">Calls</th>
+                        <th className="pb-2">Success</th>
+                        <th className="pb-2">Failed</th>
+                        <th className="pb-2">Avg Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(toolStats)
+                        .sort((a, b) => b[1].calls - a[1].calls)
+                        .map(([tool, stats]) => (
+                          <tr key={tool} className="border-t border-gray-700">
+                            <td className="py-2 text-white font-medium">
+                              {tool}
+                            </td>
+                            <td className="py-2 text-gray-300">
+                              {stats.calls}
+                            </td>
+                            <td className="py-2 text-green-400">
+                              {stats.successes}
+                            </td>
+                            <td className="py-2 text-red-400">
+                              {stats.failures || "-"}
+                            </td>
+                            <td className="py-2 text-gray-400">
+                              {stats.calls > 0
+                                ? formatDuration(stats.totalMs / stats.calls)
+                                : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {tab === "timeline" && hookSession && (
+              <div className="space-y-2">
+                {loading ? (
+                  <div className="text-gray-500">Loading...</div>
+                ) : timeline.length === 0 ? (
+                  <div className="text-gray-500">No timeline data</div>
+                ) : (
+                  timeline.slice(0, 50).map((usage, i) => (
+                    <div
+                      key={usage.tool_use_id || i}
+                      className="flex items-center gap-3 px-3 py-2 bg-gray-750 rounded"
+                    >
+                      <span className="text-gray-500 text-xs w-16">
+                        {formatTime(usage.timestamp)}
+                      </span>
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          usage.success === true
+                            ? "bg-green-400"
+                            : usage.success === false
+                              ? "bg-red-400"
+                              : "bg-yellow-400"
+                        }`}
+                      />
+                      <span className="text-white font-medium">
+                        {usage.tool_name}
+                      </span>
+                      {usage.duration_ms && (
+                        <span className="text-gray-500 text-xs">
+                          {formatDuration(usage.duration_ms)}
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {tab === "conversation" && (linkedConversation || hookSession) && (
+              <div className="space-y-6">
+                {/* Conversation Name */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                    Conversation Name
+                  </h3>
+                  {(() => {
+                    const currentName = conversationName;
+                    if (conversationNameLoading) {
+                      return (
+                        <div className="text-sm text-gray-500">
+                          Loading conversation name...
+                        </div>
+                      );
+                    }
+                    return editingConversationName ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={conversationNameValue}
+                          onChange={(e) =>
+                            setConversationNameValue(e.target.value)
+                          }
+                          placeholder={conversationNamePlaceholder}
+                          className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              saveConversationName(
+                                conversationNameValue.trim() || null
+                              );
+                              setEditingConversationName(false);
+                            } else if (e.key === "Escape") {
+                              setEditingConversationName(false);
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => {
                             saveConversationName(
                               conversationNameValue.trim() || null
                             );
                             setEditingConversationName(false);
-                          } else if (e.key === "Escape") {
-                            setEditingConversationName(false);
+                          }}
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingConversationName(false)}
+                          className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={
+                            currentName ? "text-blue-400" : "text-gray-400"
                           }
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          saveConversationName(
-                            conversationNameValue.trim() || null
-                          );
-                          setEditingConversationName(false);
-                        }}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingConversationName(false)}
-                        className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={
-                          currentName ? "text-blue-400" : "text-gray-400"
-                        }
-                      >
-                        {currentName ||
-                          conversationNamePlaceholder ||
-                          "Unnamed"}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setConversationNameValue(currentName || "");
-                          setEditingConversationName(true);
-                        }}
-                        className="text-gray-500 hover:text-white text-sm"
-                        title="Edit name"
-                      >
-                        ✎
-                      </button>
-                    </div>
-                  );
-                })()}
-              </div>
+                        >
+                          {currentName ||
+                            conversationNamePlaceholder ||
+                            "Unnamed"}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setConversationNameValue(currentName || "");
+                            setEditingConversationName(true);
+                          }}
+                          className="text-gray-500 hover:text-white text-sm"
+                          title="Edit name"
+                        >
+                          ✎
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
 
-              {/* Conversation Overview */}
-              {linkedConversation ? (
+                {/* Conversation Overview */}
+                {linkedConversation ? (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                      Linked Conversation
+                    </h3>
+                    <div className="bg-gray-750 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Match Type</span>
+                        <span
+                          className={`${
+                            linkedConversation.match_type === "exact"
+                              ? "text-green-400"
+                              : linkedConversation.match_type === "confident"
+                                ? "text-yellow-400"
+                                : "text-orange-400"
+                          }`}
+                        >
+                          {linkedConversation.match_type}
+                          {linkedConversation.match_details?.score && (
+                            <span className="text-gray-500 ml-1">
+                              ({linkedConversation.match_details.score}%)
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Project</span>
+                        <span className="text-gray-300">
+                          {getProjectName(linkedConversation.cwd)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Agent</span>
+                        <span className="text-gray-300">
+                          {linkedConversation.agent}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Started</span>
+                        <span className="text-gray-300">
+                          {new Date(
+                            linkedConversation.start_time > 1e12
+                              ? linkedConversation.start_time
+                              : linkedConversation.start_time * 1000
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : hookSession ? (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                      Hook Session
+                    </h3>
+                    <div className="bg-gray-750 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Session ID</span>
+                        <span className="text-gray-300 font-mono text-sm">
+                          {hookSession.session_id.slice(0, 8)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Started</span>
+                        <span className="text-gray-300">
+                          {new Date(
+                            hookSession.start_time > 1e12
+                              ? hookSession.start_time
+                              : hookSession.start_time * 1000
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tool Calls</span>
+                        <span className="text-gray-300">
+                          {hookSession.tool_count}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Permission</span>
+                        <span className="text-gray-300">
+                          {hookSession.permission_mode}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Available Data */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                    Linked Conversation
+                    Available Data
                   </h3>
-                  <div className="bg-gray-750 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Match Type</span>
-                      <span
-                        className={`${
-                          linkedConversation.match_type === "exact"
-                            ? "text-green-400"
-                            : linkedConversation.match_type === "confident"
-                              ? "text-yellow-400"
-                              : "text-orange-400"
-                        }`}
-                      >
-                        {linkedConversation.match_type}
-                        {linkedConversation.match_details?.score && (
-                          <span className="text-gray-500 ml-1">
-                            ({linkedConversation.match_details.score}%)
+                  <div className="space-y-2">
+                    <div
+                      className={`p-3 rounded-lg ${
+                        linkedConversation?.hook_session || hookSession
+                          ? "bg-green-900/20 border border-green-800/50"
+                          : "bg-gray-700/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              linkedConversation?.hook_session || hookSession
+                                ? "bg-green-400"
+                                : "bg-gray-500"
+                            }`}
+                          />
+                          <span className="text-sm text-white">
+                            Hook Session
                           </span>
-                        )}
-                      </span>
+                        </div>
+                        <span
+                          className={`text-xs ${
+                            linkedConversation?.hook_session || hookSession
+                              ? "text-green-400"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {linkedConversation?.hook_session || hookSession
+                            ? `${
+                                linkedConversation?.hook_session?.tool_count ??
+                                hookSession?.tool_count ??
+                                "?"
+                              } tools`
+                            : "Not captured"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Project</span>
-                      <span className="text-gray-300">
-                        {getProjectName(linkedConversation.cwd)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Agent</span>
-                      <span className="text-gray-300">
-                        {linkedConversation.agent}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Started</span>
-                      <span className="text-gray-300">
-                        {new Date(
-                          linkedConversation.start_time > 1e12
-                            ? linkedConversation.start_time
-                            : linkedConversation.start_time * 1000
-                        ).toLocaleString()}
-                      </span>
+                    <div
+                      className={`p-3 rounded-lg ${
+                        linkedConversation?.transcript
+                          ? "bg-blue-900/20 border border-blue-800/50"
+                          : "bg-gray-700/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              linkedConversation?.transcript
+                                ? "bg-blue-400"
+                                : "bg-gray-500"
+                            }`}
+                          />
+                          <span className="text-sm text-white">Transcript</span>
+                        </div>
+                        <span
+                          className={`text-xs ${
+                            linkedConversation?.transcript
+                              ? "text-blue-400"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {linkedConversation?.transcript
+                            ? `${linkedConversation.transcript.message_count || "?"} messages, ${Math.round(linkedConversation.transcript.size_bytes / 1024)}KB`
+                            : "Not available in watcher"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ) : hookSession ? (
+
+                {/* Annotation */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                    Hook Session
+                    Annotation
                   </h3>
-                  <div className="bg-gray-750 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Session ID</span>
-                      <span className="text-gray-300 font-mono text-sm">
-                        {hookSession.session_id.slice(0, 8)}
-                      </span>
+                  {enrichmentsLoading ? (
+                    <div className="text-gray-500 text-sm">
+                      Loading annotation data...
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Started</span>
-                      <span className="text-gray-300">
-                        {new Date(
-                          hookSession.start_time > 1e12
-                            ? hookSession.start_time
-                            : hookSession.start_time * 1000
-                        ).toLocaleString()}
-                      </span>
+                  ) : linkedConversation?.hook_session?.session_id ||
+                    linkedConversation?.correlation_id ||
+                    hookSession?.session_id ? (
+                    <ConversationAnnotationPanel
+                      componentId="watcher.agents.annotation-panel"
+                      sessionId={annotationSessionId || ""}
+                      manualAnnotation={
+                        sessionEnrichments?.manual_annotation ?? null
+                      }
+                      conversationName={conversationName}
+                      conversationNamePlaceholder={conversationNamePlaceholder}
+                      onConversationNameSave={saveConversationName}
+                      onAnnotationSaved={(manual) =>
+                        setSessionEnrichments((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                manual_annotation: manual ?? undefined
+                              }
+                            : prev
+                        )
+                      }
+                    />
+                  ) : (
+                    <div className="text-gray-500 text-sm">
+                      No session identifier available for annotations.
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Tool Calls</span>
-                      <span className="text-gray-300">
-                        {hookSession.tool_count}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Permission</span>
-                      <span className="text-gray-300">
-                        {hookSession.permission_mode}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Available Data */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                  Available Data
-                </h3>
-                <div className="space-y-2">
-                  <div
-                    className={`p-3 rounded-lg ${
-                      linkedConversation?.hook_session || hookSession
-                        ? "bg-green-900/20 border border-green-800/50"
-                        : "bg-gray-700/30"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            linkedConversation?.hook_session || hookSession
-                              ? "bg-green-400"
-                              : "bg-gray-500"
-                          }`}
-                        />
-                        <span className="text-sm text-white">Hook Session</span>
-                      </div>
-                      <span
-                        className={`text-xs ${
-                          linkedConversation?.hook_session || hookSession
-                            ? "text-green-400"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {linkedConversation?.hook_session || hookSession
-                          ? `${
-                              linkedConversation?.hook_session?.tool_count ??
-                              hookSession?.tool_count ??
-                              "?"
-                            } tools`
-                          : "Not captured"}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    className={`p-3 rounded-lg ${
-                      linkedConversation?.transcript
-                        ? "bg-blue-900/20 border border-blue-800/50"
-                        : "bg-gray-700/30"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            linkedConversation?.transcript
-                              ? "bg-blue-400"
-                              : "bg-gray-500"
-                          }`}
-                        />
-                        <span className="text-sm text-white">Transcript</span>
-                      </div>
-                      <span
-                        className={`text-xs ${
-                          linkedConversation?.transcript
-                            ? "text-blue-400"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {linkedConversation?.transcript
-                          ? `${linkedConversation.transcript.message_count || "?"} messages, ${Math.round(linkedConversation.transcript.size_bytes / 1024)}KB`
-                          : "Not available in watcher"}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
+            )}
 
-              {/* Annotation */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                  Annotation
-                </h3>
-                {enrichmentsLoading ? (
-                  <div className="text-gray-500 text-sm">
-                    Loading annotation data...
-                  </div>
-                ) : linkedConversation?.hook_session?.session_id ||
-                  linkedConversation?.correlation_id ||
-                  hookSession?.session_id ? (
-                  <ConversationAnnotationPanel
-                    sessionId={annotationSessionId || ""}
-                    manualAnnotation={
-                      sessionEnrichments?.manual_annotation ?? null
-                    }
-                    conversationName={conversationName}
-                    conversationNamePlaceholder={conversationNamePlaceholder}
-                    onConversationNameSave={saveConversationName}
-                    onAnnotationSaved={(manual) =>
-                      setSessionEnrichments((prev) =>
-                        prev
-                          ? { ...prev, manual_annotation: manual ?? undefined }
-                          : prev
-                      )
-                    }
-                  />
-                ) : (
-                  <div className="text-gray-500 text-sm">
-                    No session identifier available for annotations.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+            {tab === "settings" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                    Agent Naming & Annotations
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Give this agent a custom name to identify it across
+                    sessions. Names persist across daemon restarts.
+                  </p>
 
-          {tab === "settings" && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                  Agent Naming & Annotations
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Give this agent a custom name to identify it across sessions.
-                  Names persist across daemon restarts.
-                </p>
-
-                <div className="space-y-4">
-                  {/* Custom Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Custom Name
-                    </label>
-                    <input
-                      type="text"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      placeholder={`e.g., "Frontend Dev", "Backend API"`}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Agents are identified by their executable path, so the
-                      same agent will keep this name.
-                    </p>
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Tags
-                    </label>
-                    <input
-                      type="text"
-                      value={tagsInput}
-                      onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="e.g., frontend, react, high-priority"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Comma-separated tags for categorization
-                    </p>
-                  </div>
-
-                  {/* Color */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Status Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={color || "#6b7280"}
-                        onChange={(e) => setColor(e.target.value)}
-                        className="w-10 h-10 rounded cursor-pointer border border-gray-600"
-                      />
+                  <div className="space-y-4">
+                    {/* Custom Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Custom Name
+                      </label>
                       <input
                         type="text"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                        placeholder="#6b7280"
-                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder={`e.g., "Frontend Dev", "Backend API"`}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                       />
-                      {color && (
-                        <button
-                          onClick={() => setColor("")}
-                          className="px-2 py-2 text-gray-400 hover:text-white"
-                          title="Clear color"
-                        >
-                          ×
-                        </button>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Agents are identified by their executable path, so the
+                        same agent will keep this name.
+                      </p>
+                    </div>
+
+                    {/* Tags */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Tags
+                      </label>
+                      <input
+                        type="text"
+                        value={tagsInput}
+                        onChange={(e) => setTagsInput(e.target.value)}
+                        placeholder="e.g., frontend, react, high-priority"
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Comma-separated tags for categorization
+                      </p>
+                    </div>
+
+                    {/* Color */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Status Color
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={color || "#6b7280"}
+                          onChange={(e) => setColor(e.target.value)}
+                          className="w-10 h-10 rounded cursor-pointer border border-gray-600"
+                        />
+                        <input
+                          type="text"
+                          value={color}
+                          onChange={(e) => setColor(e.target.value)}
+                          placeholder="#6b7280"
+                          className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono text-sm"
+                        />
+                        {color && (
+                          <button
+                            onClick={() => setColor("")}
+                            className="px-2 py-2 text-gray-400 hover:text-white"
+                            title="Clear color"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Notes
+                      </label>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Add any notes about this agent..."
+                        rows={3}
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                      />
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={saveMetadata}
+                        disabled={saving}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded font-medium"
+                      >
+                        {saving ? "Saving..." : "Save Changes"}
+                      </button>
+                      {saveSuccess && (
+                        <span className="text-green-400 text-sm">
+                          Saved successfully!
+                        </span>
                       )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Add any notes about this agent..."
-                      rows={3}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
-                    />
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={saveMetadata}
-                      disabled={saving}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded font-medium"
-                    >
-                      {saving ? "Saving..." : "Save Changes"}
-                    </button>
-                    {saveSuccess && (
-                      <span className="text-green-400 text-sm">
-                        Saved successfully!
+                {/* Agent Info (read-only) */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
+                    Agent Identifier
+                  </h3>
+                  <div className="bg-gray-750 rounded-lg p-4 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Label</span>
+                      <span className="text-gray-300">{agent.label}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Executable</span>
+                      <span
+                        className="text-gray-300 font-mono text-xs truncate max-w-xs"
+                        title={agent.exe}
+                      >
+                        {agent.exe}
                       </span>
+                    </div>
+                    {metadata?.agentId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Agent ID</span>
+                        <span className="text-gray-300 font-mono text-xs">
+                          {metadata.agentId}
+                        </span>
+                      </div>
+                    )}
+                    {metadata?.createdAt && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">First Named</span>
+                        <span className="text-gray-300">
+                          {new Date(metadata.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Agent Info (read-only) */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-4">
-                  Agent Identifier
-                </h3>
-                <div className="bg-gray-750 rounded-lg p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Label</span>
-                    <span className="text-gray-300">{agent.label}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Executable</span>
-                    <span
-                      className="text-gray-300 font-mono text-xs truncate max-w-xs"
-                      title={agent.exe}
-                    >
-                      {agent.exe}
-                    </span>
-                  </div>
-                  {metadata?.agentId && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Agent ID</span>
-                      <span className="text-gray-300 font-mono text-xs">
-                        {metadata.agentId}
-                      </span>
-                    </div>
-                  )}
-                  {metadata?.createdAt && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">First Named</span>
-                      <span className="text-gray-300">
-                        {new Date(metadata.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+          {/* Footer with actions */}
+          <div className="px-4 py-3 border-t border-gray-700 flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSignal("interrupt")}
+                className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
+                title="Send Ctrl+C"
+              >
+                Interrupt
+              </button>
+              <button
+                onClick={() => handleKill(false)}
+                className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-500 text-white rounded"
+              >
+                Terminate
+              </button>
+              <button
+                onClick={() => handleKill(true)}
+                className="px-3 py-1.5 text-sm bg-red-800 hover:bg-red-700 text-white rounded"
+              >
+                Force Kill
+              </button>
             </div>
-          )}
-        </div>
-
-        {/* Footer with actions */}
-        <div className="px-4 py-3 border-t border-gray-700 flex items-center justify-between">
-          <div className="flex gap-2">
             <button
-              onClick={() => handleSignal("interrupt")}
-              className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-500 text-white rounded"
-              title="Send Ctrl+C"
+              onClick={onClose}
+              className="px-4 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded"
             >
-              Interrupt
-            </button>
-            <button
-              onClick={() => handleKill(false)}
-              className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-500 text-white rounded"
-            >
-              Terminate
-            </button>
-            <button
-              onClick={() => handleKill(true)}
-              className="px-3 py-1.5 text-sm bg-red-800 hover:bg-red-700 text-white rounded"
-            >
-              Force Kill
+              Close
             </button>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded"
-          >
-            Close
-          </button>
         </div>
       </div>
-    </div>
+    </SelfDocumentingSection>
   );
 }

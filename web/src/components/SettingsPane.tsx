@@ -187,593 +187,615 @@ export function SettingsPane({
   return (
     <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
       <div className="space-y-6">
-      <Toast message={saveMessage} onDismiss={() => setSaveMessage(null)} />
+        <Toast message={saveMessage} onDismiss={() => setSaveMessage(null)} />
 
-      {/* Settings Overview Header */}
-      <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-white mb-2">
-          Settings Manager
-        </h2>
-        <p className="text-sm text-gray-300 mb-3">
-          This page provides a visual interface for editing your configuration
-          files. Changes are saved automatically.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="flex items-start gap-2 p-2 bg-gray-800/50 rounded">
-            <span className="text-blue-400 mt-0.5">📁</span>
-            <div>
-              <code className="text-blue-300">
-                ~/.config/agentwatch/config.toml
-              </code>
-              <p className="text-gray-400 mt-0.5">
-                AgentWatch watcher settings: notifications, test gates, hook
-                enhancements
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 p-2 bg-gray-800/50 rounded">
-            <span className="text-purple-400 mt-0.5">📁</span>
-            <div>
-              <code className="text-purple-300">~/.claude/settings.json</code>
-              <p className="text-gray-400 mt-0.5">
-                Claude Code settings: hooks, permissions, MCP servers
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table of Contents */}
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg p-3">
-        <div className="flex flex-wrap gap-2">
-          {tocItems.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded transition-colors"
-            >
-              {item.label}
-            </a>
-          ))}
-        </div>
-      </div>
-
-      {/* Visible Tabs */}
-      <div
-        id="visible-tabs"
-        className="bg-gray-800 rounded-lg p-4 scroll-mt-16"
-      >
-        <h2 className="text-lg font-semibold text-white mb-2">Visible Tabs</h2>
-        <p className="text-sm text-gray-400 mb-2">
-          Toggle optional tabs. Hidden tabs won't fetch data, reducing network
-          overhead.
-        </p>
-        <p className="text-xs text-gray-500 mb-4">
-          Stored in:{" "}
-          <code className="bg-gray-700 px-1 rounded">
-            ~/.config/agentwatch/config.toml
-          </code>{" "}
-          (syncs across browsers)
-        </p>
-        <div className="space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={!hiddenTabs.has("ports")}
-              onChange={() => onToggleTabVisibility("ports")}
-              className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
-            />
-            <span className="text-gray-300">Ports</span>
-            <span className="text-xs text-gray-500">
-              (Shows listening dev server ports)
-            </span>
-          </label>
-        </div>
-      </div>
-
-      {/* Projects */}
-      <div id="projects" className="scroll-mt-16">
-        <ProjectsSettingsSection />
-      </div>
-
-      {/* Conversations Settings */}
-      <div id="conversations" className="scroll-mt-16">
-        <ConversationsSettingsSection
-          transcriptDays={config.conversations?.transcript_days ?? 30}
-          includeProcessSnapshots={
-            config.conversations?.include_process_snapshots ?? false
-          }
-          saving={saving}
-          onUpdateTranscriptDays={async (days: number) => {
-            setSaving(true);
-            setSaveMessage(null);
-            try {
-              const result = await updateConfig({
-                conversations: { transcript_days: days }
-              });
-              if (result.success) {
-                setSaveMessage(`Updated: ${result.updates.join(", ")}`);
-                await loadConfig(true);
-              }
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Failed to save");
-            } finally {
-              setSaving(false);
-              setTimeout(() => setSaveMessage(null), 3000);
-            }
-          }}
-          onToggleProcessSnapshots={async (enabled: boolean) => {
-            setSaving(true);
-            setSaveMessage(null);
-            try {
-              const result = await updateConfig({
-                conversations: { include_process_snapshots: enabled }
-              });
-              if (result.success) {
-                setSaveMessage(`Updated: ${result.updates.join(", ")}`);
-                await loadConfig(true);
-              }
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Failed to save");
-            } finally {
-              setSaving(false);
-              setTimeout(() => setSaveMessage(null), 3000);
-            }
-          }}
-        />
-      </div>
-
-      {/* Redaction Profiles */}
-      <div id="redaction-profiles" className="scroll-mt-16">
-        <RedactionProfilesSection />
-      </div>
-
-      {/* Quality Scoring Configuration */}
-      <div id="quality-scoring" className="scroll-mt-16">
-        <QualityConfigSection />
-      </div>
-
-      {/* Notifications */}
-      <div
-        id="notifications"
-        className="bg-gray-800 rounded-lg p-4 scroll-mt-16"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-white">
-              Desktop Notifications
-            </h2>
-            <span
-              className={`px-2 py-0.5 text-xs rounded ${config.notifications.enable ? "bg-green-600 text-white" : "bg-gray-600 text-gray-300"}`}
-            >
-              {config.notifications.enable ? "ON" : "OFF"}
-            </span>
-          </div>
-          <button
-            onClick={() =>
-              handleToggle("notifications.enable", !config.notifications.enable)
-            }
-            disabled={saving}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              config.notifications.enable ? "bg-green-600" : "bg-gray-600"
-            } ${saving ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                config.notifications.enable ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
-        <p className="text-sm text-gray-400 mb-2">
-          Get macOS notifications for Claude Code hook events. Useful for
-          staying aware when Claude needs input or finishes work.
-        </p>
-        <p className="text-xs text-gray-500 mb-4">
-          Stored in:{" "}
-          <code className="bg-gray-700 px-1 rounded">
-            ~/.config/agentwatch/config.toml
-          </code>
-        </p>
-
-        {/* Notification Format Options */}
-        <div
-          className={`mb-6 p-3 bg-gray-700/50 rounded-lg ${!config.notifications.enable ? "opacity-50 pointer-events-none" : ""}`}
-        >
-          <div className="text-xs text-blue-400 font-medium mb-3">
-            Notification Content
-          </div>
-          <p className="text-xs text-gray-400 mb-3">
-            Choose what information appears in notifications. Project name is
-            derived from your working directory.
+        {/* Settings Overview Header */}
+        <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Settings Manager
+          </h2>
+          <p className="text-sm text-gray-300 mb-3">
+            This page provides a visual interface for editing your configuration
+            files. Changes are saved automatically.
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div className="flex items-start gap-2 p-2 bg-gray-800/50 rounded">
+              <span className="text-blue-400 mt-0.5">📁</span>
+              <div>
+                <code className="text-blue-300">
+                  ~/.config/agentwatch/config.toml
+                </code>
+                <p className="text-gray-400 mt-0.5">
+                  AgentWatch watcher settings: notifications, test gates, hook
+                  enhancements
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 p-2 bg-gray-800/50 rounded">
+              <span className="text-purple-400 mt-0.5">📁</span>
+              <div>
+                <code className="text-purple-300">~/.claude/settings.json</code>
+                <p className="text-gray-400 mt-0.5">
+                  Claude Code settings: hooks, permissions, MCP servers
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table of Contents */}
+        <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg p-3">
+          <div className="flex flex-wrap gap-2">
+            {tocItems.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded transition-colors"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Visible Tabs */}
+        <div
+          id="visible-tabs"
+          className="bg-gray-800 rounded-lg p-4 scroll-mt-16"
+        >
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Visible Tabs
+          </h2>
+          <p className="text-sm text-gray-400 mb-2">
+            Toggle optional tabs. Hidden tabs won't fetch data, reducing network
+            overhead.
+          </p>
+          <p className="text-xs text-gray-500 mb-4">
+            Stored in:{" "}
+            <code className="bg-gray-700 px-1 rounded">
+              ~/.config/agentwatch/config.toml
+            </code>{" "}
+            (syncs across browsers)
+          </p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={
-                  config.hook_enhancements?.notification_hub?.desktop?.format
-                    ?.show_project_name ?? true
-                }
-                onChange={(e) =>
-                  handleToggle(
-                    "hook_enhancements.notification_hub.desktop.format.show_project_name",
-                    e.target.checked
-                  )
-                }
-                disabled={saving}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                checked={!hiddenTabs.has("ports")}
+                onChange={() => onToggleTabVisibility("ports")}
+                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
               />
-              <span className="text-gray-300">Project name</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                checked={
-                  config.hook_enhancements?.notification_hub?.desktop?.format
-                    ?.show_session_id ?? true
-                }
-                onChange={(e) =>
-                  handleToggle(
-                    "hook_enhancements.notification_hub.desktop.format.show_session_id",
-                    e.target.checked
-                  )
-                }
-                disabled={saving}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
-              />
-              <span className="text-gray-300">Session ID</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                checked={
-                  config.hook_enhancements?.notification_hub?.desktop?.format
-                    ?.show_tool_details ?? true
-                }
-                onChange={(e) =>
-                  handleToggle(
-                    "hook_enhancements.notification_hub.desktop.format.show_tool_details",
-                    e.target.checked
-                  )
-                }
-                disabled={saving}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
-              />
-              <span className="text-gray-300">Tool details</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                checked={
-                  config.hook_enhancements?.notification_hub?.desktop?.format
-                    ?.show_stats ?? false
-                }
-                onChange={(e) =>
-                  handleToggle(
-                    "hook_enhancements.notification_hub.desktop.format.show_stats",
-                    e.target.checked
-                  )
-                }
-                disabled={saving}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
-              />
-              <span className="text-gray-300">Stats (tokens, tools)</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                checked={
-                  config.hook_enhancements?.notification_hub?.desktop?.format
-                    ?.show_cwd ?? false
-                }
-                onChange={(e) =>
-                  handleToggle(
-                    "hook_enhancements.notification_hub.desktop.format.show_cwd",
-                    e.target.checked
-                  )
-                }
-                disabled={saving}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
-              />
-              <span className="text-gray-300">Full path (cwd)</span>
+              <span className="text-gray-300">Ports</span>
+              <span className="text-xs text-gray-500">
+                (Shows listening dev server ports)
+              </span>
             </label>
           </div>
+        </div>
 
-          {/* Live preview of notification appearance */}
-          <NotificationPreview
-            format={{
-              showProjectName:
-                config.hook_enhancements?.notification_hub?.desktop?.format
-                  ?.show_project_name ?? true,
-              showSessionId:
-                config.hook_enhancements?.notification_hub?.desktop?.format
-                  ?.show_session_id ?? true,
-              showToolDetails:
-                config.hook_enhancements?.notification_hub?.desktop?.format
-                  ?.show_tool_details ?? true,
-              showStats:
-                config.hook_enhancements?.notification_hub?.desktop?.format
-                  ?.show_stats ?? false,
-              showCwd:
-                config.hook_enhancements?.notification_hub?.desktop?.format
-                  ?.show_cwd ?? false
+        {/* Projects */}
+        <div id="projects" className="scroll-mt-16">
+          <ProjectsSettingsSection />
+        </div>
+
+        {/* Conversations Settings */}
+        <div id="conversations" className="scroll-mt-16">
+          <ConversationsSettingsSection
+            transcriptDays={config.conversations?.transcript_days ?? 30}
+            includeProcessSnapshots={
+              config.conversations?.include_process_snapshots ?? false
+            }
+            saving={saving}
+            onUpdateTranscriptDays={async (days: number) => {
+              setSaving(true);
+              setSaveMessage(null);
+              try {
+                const result = await updateConfig({
+                  conversations: { transcript_days: days }
+                });
+                if (result.success) {
+                  setSaveMessage(`Updated: ${result.updates.join(", ")}`);
+                  await loadConfig(true);
+                }
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Failed to save");
+              } finally {
+                setSaving(false);
+                setTimeout(() => setSaveMessage(null), 3000);
+              }
+            }}
+            onToggleProcessSnapshots={async (enabled: boolean) => {
+              setSaving(true);
+              setSaveMessage(null);
+              try {
+                const result = await updateConfig({
+                  conversations: { include_process_snapshots: enabled }
+                });
+                if (result.success) {
+                  setSaveMessage(`Updated: ${result.updates.join(", ")}`);
+                  await loadConfig(true);
+                }
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Failed to save");
+              } finally {
+                setSaving(false);
+                setTimeout(() => setSaveMessage(null), 3000);
+              }
             }}
           />
         </div>
 
+        {/* Redaction Profiles */}
+        <div id="redaction-profiles" className="scroll-mt-16">
+          <RedactionProfilesSection />
+        </div>
+
+        {/* Quality Scoring Configuration */}
+        <div id="quality-scoring" className="scroll-mt-16">
+          <QualityConfigSection />
+        </div>
+
+        {/* Notifications */}
         <div
-          className={`space-y-2 ${!config.notifications.enable ? "opacity-50 pointer-events-none" : ""}`}
+          id="notifications"
+          className="bg-gray-800 rounded-lg p-4 scroll-mt-16"
         >
-          {/* Highly recommended notifications */}
-          <div className="text-xs text-green-400 font-medium mb-2">
-            Recommended - high value, low noise:
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-white">
+                Desktop Notifications
+              </h2>
+              <span
+                className={`px-2 py-0.5 text-xs rounded ${config.notifications.enable ? "bg-green-600 text-white" : "bg-gray-600 text-gray-300"}`}
+              >
+                {config.notifications.enable ? "ON" : "OFF"}
+              </span>
+            </div>
+            <button
+              onClick={() =>
+                handleToggle(
+                  "notifications.enable",
+                  !config.notifications.enable
+                )
+              }
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                config.notifications.enable ? "bg-green-600" : "bg-gray-600"
+              } ${saving ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  config.notifications.enable
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
           </div>
-
-          <NotificationToggle
-            label="Awaiting Input"
-            description="Claude needs your approval to continue"
-            recommendation="Essential - don't miss permission prompts"
-            enabled={config.notifications.hook_awaiting_input}
-            onChange={(v) =>
-              handleToggle("notifications.hook_awaiting_input", v)
-            }
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Session End"
-            description="Claude finished and session completed"
-            recommendation="Useful - know when work is done"
-            enabled={config.notifications.hook_session_end}
-            onChange={(v) => handleToggle("notifications.hook_session_end", v)}
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Stop (Turn Complete)"
-            description="Claude finished responding and is waiting"
-            recommendation="Useful - know when to review output"
-            enabled={config.notifications.hook_stop}
-            onChange={(v) => handleToggle("notifications.hook_stop", v)}
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Tool Failure"
-            description="A tool call failed (read error, command failed, etc.)"
-            recommendation="Useful - catch errors early"
-            enabled={config.notifications.hook_tool_failure}
-            onChange={(v) => handleToggle("notifications.hook_tool_failure", v)}
-            saving={saving}
-          />
-
-          {/* Moderate value notifications */}
-          <div className="text-xs text-yellow-400 font-medium mt-4 mb-2">
-            Moderate value - can be noisy:
-          </div>
-
-          <NotificationToggle
-            label="Permission Request"
-            description="User approved or denied a permission"
-            recommendation="Verbose - mostly for debugging"
-            enabled={config.notifications.hook_permission_request}
-            onChange={(v) =>
-              handleToggle("notifications.hook_permission_request", v)
-            }
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Subagent Stop"
-            description="A Task agent completed its work"
-            recommendation="Useful if using many subagents"
-            enabled={config.notifications.hook_subagent_stop}
-            onChange={(v) =>
-              handleToggle("notifications.hook_subagent_stop", v)
-            }
-            saving={saving}
-          />
-
-          {/* Noisy/Debug notifications */}
-          <div className="text-xs text-gray-500 font-medium mt-4 mb-2">
-            Very verbose - mainly for learning/debugging:
-          </div>
-
-          <NotificationToggle
-            label="Session Start"
-            description="New or resumed Claude session started"
-            recommendation="Verbose - one per conversation"
-            enabled={config.notifications.hook_session_start}
-            onChange={(v) =>
-              handleToggle("notifications.hook_session_start", v)
-            }
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="User Prompt Submit"
-            description="You submitted a prompt"
-            recommendation="Verbose - you already know you sent it"
-            enabled={config.notifications.hook_user_prompt_submit}
-            onChange={(v) =>
-              handleToggle("notifications.hook_user_prompt_submit", v)
-            }
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Pre Tool Use"
-            description="Claude is about to execute a tool"
-            recommendation="Very noisy - fires for every tool call"
-            enabled={config.notifications.hook_pre_tool_use}
-            onChange={(v) => handleToggle("notifications.hook_pre_tool_use", v)}
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Post Tool Use"
-            description="Tool execution completed"
-            recommendation="Very noisy - fires for every tool call"
-            enabled={config.notifications.hook_post_tool_use}
-            onChange={(v) =>
-              handleToggle("notifications.hook_post_tool_use", v)
-            }
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Notification Hook"
-            description="Claude sent a notification message"
-            recommendation="Rare - depends on Claude's behavior"
-            enabled={config.notifications.hook_notification}
-            onChange={(v) => handleToggle("notifications.hook_notification", v)}
-            saving={saving}
-          />
-
-          <NotificationToggle
-            label="Pre Compact"
-            description="Context about to be compacted"
-            recommendation="Rare - only on long conversations"
-            enabled={config.notifications.hook_pre_compact}
-            onChange={(v) => handleToggle("notifications.hook_pre_compact", v)}
-            saving={saving}
-          />
-        </div>
-      </div>
-
-      {/* Hook Enhancements */}
-      <div id="hook-enhancements" className="scroll-mt-16">
-        <HookEnhancementsSection />
-      </div>
-
-      {/* Claude Code Settings */}
-      <div id="claude-settings" className="scroll-mt-16">
-        <ClaudeSettingsSection />
-      </div>
-
-      {/* Test Gate */}
-      <div id="test-gate" className="bg-gray-800 rounded-lg p-4 scroll-mt-16">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-lg font-semibold text-white">Test Gate</h2>
-          <span className="px-2 py-0.5 text-xs bg-blue-600 rounded text-white">
-            Interactive
-          </span>
-        </div>
-        <p className="text-sm text-gray-400 mb-2">
-          Require tests to pass before git commits. Uses Claude Code hooks.
-        </p>
-        <div className="p-2 bg-blue-900/20 border border-blue-800/30 rounded mb-4">
-          <p className="text-xs text-blue-300">
-            <strong>How it works:</strong> When enabled, a{" "}
-            <code className="bg-gray-700 px-1 rounded">PreToolUse</code> hook
-            intercepts{" "}
-            <code className="bg-gray-700 px-1 rounded">git commit</code>{" "}
-            commands. The hook checks if your test command has recently passed
-            (within max age). If not, the commit is blocked and Claude is
-            prompted to run tests first.
+          <p className="text-sm text-gray-400 mb-2">
+            Get macOS notifications for Claude Code hook events. Useful for
+            staying aware when Claude needs input or finishes work.
           </p>
-        </div>
-
-        <div className="space-y-3">
-          <ToggleRow
-            label="Enable Test Gate"
-            description={`Block commits unless tests pass (${config.test_gate.test_command || "no command set"})`}
-            enabled={config.test_gate.enabled}
-            onChange={(v) => handleToggle("test_gate.enabled", v)}
-            saving={saving}
-            tooltip="When enabled, a PreToolUse hook intercepts git commit commands and checks if tests have passed recently. If the pass file is missing or too old, the commit is blocked and Claude is prompted to run tests first. Configure test_command and pass_file_max_age_seconds in config.toml."
-          />
-
-          <div className="mt-2 p-2 bg-gray-700/50 rounded text-xs text-gray-400 space-y-1">
-            <div>
-              <span className="text-gray-500">Test command:</span>{" "}
-              <code className="bg-gray-600 px-1 rounded">
-                {config.test_gate.test_command || "not set"}
-              </code>
-            </div>
-            <div>
-              <span className="text-gray-500">Pass file:</span>{" "}
-              <code className="bg-gray-600 px-1 rounded">
-                {config.test_gate.pass_file}
-              </code>
-            </div>
-            <div>
-              <span className="text-gray-500">Max age:</span>{" "}
-              {config.test_gate.pass_file_max_age_seconds}s (tests older than
-              this require re-run)
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            Configure in:{" "}
+          <p className="text-xs text-gray-500 mb-4">
+            Stored in:{" "}
             <code className="bg-gray-700 px-1 rounded">
               ~/.config/agentwatch/config.toml
             </code>
           </p>
+
+          {/* Notification Format Options */}
+          <div
+            className={`mb-6 p-3 bg-gray-700/50 rounded-lg ${!config.notifications.enable ? "opacity-50 pointer-events-none" : ""}`}
+          >
+            <div className="text-xs text-blue-400 font-medium mb-3">
+              Notification Content
+            </div>
+            <p className="text-xs text-gray-400 mb-3">
+              Choose what information appears in notifications. Project name is
+              derived from your working directory.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    config.hook_enhancements?.notification_hub?.desktop?.format
+                      ?.show_project_name ?? true
+                  }
+                  onChange={(e) =>
+                    handleToggle(
+                      "hook_enhancements.notification_hub.desktop.format.show_project_name",
+                      e.target.checked
+                    )
+                  }
+                  disabled={saving}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                />
+                <span className="text-gray-300">Project name</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    config.hook_enhancements?.notification_hub?.desktop?.format
+                      ?.show_session_id ?? true
+                  }
+                  onChange={(e) =>
+                    handleToggle(
+                      "hook_enhancements.notification_hub.desktop.format.show_session_id",
+                      e.target.checked
+                    )
+                  }
+                  disabled={saving}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                />
+                <span className="text-gray-300">Session ID</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    config.hook_enhancements?.notification_hub?.desktop?.format
+                      ?.show_tool_details ?? true
+                  }
+                  onChange={(e) =>
+                    handleToggle(
+                      "hook_enhancements.notification_hub.desktop.format.show_tool_details",
+                      e.target.checked
+                    )
+                  }
+                  disabled={saving}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                />
+                <span className="text-gray-300">Tool details</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    config.hook_enhancements?.notification_hub?.desktop?.format
+                      ?.show_stats ?? false
+                  }
+                  onChange={(e) =>
+                    handleToggle(
+                      "hook_enhancements.notification_hub.desktop.format.show_stats",
+                      e.target.checked
+                    )
+                  }
+                  disabled={saving}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                />
+                <span className="text-gray-300">Stats (tokens, tools)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    config.hook_enhancements?.notification_hub?.desktop?.format
+                      ?.show_cwd ?? false
+                  }
+                  onChange={(e) =>
+                    handleToggle(
+                      "hook_enhancements.notification_hub.desktop.format.show_cwd",
+                      e.target.checked
+                    )
+                  }
+                  disabled={saving}
+                  className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-500"
+                />
+                <span className="text-gray-300">Full path (cwd)</span>
+              </label>
+            </div>
+
+            {/* Live preview of notification appearance */}
+            <NotificationPreview
+              format={{
+                showProjectName:
+                  config.hook_enhancements?.notification_hub?.desktop?.format
+                    ?.show_project_name ?? true,
+                showSessionId:
+                  config.hook_enhancements?.notification_hub?.desktop?.format
+                    ?.show_session_id ?? true,
+                showToolDetails:
+                  config.hook_enhancements?.notification_hub?.desktop?.format
+                    ?.show_tool_details ?? true,
+                showStats:
+                  config.hook_enhancements?.notification_hub?.desktop?.format
+                    ?.show_stats ?? false,
+                showCwd:
+                  config.hook_enhancements?.notification_hub?.desktop?.format
+                    ?.show_cwd ?? false
+              }}
+            />
+          </div>
+
+          <div
+            className={`space-y-2 ${!config.notifications.enable ? "opacity-50 pointer-events-none" : ""}`}
+          >
+            {/* Highly recommended notifications */}
+            <div className="text-xs text-green-400 font-medium mb-2">
+              Recommended - high value, low noise:
+            </div>
+
+            <NotificationToggle
+              label="Awaiting Input"
+              description="Claude needs your approval to continue"
+              recommendation="Essential - don't miss permission prompts"
+              enabled={config.notifications.hook_awaiting_input}
+              onChange={(v) =>
+                handleToggle("notifications.hook_awaiting_input", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Session End"
+              description="Claude finished and session completed"
+              recommendation="Useful - know when work is done"
+              enabled={config.notifications.hook_session_end}
+              onChange={(v) =>
+                handleToggle("notifications.hook_session_end", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Stop (Turn Complete)"
+              description="Claude finished responding and is waiting"
+              recommendation="Useful - know when to review output"
+              enabled={config.notifications.hook_stop}
+              onChange={(v) => handleToggle("notifications.hook_stop", v)}
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Tool Failure"
+              description="A tool call failed (read error, command failed, etc.)"
+              recommendation="Useful - catch errors early"
+              enabled={config.notifications.hook_tool_failure}
+              onChange={(v) =>
+                handleToggle("notifications.hook_tool_failure", v)
+              }
+              saving={saving}
+            />
+
+            {/* Moderate value notifications */}
+            <div className="text-xs text-yellow-400 font-medium mt-4 mb-2">
+              Moderate value - can be noisy:
+            </div>
+
+            <NotificationToggle
+              label="Permission Request"
+              description="User approved or denied a permission"
+              recommendation="Verbose - mostly for debugging"
+              enabled={config.notifications.hook_permission_request}
+              onChange={(v) =>
+                handleToggle("notifications.hook_permission_request", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Subagent Stop"
+              description="A Task agent completed its work"
+              recommendation="Useful if using many subagents"
+              enabled={config.notifications.hook_subagent_stop}
+              onChange={(v) =>
+                handleToggle("notifications.hook_subagent_stop", v)
+              }
+              saving={saving}
+            />
+
+            {/* Noisy/Debug notifications */}
+            <div className="text-xs text-gray-500 font-medium mt-4 mb-2">
+              Very verbose - mainly for learning/debugging:
+            </div>
+
+            <NotificationToggle
+              label="Session Start"
+              description="New or resumed Claude session started"
+              recommendation="Verbose - one per conversation"
+              enabled={config.notifications.hook_session_start}
+              onChange={(v) =>
+                handleToggle("notifications.hook_session_start", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="User Prompt Submit"
+              description="You submitted a prompt"
+              recommendation="Verbose - you already know you sent it"
+              enabled={config.notifications.hook_user_prompt_submit}
+              onChange={(v) =>
+                handleToggle("notifications.hook_user_prompt_submit", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Pre Tool Use"
+              description="Claude is about to execute a tool"
+              recommendation="Very noisy - fires for every tool call"
+              enabled={config.notifications.hook_pre_tool_use}
+              onChange={(v) =>
+                handleToggle("notifications.hook_pre_tool_use", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Post Tool Use"
+              description="Tool execution completed"
+              recommendation="Very noisy - fires for every tool call"
+              enabled={config.notifications.hook_post_tool_use}
+              onChange={(v) =>
+                handleToggle("notifications.hook_post_tool_use", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Notification Hook"
+              description="Claude sent a notification message"
+              recommendation="Rare - depends on Claude's behavior"
+              enabled={config.notifications.hook_notification}
+              onChange={(v) =>
+                handleToggle("notifications.hook_notification", v)
+              }
+              saving={saving}
+            />
+
+            <NotificationToggle
+              label="Pre Compact"
+              description="Context about to be compacted"
+              recommendation="Rare - only on long conversations"
+              enabled={config.notifications.hook_pre_compact}
+              onChange={(v) =>
+                handleToggle("notifications.hook_pre_compact", v)
+              }
+              saving={saving}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Activity / Audit Log Section */}
-      <ActivitySection />
-
-      {/* Info Section */}
-      <div id="config-info" className="bg-gray-800 rounded-lg p-4 scroll-mt-16">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-lg font-semibold text-white">
-            Configuration Info
-          </h2>
-          <span className="px-2 py-0.5 text-xs bg-gray-600 rounded text-gray-400">
-            Read-only
-          </span>
+        {/* Hook Enhancements */}
+        <div id="hook-enhancements" className="scroll-mt-16">
+          <HookEnhancementsSection />
         </div>
 
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-400">Daemon</span>
-            <span className="text-white font-mono">
-              {config.daemon.host}:{config.daemon.port}
+        {/* Claude Code Settings */}
+        <div id="claude-settings" className="scroll-mt-16">
+          <ClaudeSettingsSection />
+        </div>
+
+        {/* Test Gate */}
+        <div id="test-gate" className="bg-gray-800 rounded-lg p-4 scroll-mt-16">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-white">Test Gate</h2>
+            <span className="px-2 py-0.5 text-xs bg-blue-600 rounded text-white">
+              Interactive
+            </span>
+          </div>
+          <p className="text-sm text-gray-400 mb-2">
+            Require tests to pass before git commits. Uses Claude Code hooks.
+          </p>
+          <div className="p-2 bg-blue-900/20 border border-blue-800/30 rounded mb-4">
+            <p className="text-xs text-blue-300">
+              <strong>How it works:</strong> When enabled, a{" "}
+              <code className="bg-gray-700 px-1 rounded">PreToolUse</code> hook
+              intercepts{" "}
+              <code className="bg-gray-700 px-1 rounded">git commit</code>{" "}
+              commands. The hook checks if your test command has recently passed
+              (within max age). If not, the commit is blocked and Claude is
+              prompted to run tests first.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <ToggleRow
+              label="Enable Test Gate"
+              description={`Block commits unless tests pass (${config.test_gate.test_command || "no command set"})`}
+              enabled={config.test_gate.enabled}
+              onChange={(v) => handleToggle("test_gate.enabled", v)}
+              saving={saving}
+              tooltip="When enabled, a PreToolUse hook intercepts git commit commands and checks if tests have passed recently. If the pass file is missing or too old, the commit is blocked and Claude is prompted to run tests first. Configure test_command and pass_file_max_age_seconds in config.toml."
+            />
+
+            <div className="mt-2 p-2 bg-gray-700/50 rounded text-xs text-gray-400 space-y-1">
+              <div>
+                <span className="text-gray-500">Test command:</span>{" "}
+                <code className="bg-gray-600 px-1 rounded">
+                  {config.test_gate.test_command || "not set"}
+                </code>
+              </div>
+              <div>
+                <span className="text-gray-500">Pass file:</span>{" "}
+                <code className="bg-gray-600 px-1 rounded">
+                  {config.test_gate.pass_file}
+                </code>
+              </div>
+              <div>
+                <span className="text-gray-500">Max age:</span>{" "}
+                {config.test_gate.pass_file_max_age_seconds}s (tests older than
+                this require re-run)
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Configure in:{" "}
+              <code className="bg-gray-700 px-1 rounded">
+                ~/.config/agentwatch/config.toml
+              </code>
+            </p>
+          </div>
+        </div>
+
+        {/* Activity / Audit Log Section */}
+        <ActivitySection />
+
+        {/* Info Section */}
+        <div
+          id="config-info"
+          className="bg-gray-800 rounded-lg p-4 scroll-mt-16"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-lg font-semibold text-white">
+              Configuration Info
+            </h2>
+            <span className="px-2 py-0.5 text-xs bg-gray-600 rounded text-gray-400">
+              Read-only
             </span>
           </div>
 
-          <div className="flex justify-between">
-            <span className="text-gray-400">Repository Roots</span>
-            <span className="text-white">{config.roots.length} configured</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-400">Agent Matchers</span>
-            <span className="text-white">
-              {config.agents.matchers.length} patterns
-            </span>
-          </div>
-
-          <div className="mt-4 p-3 bg-gray-700/50 rounded">
-            <div className="text-xs text-gray-400 mb-2">
-              Detected Agent Types:
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Daemon</span>
+              <span className="text-white font-mono">
+                {config.daemon.host}:{config.daemon.port}
+              </span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {config.agents.matchers.map((m) => (
-                <span
-                  key={m.label}
-                  className="px-2 py-1 bg-gray-600 rounded text-xs text-gray-300"
-                >
-                  {m.label}
-                </span>
-              ))}
+
+            <div className="flex justify-between">
+              <span className="text-gray-400">Repository Roots</span>
+              <span className="text-white">
+                {config.roots.length} configured
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-gray-400">Agent Matchers</span>
+              <span className="text-white">
+                {config.agents.matchers.length} patterns
+              </span>
+            </div>
+
+            <div className="mt-4 p-3 bg-gray-700/50 rounded">
+              <div className="text-xs text-gray-400 mb-2">
+                Detected Agent Types:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {config.agents.matchers.map((m) => (
+                  <span
+                    key={m.label}
+                    className="px-2 py-1 bg-gray-600 rounded text-xs text-gray-300"
+                  >
+                    {m.label}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* External Reference - expandable section */}
-      <div id="external-reference" className="scroll-mt-16">
-        <ExternalReferenceSection />
-      </div>
+        {/* External Reference - expandable section */}
+        <div id="external-reference" className="scroll-mt-16">
+          <ExternalReferenceSection />
+        </div>
 
-      {/* Raw Config Files - at bottom */}
-      <div id="raw-files" className="scroll-mt-16">
-        <RawFilesSection />
-      </div>
+        {/* Raw Config Files - at bottom */}
+        <div id="raw-files" className="scroll-mt-16">
+          <RawFilesSection />
+        </div>
       </div>
     </SelfDocumentingSection>
   );

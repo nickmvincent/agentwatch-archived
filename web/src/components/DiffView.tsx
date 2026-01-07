@@ -1,6 +1,10 @@
 import { type Diff, diff_match_patch } from "diff-match-patch";
 import { useMemo, useState } from "react";
 import type { RedactionInfo } from "../api/types";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // =============================================================================
 // REDACTION SUMMARY - Shows aggregated stats for the entire Conversation
@@ -854,6 +858,7 @@ interface RawTerminalDiffViewProps {
   originalJson: string;
   redactedJson: string;
   redactionInfoMap?: Record<string, RedactionInfo>;
+  componentId?: string;
 }
 
 /**
@@ -863,9 +868,20 @@ interface RawTerminalDiffViewProps {
 export function RawTerminalDiffView({
   originalJson,
   redactedJson,
-  redactionInfoMap
+  redactionInfoMap,
+  componentId = "analyzer.share.diff-view"
 }: RawTerminalDiffViewProps) {
   const [confirmed, setConfirmed] = useState(false);
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Raw JSON diff",
+    componentId,
+    calculations: [
+      "diff-match-patch semantic diffing",
+      "JSON stringify normalization for comparison"
+    ],
+    notes: ["Large diffs require confirmation to render."]
+  };
 
   const sizeKb = ((originalJson.length + redactedJson.length) / 1024).toFixed(
     1
@@ -891,43 +907,49 @@ export function RawTerminalDiffView({
 
   if (!confirmed && isLarge) {
     return (
-      <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">⚠️</span>
-          <div>
-            <h4 className="text-yellow-300 font-medium">Large Data Warning</h4>
-            <p className="text-gray-300 text-sm mt-1">
-              This diff contains approximately <strong>{sizeKb} KB</strong> of
-              data. Rendering may be slow and could freeze your browser
-              momentarily.
-            </p>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <h4 className="text-yellow-300 font-medium">
+                Large Data Warning
+              </h4>
+              <p className="text-gray-300 text-sm mt-1">
+                This diff contains approximately <strong>{sizeKb} KB</strong> of
+                data. Rendering may be slow and could freeze your browser
+                momentarily.
+              </p>
+            </div>
           </div>
+          <div className="bg-gray-800/50 rounded p-3 text-xs text-gray-400 font-mono">
+            <p className="mb-2">
+              💡 For better performance, you can view this locally:
+            </p>
+            <code className="block bg-gray-900 p-2 rounded">
+              # Save the JSON files and use a diff tool{"\n"}
+              diff original.json redacted.json{"\n"}# Or use a GUI tool like VS
+              Code's diff viewer
+            </code>
+          </div>
+          <button
+            onClick={() => setConfirmed(true)}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded text-sm"
+          >
+            Show Raw Diff Anyway
+          </button>
         </div>
-        <div className="bg-gray-800/50 rounded p-3 text-xs text-gray-400 font-mono">
-          <p className="mb-2">
-            💡 For better performance, you can view this locally:
-          </p>
-          <code className="block bg-gray-900 p-2 rounded">
-            # Save the JSON files and use a diff tool{"\n"}
-            diff original.json redacted.json{"\n"}# Or use a GUI tool like VS
-            Code's diff viewer
-          </code>
-        </div>
-        <button
-          onClick={() => setConfirmed(true)}
-          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded text-sm"
-        >
-          Show Raw Diff Anyway
-        </button>
-      </div>
+      </SelfDocumentingSection>
     );
   }
 
   if (!diff) {
     return (
-      <div className="text-gray-500 text-sm text-center py-8">
-        Unable to compute diff
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-500 text-sm text-center py-8">
+          Unable to compute diff
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
@@ -935,93 +957,95 @@ export function RawTerminalDiffView({
   const placeholderRegex = /<[A-Z_]+_\d+>/g;
 
   return (
-    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
-      <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 text-xs text-gray-400 border-b border-gray-700">
-        <span className="font-mono">$ diff original.json redacted.json</span>
-        <span className="ml-auto">{sizeKb} KB</span>
-      </div>
-      <pre className="p-3 text-xs font-mono overflow-auto max-h-[500px] leading-relaxed">
-        {diff.map((d, i) => {
-          const [op, text] = d;
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 text-xs text-gray-400 border-b border-gray-700">
+          <span className="font-mono">$ diff original.json redacted.json</span>
+          <span className="ml-auto">{sizeKb} KB</span>
+        </div>
+        <pre className="p-3 text-xs font-mono overflow-auto max-h-[500px] leading-relaxed">
+          {diff.map((d, i) => {
+            const [op, text] = d;
 
-          // Check for placeholders in the text
-          const hasPlaceholder = placeholderRegex.test(text);
+            // Check for placeholders in the text
+            const hasPlaceholder = placeholderRegex.test(text);
 
-          if (op === 0) {
-            return (
-              <span key={i} className="text-gray-400">
-                {text}
-              </span>
-            );
-          } else if (op === -1) {
-            return (
-              <span
-                key={i}
-                className="bg-red-900/40 text-red-300"
-                title="Removed"
-              >
-                {text}
-              </span>
-            );
-          } else {
-            // For added text, show redaction info
-            if (hasPlaceholder && redactionInfoMap) {
-              const parts: JSX.Element[] = [];
-              let lastIdx = 0;
-              let match;
-              const regex = /<[A-Z_]+_\d+>/g;
+            if (op === 0) {
+              return (
+                <span key={i} className="text-gray-400">
+                  {text}
+                </span>
+              );
+            } else if (op === -1) {
+              return (
+                <span
+                  key={i}
+                  className="bg-red-900/40 text-red-300"
+                  title="Removed"
+                >
+                  {text}
+                </span>
+              );
+            } else {
+              // For added text, show redaction info
+              if (hasPlaceholder && redactionInfoMap) {
+                const parts: JSX.Element[] = [];
+                let lastIdx = 0;
+                let match;
+                const regex = /<[A-Z_]+_\d+>/g;
 
-              while ((match = regex.exec(text)) !== null) {
-                if (match.index > lastIdx) {
+                while ((match = regex.exec(text)) !== null) {
+                  if (match.index > lastIdx) {
+                    parts.push(
+                      <span
+                        key={`pre-${i}-${lastIdx}`}
+                        className="bg-green-900/40 text-green-300"
+                      >
+                        {text.slice(lastIdx, match.index)}
+                      </span>
+                    );
+                  }
+                  const info = redactionInfoMap[match[0]];
                   parts.push(
                     <span
-                      key={`pre-${i}-${lastIdx}`}
+                      key={`match-${i}-${match.index}`}
+                      className="bg-blue-900/60 text-blue-200 px-0.5 rounded"
+                      title={
+                        info ? `${info.category}: ${info.ruleName}` : "Redacted"
+                      }
+                    >
+                      {match[0]}
+                    </span>
+                  );
+                  lastIdx = match.index + match[0].length;
+                }
+                if (lastIdx < text.length) {
+                  parts.push(
+                    <span
+                      key={`post-${i}`}
                       className="bg-green-900/40 text-green-300"
                     >
-                      {text.slice(lastIdx, match.index)}
+                      {text.slice(lastIdx)}
                     </span>
                   );
                 }
-                const info = redactionInfoMap[match[0]];
-                parts.push(
-                  <span
-                    key={`match-${i}-${match.index}`}
-                    className="bg-blue-900/60 text-blue-200 px-0.5 rounded"
-                    title={
-                      info ? `${info.category}: ${info.ruleName}` : "Redacted"
-                    }
-                  >
-                    {match[0]}
-                  </span>
-                );
-                lastIdx = match.index + match[0].length;
+                return <span key={i}>{parts}</span>;
               }
-              if (lastIdx < text.length) {
-                parts.push(
-                  <span
-                    key={`post-${i}`}
-                    className="bg-green-900/40 text-green-300"
-                  >
-                    {text.slice(lastIdx)}
-                  </span>
-                );
-              }
-              return <span key={i}>{parts}</span>;
-            }
 
-            return (
-              <span
-                key={i}
-                className="bg-green-900/40 text-green-300"
-                title="Added"
-              >
-                {text}
-              </span>
-            );
-          }
-        })}
-      </pre>
-    </div>
+              return (
+                <span
+                  key={i}
+                  className="bg-green-900/40 text-green-300"
+                  title="Added"
+                >
+                  {text}
+                </span>
+              );
+            }
+          })}
+        </pre>
+      </div>
+    </SelfDocumentingSection>
   );
 }
 
@@ -1657,6 +1681,7 @@ interface DiffViewProps {
   onToggleRedaction?: (category: string) => void;
   /** List of currently enabled redaction categories */
   enabledCategories?: string[];
+  componentId?: string;
 }
 
 const dmp = new diff_match_patch();
@@ -2017,40 +2042,60 @@ export function DiffView({
   mode,
   redactionInfoMap,
   onToggleRedaction,
-  enabledCategories
+  enabledCategories,
+  componentId = "analyzer.conversations.diff-view"
 }: DiffViewProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Diff viewer",
+    componentId,
+    calculations: [
+      "diff-match-patch diffing for inline views",
+      "Placeholder extraction for redaction summaries"
+    ],
+    notes: ["Supports full inline view or changes-only view."]
+  };
+
   if (!original || !redacted) {
     return (
-      <div className="text-gray-500 italic text-sm">
-        Select a session to preview redactions
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-500 italic text-sm">
+          Select a session to preview redactions
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
   if (original === redacted) {
     return (
-      <div className="text-gray-400 italic text-sm">
-        No changes - content is identical before and after redaction.
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-400 italic text-sm">
+          No changes - content is identical before and after redaction.
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
-  return mode === "full" ? (
-    <FullDiffView
-      original={original}
-      redacted={redacted}
-      redactionInfoMap={redactionInfoMap}
-      onToggleRedaction={onToggleRedaction}
-      enabledCategories={enabledCategories}
-    />
-  ) : (
-    <ChangesOnlyView
-      original={original}
-      redacted={redacted}
-      redactionInfoMap={redactionInfoMap}
-      onToggleRedaction={onToggleRedaction}
-      enabledCategories={enabledCategories}
-    />
+  return (
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      {mode === "full" ? (
+        <FullDiffView
+          original={original}
+          redacted={redacted}
+          redactionInfoMap={redactionInfoMap}
+          onToggleRedaction={onToggleRedaction}
+          enabledCategories={enabledCategories}
+        />
+      ) : (
+        <ChangesOnlyView
+          original={original}
+          redacted={redacted}
+          redactionInfoMap={redactionInfoMap}
+          onToggleRedaction={onToggleRedaction}
+          enabledCategories={enabledCategories}
+        />
+      )}
+    </SelfDocumentingSection>
   );
 }
 

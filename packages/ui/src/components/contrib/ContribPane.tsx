@@ -18,6 +18,10 @@ import type {
 import type { ContributionHistoryEntry } from "../../adapters/types";
 import { ExportSummary, InfoBox } from "../HelpText";
 import { HELP_CONTENT, HelpIcon } from "../HelpText";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "../SelfDocumentingSection";
 import { ContributionHistory } from "./ContributionHistory";
 import { ContributorInfo } from "./ContributorInfo";
 import { FieldSelector } from "./FieldSelector";
@@ -59,6 +63,7 @@ export function ContribPane({
   renderSessionActions,
   onViewSession
 }: ContribPaneProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
   const backend = useBackend();
   const { hasHuggingFaceUpload, hasPersistentSettings, hasHistory } =
     useAdapter();
@@ -436,391 +441,455 @@ export function ContribPane({
     rightsConfirmed && reviewedConfirmed && preparedSessions.length > 0;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <p className="text-sm text-gray-400 mt-1">
-          Select sessions, configure redaction, preview, and export.
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded text-red-400 text-sm flex items-center justify-between">
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-300 hover:text-white"
-          >
-            ×
-          </button>
+    <SelfDocumentingSection
+      title="Share flow"
+      componentId="static.share.pane"
+      reads={[
+        {
+          path: "adapter.getFieldSchemas",
+          description: "Field schema definitions and defaults"
+        },
+        {
+          path: "adapter.prepareSessions",
+          description: "Redaction and preview preparation"
+        },
+        {
+          path: "adapter.exportBundle",
+          description: "Bundle export and share data"
+        }
+      ]}
+      notes={[
+        "Supports both daemon API and worker-based adapters.",
+        "Sections map to select, prepare, and export steps."
+      ]}
+      visible={showSelfDocs}
+    >
+      <div className="bg-gray-800 rounded-lg p-4">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Select sessions, configure redaction, preview, and export.
+          </p>
         </div>
-      )}
 
-      <div className="space-y-4">
-        {/* Step 1: Sessions */}
-        <Section
-          title="Select Sessions"
-          step={1}
-          expanded={expandedSections.has("sessions")}
-          onToggle={() => toggleSection("sessions")}
-          badge={
-            selectedIds.size > 0 ? (
-              <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
-                {selectedIds.size} selected
-              </span>
-            ) : undefined
-          }
-        >
-          <div className="space-y-3">
-            {/* Custom session loader (for file upload in pages) */}
-            {sessionLoader}
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded text-red-400 text-sm flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-300 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
-            {/* Session list */}
-            {sessions.length > 0 && (
-              <>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      {filteredSessions.length} session
-                      {filteredSessions.length === 1 ? "" : "s"} shown
-                      {filteredSessions.length !== sessions.length && (
-                        <span className="text-gray-500">
-                          {" "}
-                          (of {sessions.length})
+        <div className="space-y-4">
+          {/* Step 1: Sessions */}
+          <SelfDocumentingSection
+            title="Select Sessions"
+            componentId="static.share.sessions-section"
+            notes={[
+              "Session list supports search, sort, and multi-select.",
+              "Session loader can be injected for uploads."
+            ]}
+            visible={showSelfDocs}
+            compact
+          >
+            <Section
+              title="Select Sessions"
+              step={1}
+              expanded={expandedSections.has("sessions")}
+              onToggle={() => toggleSection("sessions")}
+              badge={
+                selectedIds.size > 0 ? (
+                  <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
+                    {selectedIds.size} selected
+                  </span>
+                ) : undefined
+              }
+            >
+              <div className="space-y-3">
+                {/* Custom session loader (for file upload in pages) */}
+                {sessionLoader}
+
+                {/* Session list */}
+                {sessions.length > 0 && (
+                  <>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">
+                          {filteredSessions.length} session
+                          {filteredSessions.length === 1 ? "" : "s"} shown
+                          {filteredSessions.length !== sessions.length && (
+                            <span className="text-gray-500">
+                              {" "}
+                              (of {sessions.length})
+                            </span>
+                          )}
                         </span>
-                      )}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={selectAll}
-                        className="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-                      >
-                        Select All
-                      </button>
-                      <button
-                        onClick={selectNone}
-                        className="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Search by name, source, or path..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
-                    />
-                    <select
-                      value={sourceFilter}
-                      onChange={(e) => setSourceFilter(e.target.value)}
-                      className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
-                    >
-                      <option value="all">All sources</option>
-                      {availableSources.map((source) => (
-                        <option key={source} value={source}>
-                          {source}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={sortBy}
-                      onChange={(e) =>
-                        setSortBy(
-                          e.target.value as
-                            | "newest"
-                            | "oldest"
-                            | "score_desc"
-                            | "score_asc"
-                            | "size_desc"
-                            | "size_asc"
-                        )
-                      }
-                      className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                      <option value="score_desc">Score high → low</option>
-                      <option value="score_asc">Score low → high</option>
-                      <option value="size_desc">Size large → small</option>
-                      <option value="size_asc">Size small → large</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="max-h-64 overflow-y-auto space-y-3">
-                  {Object.entries(groupedSessions).map(
-                    ([date, dateSessions]) => (
-                      <div key={date}>
-                        <div className="text-xs text-gray-500 mb-1">{date}</div>
-                        <div className="space-y-1">
-                          {dateSessions.map((session) => (
-                            <div
-                              key={session.id}
-                              className={`p-2 rounded flex items-center gap-2 cursor-pointer transition-colors ${
-                                selectedIds.has(session.id)
-                                  ? "bg-blue-900/40 border border-blue-600"
-                                  : "bg-gray-700/30 hover:bg-gray-700/50 border border-transparent"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedIds.has(session.id)}
-                                onChange={() => toggleSession(session.id)}
-                                className="rounded"
-                              />
-                              <div
-                                className="flex-1 min-w-0"
-                                onClick={() => toggleSession(session.id)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`px-1.5 py-0.5 text-xs rounded ${getSourceColorClass(session.source)}`}
-                                  >
-                                    {session.source}
-                                  </span>
-                                  <span className="text-sm text-white truncate">
-                                    {session.name}
-                                  </span>
-                                  {session.active && (
-                                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                  )}
-                                  {session.score !== undefined && (
-                                    <span
-                                      className={`px-1 py-0.5 text-[10px] rounded ${getScoreColorClass(session.score)}`}
-                                    >
-                                      {session.score}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-500 shrink-0">
-                                {session.messageCount != null && (
-                                  <span>{session.messageCount} msgs</span>
-                                )}
-                                {session.sizeBytes && (
-                                  <span>{formatSize(session.sizeBytes)}</span>
-                                )}
-                                <span>{formatTime(session.modifiedAt)}</span>
-                                {renderSessionActions?.(session)}
-                                {onViewSession && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onViewSession(session);
-                                    }}
-                                    className="px-1.5 py-0.5 bg-gray-600 rounded hover:bg-gray-500"
-                                  >
-                                    View
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={selectAll}
+                            className="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={selectNone}
+                            className="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
+                          >
+                            Clear
+                          </button>
                         </div>
                       </div>
-                    )
-                  )}
-                </div>
-              </>
-            )}
 
-            {sessions.length === 0 && !sessionLoader && (
-              <div className="text-center py-4 text-gray-500 text-sm">
-                No sessions available
-              </div>
-            )}
-          </div>
-        </Section>
-
-        {/* Step 2: Prepare & Preview */}
-        <Section
-          title="Prepare & Preview"
-          step={2}
-          expanded={expandedSections.has("prepare")}
-          onToggle={() => toggleSection("prepare")}
-          badge={
-            preparedSessions.length > 0 ? (
-              <span
-                className={`px-2 py-0.5 text-xs rounded ${
-                  redactionReport?.blocked ? "bg-red-600" : "bg-green-600"
-                } text-white`}
-              >
-                {redactionReport?.blocked ? "Blocked" : "Ready"}
-              </span>
-            ) : undefined
-          }
-        >
-          {selectedIds.size === 0 ? (
-            <div className="text-sm text-gray-500 text-center py-8">
-              Select sessions above to configure redaction and preview changes
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-4">
-              {/* Left: Config */}
-              <div className="col-span-1 space-y-4">
-                <RedactionConfigPanel
-                  config={redactionConfig}
-                  onChange={setRedactionConfig}
-                />
-                <FieldSelector
-                  schemas={fieldSchemas}
-                  selectedFields={selectedFields}
-                  fieldsPresent={fieldsPresent}
-                  onToggle={toggleField}
-                />
-              </div>
-
-              {/* Right: Preview */}
-              <div className="col-span-2">
-                <PreviewPanel
-                  sessions={preparedSessions}
-                  previewIndex={previewIndex}
-                  onPreviewIndexChange={setPreviewIndex}
-                  diffViewMode={diffViewMode}
-                  onDiffViewModeChange={setDiffViewMode}
-                  loading={previewLoading}
-                  fieldsStripped={fieldsStripped}
-                  redactionReport={redactionReport || undefined}
-                />
-              </div>
-            </div>
-          )}
-        </Section>
-
-        {/* Step 3: Contributor & Export */}
-        <Section
-          title="Contributor & Export"
-          step={3}
-          expanded={expandedSections.has("export")}
-          onToggle={() => toggleSection("export")}
-        >
-          <div className="space-y-4">
-            <ContributorInfo
-              contributorId={contributorId}
-              license={license}
-              aiPreference={aiPreference}
-              onContributorIdChange={setContributorId}
-              onLicenseChange={setLicense}
-              onAiPreferenceChange={setAiPreference}
-              rightsConfirmed={rightsConfirmed}
-              reviewedConfirmed={reviewedConfirmed}
-              onRightsConfirmedChange={setRightsConfirmed}
-              onReviewedConfirmedChange={setReviewedConfirmed}
-            />
-
-            {/* Contribution History (if supported by adapter) */}
-            {hasHistory && contributionHistory.length > 0 && (
-              <ContributionHistory entries={contributionHistory} />
-            )}
-
-            {/* Pre-export Summary */}
-            {preparedSessions.length > 0 && redactionReport && (
-              <ExportSummary
-                sessionCount={preparedSessions.length}
-                totalChars={preparedSessions.reduce(
-                  (sum, s) => sum + s.approxChars,
-                  0
-                )}
-                redactionCount={redactionReport.totalStringsTouched}
-                fieldsStripped={Object.keys(fieldsStripped).length}
-                warningCount={redactionReport.residueWarnings.length}
-                license={license}
-                aiPreference={aiPreference}
-              />
-            )}
-
-            {/* Build & Export */}
-            <div className="p-3 bg-gray-700/30 rounded space-y-3">
-              <button
-                onClick={handleBuildBundle}
-                disabled={!canBuild || exportLoading}
-                className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exportLoading ? "Building..." : "Build Bundle"}
-              </button>
-
-              {!canBuild && preparedSessions.length > 0 && (
-                <div className="text-xs text-yellow-400">
-                  Please confirm both attestations above to enable export.
-                </div>
-              )}
-
-              {bundleResult && (
-                <div className="space-y-3">
-                  <InfoBox type="tip" title="Bundle Ready">
-                    <p>
-                      <strong>{bundleResult.bundleId}</strong> (
-                      {bundleResult.transcriptsCount} sessions)
-                    </p>
-                    <p className="mt-1 text-gray-400">
-                      Format: {bundleResult.bundleFormat.toUpperCase()} -
-                      Download or upload to a dataset.
-                    </p>
-                  </InfoBox>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleDownload}
-                      className="flex-1 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                    >
-                      Download
-                    </button>
-
-                    {hasHuggingFaceUpload && (
-                      <button
-                        onClick={handleHFUpload}
-                        disabled={!hfRepoId || exportLoading}
-                        className="flex-1 py-1.5 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 disabled:opacity-50"
-                      >
-                        Upload to HF
-                      </button>
-                    )}
-                  </div>
-
-                  {hasHuggingFaceUpload && (
-                    <div className="space-y-1">
-                      <div className="flex gap-2 items-center">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <input
                           type="text"
-                          placeholder="username/dataset-name"
-                          value={hfRepoId}
-                          onChange={(e) => setHfRepoId(e.target.value)}
-                          className="flex-1 px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                          placeholder="Search by name, source, or path..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
                         />
-                        {!hfUsername && (
+                        <select
+                          value={sourceFilter}
+                          onChange={(e) => setSourceFilter(e.target.value)}
+                          className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
+                        >
+                          <option value="all">All sources</option>
+                          {availableSources.map((source) => (
+                            <option key={source} value={source}>
+                              {source}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={sortBy}
+                          onChange={(e) =>
+                            setSortBy(
+                              e.target.value as
+                                | "newest"
+                                | "oldest"
+                                | "score_desc"
+                                | "score_asc"
+                                | "size_desc"
+                                | "size_asc"
+                            )
+                          }
+                          className="px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded text-white"
+                        >
+                          <option value="newest">Newest first</option>
+                          <option value="oldest">Oldest first</option>
+                          <option value="score_desc">Score high → low</option>
+                          <option value="score_asc">Score low → high</option>
+                          <option value="size_desc">Size large → small</option>
+                          <option value="size_asc">Size small → large</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto space-y-3">
+                      {Object.entries(groupedSessions).map(
+                        ([date, dateSessions]) => (
+                          <div key={date}>
+                            <div className="text-xs text-gray-500 mb-1">
+                              {date}
+                            </div>
+                            <div className="space-y-1">
+                              {dateSessions.map((session) => (
+                                <div
+                                  key={session.id}
+                                  className={`p-2 rounded flex items-center gap-2 cursor-pointer transition-colors ${
+                                    selectedIds.has(session.id)
+                                      ? "bg-blue-900/40 border border-blue-600"
+                                      : "bg-gray-700/30 hover:bg-gray-700/50 border border-transparent"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(session.id)}
+                                    onChange={() => toggleSession(session.id)}
+                                    className="rounded"
+                                  />
+                                  <div
+                                    className="flex-1 min-w-0"
+                                    onClick={() => toggleSession(session.id)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`px-1.5 py-0.5 text-xs rounded ${getSourceColorClass(session.source)}`}
+                                      >
+                                        {session.source}
+                                      </span>
+                                      <span className="text-sm text-white truncate">
+                                        {session.name}
+                                      </span>
+                                      {session.active && (
+                                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                      )}
+                                      {session.score !== undefined && (
+                                        <span
+                                          className={`px-1 py-0.5 text-[10px] rounded ${getScoreColorClass(session.score)}`}
+                                        >
+                                          {session.score}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 shrink-0">
+                                    {session.messageCount != null && (
+                                      <span>{session.messageCount} msgs</span>
+                                    )}
+                                    {session.sizeBytes && (
+                                      <span>
+                                        {formatSize(session.sizeBytes)}
+                                      </span>
+                                    )}
+                                    <span>
+                                      {formatTime(session.modifiedAt)}
+                                    </span>
+                                    {renderSessionActions?.(session)}
+                                    {onViewSession && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onViewSession(session);
+                                        }}
+                                        className="px-1.5 py-0.5 bg-gray-600 rounded hover:bg-gray-500"
+                                      >
+                                        View
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {sessions.length === 0 && !sessionLoader && (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    No sessions available
+                  </div>
+                )}
+              </div>
+            </Section>
+          </SelfDocumentingSection>
+
+          {/* Step 2: Prepare & Preview */}
+          <SelfDocumentingSection
+            title="Prepare & Preview"
+            componentId="static.share.prepare-section"
+            notes={[
+              "Redaction config and field selection update live previews.",
+              "Preview modes include diffs and raw JSON."
+            ]}
+            visible={showSelfDocs}
+            compact
+          >
+            <Section
+              title="Prepare & Preview"
+              step={2}
+              expanded={expandedSections.has("prepare")}
+              onToggle={() => toggleSection("prepare")}
+              badge={
+                preparedSessions.length > 0 ? (
+                  <span
+                    className={`px-2 py-0.5 text-xs rounded ${
+                      redactionReport?.blocked ? "bg-red-600" : "bg-green-600"
+                    } text-white`}
+                  >
+                    {redactionReport?.blocked ? "Blocked" : "Ready"}
+                  </span>
+                ) : undefined
+              }
+            >
+              {selectedIds.size === 0 ? (
+                <div className="text-sm text-gray-500 text-center py-8">
+                  Select sessions above to configure redaction and preview
+                  changes
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Left: Config */}
+                  <div className="col-span-1 space-y-4">
+                    <RedactionConfigPanel
+                      config={redactionConfig}
+                      onChange={setRedactionConfig}
+                    />
+                    <FieldSelector
+                      schemas={fieldSchemas}
+                      selectedFields={selectedFields}
+                      fieldsPresent={fieldsPresent}
+                      onToggle={toggleField}
+                    />
+                  </div>
+
+                  {/* Right: Preview */}
+                  <div className="col-span-2">
+                    <PreviewPanel
+                      sessions={preparedSessions}
+                      previewIndex={previewIndex}
+                      onPreviewIndexChange={setPreviewIndex}
+                      diffViewMode={diffViewMode}
+                      onDiffViewModeChange={setDiffViewMode}
+                      loading={previewLoading}
+                      fieldsStripped={fieldsStripped}
+                      redactionReport={redactionReport || undefined}
+                    />
+                  </div>
+                </div>
+              )}
+            </Section>
+          </SelfDocumentingSection>
+
+          {/* Step 3: Contributor & Export */}
+          <SelfDocumentingSection
+            title="Contributor & Export"
+            componentId="static.share.export-section"
+            notes={[
+              "Contributor metadata and licensing live here.",
+              "Export requires rights and review confirmations."
+            ]}
+            visible={showSelfDocs}
+            compact
+          >
+            <Section
+              title="Contributor & Export"
+              step={3}
+              expanded={expandedSections.has("export")}
+              onToggle={() => toggleSection("export")}
+            >
+              <div className="space-y-4">
+                <ContributorInfo
+                  contributorId={contributorId}
+                  license={license}
+                  aiPreference={aiPreference}
+                  onContributorIdChange={setContributorId}
+                  onLicenseChange={setLicense}
+                  onAiPreferenceChange={setAiPreference}
+                  rightsConfirmed={rightsConfirmed}
+                  reviewedConfirmed={reviewedConfirmed}
+                  onRightsConfirmedChange={setRightsConfirmed}
+                  onReviewedConfirmedChange={setReviewedConfirmed}
+                />
+
+                {/* Contribution History (if supported by adapter) */}
+                {hasHistory && contributionHistory.length > 0 && (
+                  <ContributionHistory entries={contributionHistory} />
+                )}
+
+                {/* Pre-export Summary */}
+                {preparedSessions.length > 0 && redactionReport && (
+                  <ExportSummary
+                    sessionCount={preparedSessions.length}
+                    totalChars={preparedSessions.reduce(
+                      (sum, s) => sum + s.approxChars,
+                      0
+                    )}
+                    redactionCount={redactionReport.totalStringsTouched}
+                    fieldsStripped={Object.keys(fieldsStripped).length}
+                    warningCount={redactionReport.residueWarnings.length}
+                    license={license}
+                    aiPreference={aiPreference}
+                  />
+                )}
+
+                {/* Build & Export */}
+                <div className="p-3 bg-gray-700/30 rounded space-y-3">
+                  <button
+                    onClick={handleBuildBundle}
+                    disabled={!canBuild || exportLoading}
+                    className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {exportLoading ? "Building..." : "Build Bundle"}
+                  </button>
+
+                  {!canBuild && preparedSessions.length > 0 && (
+                    <div className="text-xs text-yellow-400">
+                      Please confirm both attestations above to enable export.
+                    </div>
+                  )}
+
+                  {bundleResult && (
+                    <div className="space-y-3">
+                      <InfoBox type="tip" title="Bundle Ready">
+                        <p>
+                          <strong>{bundleResult.bundleId}</strong> (
+                          {bundleResult.transcriptsCount} sessions)
+                        </p>
+                        <p className="mt-1 text-gray-400">
+                          Format: {bundleResult.bundleFormat.toUpperCase()} -
+                          Download or upload to a dataset.
+                        </p>
+                      </InfoBox>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleDownload}
+                          className="flex-1 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                        >
+                          Download
+                        </button>
+
+                        {hasHuggingFaceUpload && (
                           <button
-                            onClick={handleHFOAuth}
-                            className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded hover:bg-gray-600"
+                            onClick={handleHFUpload}
+                            disabled={!hfRepoId || exportLoading}
+                            className="flex-1 py-1.5 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 disabled:opacity-50"
                           >
-                            Login
+                            Upload to HF
                           </button>
                         )}
-                        {hfUsername && (
-                          <span className="text-xs text-green-400">
-                            @{hfUsername}
-                          </span>
-                        )}
-                        <HelpIcon
-                          tooltip={HELP_CONTENT.huggingFace.repoFormat}
-                        />
                       </div>
-                      <div className="text-[10px] text-gray-500">
-                        Dataset must exist on HuggingFace. You need write access
-                        to upload.
-                      </div>
+
+                      {hasHuggingFaceUpload && (
+                        <div className="space-y-1">
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder="username/dataset-name"
+                              value={hfRepoId}
+                              onChange={(e) => setHfRepoId(e.target.value)}
+                              className="flex-1 px-2 py-1 bg-gray-900 border border-gray-600 rounded text-white text-xs"
+                            />
+                            {!hfUsername && (
+                              <button
+                                onClick={handleHFOAuth}
+                                className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded hover:bg-gray-600"
+                              >
+                                Login
+                              </button>
+                            )}
+                            {hfUsername && (
+                              <span className="text-xs text-green-400">
+                                @{hfUsername}
+                              </span>
+                            )}
+                            <HelpIcon
+                              tooltip={HELP_CONTENT.huggingFace.repoFormat}
+                            />
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            Dataset must exist on HuggingFace. You need write
+                            access to upload.
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        </Section>
+              </div>
+            </Section>
+          </SelfDocumentingSection>
+        </div>
       </div>
-    </div>
+    </SelfDocumentingSection>
   );
 }
 

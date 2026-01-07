@@ -3,6 +3,10 @@
  */
 
 import { useEffect, useState } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "../../components/ui/SelfDocumentingSection";
 
 interface SandboxStatus {
   docker: {
@@ -39,6 +43,20 @@ export function WatcherHeader({
   agentCount,
   sessionCount
 }: WatcherHeaderProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Watcher Header",
+    componentId: "watcher.global.header",
+    reads: [
+      {
+        path: "GET /api/sandbox/status",
+        description: "Sandbox readiness and Docker status"
+      }
+    ],
+    notes: [
+      "Watcher connectivity and counts are derived from live WebSocket data."
+    ]
+  };
   const [sandboxStatus, setSandboxStatus] = useState<SandboxStatus | null>(
     null
   );
@@ -68,43 +86,45 @@ export function WatcherHeader({
   };
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-white">Agentwatch Watcher</h1>
-          <span
-            className={`px-2 py-1 rounded text-xs ${
-              connected
-                ? "bg-green-900 text-green-300"
-                : "bg-red-900 text-red-300"
-            }`}
-          >
-            {connected ? "Connected" : "Disconnected"}
-          </span>
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-white">Agentwatch Watcher</h1>
+            <span
+              className={`px-2 py-1 rounded text-xs ${
+                connected
+                  ? "bg-green-900 text-green-300"
+                  : "bg-red-900 text-red-300"
+              }`}
+            >
+              {connected ? "Connected" : "Disconnected"}
+            </span>
 
-          {/* Sandbox Status Indicator */}
-          {sandboxStatus && <SandboxIndicator status={sandboxStatus} />}
-        </div>
-
-        <div className="flex items-center gap-4">
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-gray-400 text-sm">
-            <span title="Active hook sessions">{sessionCount} sessions</span>
-            <span>{agentCount} agents</span>
-            <span>{repoCount} repos</span>
+            {/* Sandbox Status Indicator */}
+            {sandboxStatus && <SandboxIndicator status={sandboxStatus} />}
           </div>
 
-          {/* Open Analyzer Button */}
-          <button
-            onClick={openAnalyzer}
-            className="px-3 py-1.5 rounded text-sm font-medium transition-colors bg-gray-700 hover:bg-gray-600 text-gray-300"
-            title="Open Analyzer dashboard"
-          >
-            Open Analyzer
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Stats */}
+            <div className="flex items-center gap-3 text-gray-400 text-sm">
+              <span title="Active hook sessions">{sessionCount} sessions</span>
+              <span>{agentCount} agents</span>
+              <span>{repoCount} repos</span>
+            </div>
+
+            {/* Open Analyzer Button */}
+            <button
+              onClick={openAnalyzer}
+              className="px-3 py-1.5 rounded text-sm font-medium transition-colors bg-gray-700 hover:bg-gray-600 text-gray-300"
+              title="Open Analyzer dashboard"
+            >
+              Open Analyzer
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </SelfDocumentingSection>
   );
 }
 

@@ -8,11 +8,16 @@
 
 import { type Diff, diff_match_patch } from "diff-match-patch";
 import { useMemo } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./SelfDocumentingSection";
 
 export interface DiffViewProps {
   original: string;
   redacted: string;
   mode: "full" | "changes";
+  componentId?: string;
 }
 
 const dmp = new diff_match_patch();
@@ -211,27 +216,48 @@ function ChangesOnlyView({
   );
 }
 
-export function DiffView({ original, redacted, mode }: DiffViewProps) {
+export function DiffView({
+  original,
+  redacted,
+  mode,
+  componentId = "static.share.diff-view"
+}: DiffViewProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Diff viewer",
+    componentId,
+    calculations: ["diff-match-patch semantic diffing"],
+    notes: ["Supports full inline view or changes-only view."]
+  };
+
   if (!original || !redacted) {
     return (
-      <div className="text-gray-500 italic text-sm">
-        Select a session to preview redactions
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-500 italic text-sm">
+          Select a session to preview redactions
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
   if (original === redacted) {
     return (
-      <div className="text-gray-400 italic text-sm">
-        No changes - content is identical before and after redaction.
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-400 italic text-sm">
+          No changes - content is identical before and after redaction.
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
-  return mode === "full" ? (
-    <FullDiffView original={original} redacted={redacted} />
-  ) : (
-    <ChangesOnlyView original={original} redacted={redacted} />
+  return (
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      {mode === "full" ? (
+        <FullDiffView original={original} redacted={redacted} />
+      ) : (
+        <ChangesOnlyView original={original} redacted={redacted} />
+      )}
+    </SelfDocumentingSection>
   );
 }
 

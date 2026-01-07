@@ -13,30 +13,61 @@ import type {
   McpServerConfig,
   PermissionsReferenceResult
 } from "../api/types";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 export function ReferencePane() {
+  const showSelfDocs = useSelfDocumentingVisible();
+
   return (
-    <div className="space-y-6">
-      <div className="mb-4">
-        <h1 className="text-xl font-semibold text-white">Reference</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Log format schemas, MCP servers, Claude Code permissions, environment
-          variables, and token calculator.
-        </p>
+    <SelfDocumentingSection
+      title="Reference"
+      componentId="analyzer.settings.reference-pane"
+      reads={[
+        {
+          path: "GET /api/reference/format-schemas",
+          description: "Supported and planned transcript schemas"
+        },
+        { path: "GET /api/reference/mcp-config", description: "MCP servers" },
+        {
+          path: "GET /api/reference/permissions",
+          description: "Claude Code permission modes"
+        },
+        {
+          path: "GET /api/reference/env-vars",
+          description: "Environment variables reference"
+        }
+      ]}
+      calculations={["Token cost estimation from model pricing"]}
+      notes={[
+        "Reference data is read-only and reflects current local settings."
+      ]}
+      visible={showSelfDocs}
+    >
+      <div className="space-y-6">
+        <div className="mb-4">
+          <h1 className="text-xl font-semibold text-white">Reference</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Log format schemas, MCP servers, Claude Code permissions,
+            environment variables, and token calculator.
+          </p>
+        </div>
+
+        {/* Log Format Schemas */}
+        <FormatSchemasSection />
+
+        {/* MCP Servers */}
+        <McpServersSection />
+
+        {/* Claude Code Reference */}
+        <ClaudeReferenceSection />
+
+        {/* Cost Calculator */}
+        <CostCalculatorSection />
       </div>
-
-      {/* Log Format Schemas */}
-      <FormatSchemasSection />
-
-      {/* MCP Servers */}
-      <McpServersSection />
-
-      {/* Claude Code Reference */}
-      <ClaudeReferenceSection />
-
-      {/* Cost Calculator */}
-      <CostCalculatorSection />
-    </div>
+    </SelfDocumentingSection>
   );
 }
 

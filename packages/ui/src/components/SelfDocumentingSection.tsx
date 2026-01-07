@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { UI_COMPONENTS, formatComponentName } from "../../lib/ui-registry";
+import { useEffect, useState, type ReactNode } from "react";
+import { UI_COMPONENTS, formatComponentName } from "../lib/ui-registry";
 
 const SELF_DOCS_STORAGE_KEY = "agentwatch-show-self-docs";
 const SELF_DOCS_EVENT = "agentwatch:self-docs";
@@ -48,21 +48,11 @@ interface SelfDocumentingSectionProps {
   /** Whether to show this section at all (can be controlled by user settings) */
   visible?: boolean;
   /** Content to wrap */
-  children?: React.ReactNode;
+  children?: ReactNode;
   /** Compact mode - just show a small expandable icon */
   compact?: boolean;
 }
 
-/**
- * Self-documenting expandable section.
- *
- * Wraps any component with transparency information:
- * - What files it reads/writes
- * - Related test files
- * - Key calculations/algorithms
- *
- * Design principle: Users should never wonder "where does this data go?"
- */
 export function SelfDocumentingSection({
   title,
   componentId,
@@ -277,10 +267,6 @@ function FileList({ label, files, icon }: FileListProps) {
   );
 }
 
-/**
- * Hook to check if self-documenting sections should be visible.
- * Can be controlled by user settings in the future.
- */
 export function useSelfDocumentingVisible(): boolean {
   const [visible, setVisible] = useState(() => getSelfDocumentingPreference());
 

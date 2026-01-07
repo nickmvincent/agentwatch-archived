@@ -10,6 +10,10 @@
  */
 
 import { useEffect, useState } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
 // =============================================================================
 // TYPES
@@ -207,6 +211,18 @@ export function ResearchProfileSelector({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Research profiles",
+    componentId: "analyzer.share.research-profile-selector",
+    reads: [
+      {
+        path: "GET /api/contrib/research-profiles",
+        description: "Profile definitions and kept field lists"
+      }
+    ],
+    notes: ["Selection passes kept_fields to export configuration."]
+  };
 
   // Fetch research profiles from API
   useEffect(() => {
@@ -227,73 +243,81 @@ export function ResearchProfileSelector({
   }, []);
 
   if (loading) {
-    return <div className="text-gray-400 text-sm p-4">Loading profiles...</div>;
+    return (
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-gray-400 text-sm p-4">Loading profiles...</div>
+      </SelfDocumentingSection>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-red-400 text-sm p-4">
-        Failed to load profiles: {error}
-      </div>
+      <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+        <div className="text-red-400 text-sm p-4">
+          Failed to load profiles: {error}
+        </div>
+      </SelfDocumentingSection>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="text-sm text-gray-400">
-        <strong className="text-white">
-          What research will your contribution enable?
-        </strong>
-        <p className="mt-1 text-xs">
-          Select a profile to see what data is shared and what research
-          questions it helps answer.
-        </p>
-      </div>
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="text-sm text-gray-400">
+          <strong className="text-white">
+            What research will your contribution enable?
+          </strong>
+          <p className="mt-1 text-xs">
+            Select a profile to see what data is shared and what research
+            questions it helps answer.
+          </p>
+        </div>
 
-      {/* Profile cards */}
-      <div className="space-y-2">
-        {profiles.map((profile) => (
-          <ProfileCard
-            key={profile.id}
-            profile={profile}
-            isSelected={selectedProfileId === profile.id}
-            onSelect={() => onSelectProfile(profile.id, profile.kept_fields)}
-            expanded={expandedId === profile.id}
-            onToggleExpand={() =>
-              setExpandedId(expandedId === profile.id ? null : profile.id)
-            }
-          />
-        ))}
-      </div>
-
-      {/* Custom option */}
-      {onCustomClick && (
-        <button
-          className={`w-full border border-dashed rounded-lg p-3 text-left transition-all ${
-            selectedProfileId === "custom"
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-gray-600 hover:border-gray-500"
-          }`}
-          onClick={onCustomClick}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="font-medium text-white">Custom</span>
-              <p className="text-sm text-gray-400 mt-0.5">
-                Select specific fields manually
-              </p>
-            </div>
-            <input
-              type="radio"
-              checked={selectedProfileId === "custom"}
-              onChange={onCustomClick}
-              className="text-blue-500"
+        {/* Profile cards */}
+        <div className="space-y-2">
+          {profiles.map((profile) => (
+            <ProfileCard
+              key={profile.id}
+              profile={profile}
+              isSelected={selectedProfileId === profile.id}
+              onSelect={() => onSelectProfile(profile.id, profile.kept_fields)}
+              expanded={expandedId === profile.id}
+              onToggleExpand={() =>
+                setExpandedId(expandedId === profile.id ? null : profile.id)
+              }
             />
-          </div>
-        </button>
-      )}
-    </div>
+          ))}
+        </div>
+
+        {/* Custom option */}
+        {onCustomClick && (
+          <button
+            className={`w-full border border-dashed rounded-lg p-3 text-left transition-all ${
+              selectedProfileId === "custom"
+                ? "border-blue-500 bg-blue-500/10"
+                : "border-gray-600 hover:border-gray-500"
+            }`}
+            onClick={onCustomClick}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-medium text-white">Custom</span>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  Select specific fields manually
+                </p>
+              </div>
+              <input
+                type="radio"
+                checked={selectedProfileId === "custom"}
+                onChange={onCustomClick}
+                className="text-blue-500"
+              />
+            </div>
+          </button>
+        )}
+      </div>
+    </SelfDocumentingSection>
   );
 }
 
@@ -307,6 +331,7 @@ export function ResearchProfileSelectorCompact({
 }: Omit<ResearchProfileSelectorProps, "compact" | "onCustomClick">) {
   const [profiles, setProfiles] = useState<ResearchProfileData[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSelfDocs = useSelfDocumentingVisible();
 
   useEffect(() => {
     fetch("/api/contrib/research-profiles")
@@ -319,29 +344,60 @@ export function ResearchProfileSelectorCompact({
   }, []);
 
   if (loading) {
-    return <div className="text-gray-400 text-xs">Loading...</div>;
+    return (
+      <SelfDocumentingSection
+        title="Research profiles (compact)"
+        componentId="analyzer.share.research-profile-selector"
+        reads={[
+          {
+            path: "GET /api/contrib/research-profiles",
+            description: "Profile definitions and kept field lists"
+          }
+        ]}
+        visible={showSelfDocs}
+        compact
+        inline
+      >
+        <div className="text-gray-400 text-xs">Loading...</div>
+      </SelfDocumentingSection>
+    );
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {profiles.map((profile) => (
-        <button
-          key={profile.id}
-          className={`px-3 py-1.5 rounded text-sm transition-all ${
-            selectedProfileId === profile.id
-              ? "bg-blue-600 text-white"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-          onClick={() => onSelectProfile(profile.id, profile.kept_fields)}
-          title={profile.description}
-        >
-          {profile.name}
-          {profile.ui?.badge === "Recommended" && (
-            <span className="ml-1 text-xs opacity-70">★</span>
-          )}
-        </button>
-      ))}
-    </div>
+    <SelfDocumentingSection
+      title="Research profiles (compact)"
+      componentId="analyzer.share.research-profile-selector"
+      reads={[
+        {
+          path: "GET /api/contrib/research-profiles",
+          description: "Profile definitions and kept field lists"
+        }
+      ]}
+      notes={["Inline picker variant for settings panels."]}
+      visible={showSelfDocs}
+      compact
+      inline
+    >
+      <div className="flex flex-wrap gap-2">
+        {profiles.map((profile) => (
+          <button
+            key={profile.id}
+            className={`px-3 py-1.5 rounded text-sm transition-all ${
+              selectedProfileId === profile.id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+            onClick={() => onSelectProfile(profile.id, profile.kept_fields)}
+            title={profile.description}
+          >
+            {profile.name}
+            {profile.ui?.badge === "Recommended" && (
+              <span className="ml-1 text-xs opacity-70">★</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </SelfDocumentingSection>
   );
 }
 

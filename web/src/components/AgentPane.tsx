@@ -729,7 +729,9 @@ export function AgentPane({
         />
 
         {/* Hook Enhancements Section */}
-        {showHookEnhancements && <HookEnhancementsSection />}
+        {showHookEnhancements && (
+          <HookEnhancementsSection componentId="watcher.agents.hook-enhancements" />
+        )}
       </div>
 
       {selectedAgent && (

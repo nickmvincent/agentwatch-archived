@@ -1,7 +1,30 @@
 import { useEffect, useState } from "react";
 import { fetchConfig, type ConfigData } from "../api/client";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./ui/SelfDocumentingSection";
 
-export function HookEnhancementsSection() {
+interface HookEnhancementsSectionProps {
+  componentId?: string;
+}
+
+export function HookEnhancementsSection({
+  componentId = "watcher.settings.hook-enhancements"
+}: HookEnhancementsSectionProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Hook Enhancements",
+    componentId,
+    reads: [
+      {
+        path: "GET /api/config",
+        description: "Hook enhancements configuration"
+      }
+    ],
+    tests: ["packages/watcher/test/api.test.ts"],
+    notes: ["Hook enhancements are watcher-side policies and utilities."]
+  };
   const [expanded, setExpanded] = useState(false);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,108 +63,110 @@ export function HookEnhancementsSection() {
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-750"
-      >
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-white">
-            Hook Enhancements
-          </h3>
-          {enabledCount > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-purple-600 text-white rounded-full">
-              {enabledCount} active
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="bg-gray-800 rounded-lg border border-gray-700">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-750"
+        >
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-white">
+              Hook Enhancements
+            </h3>
+            {enabledCount > 0 && (
+              <span className="px-2 py-0.5 text-xs bg-purple-600 text-white rounded-full">
+                {enabledCount} active
+              </span>
+            )}
+            <span className="text-xs text-gray-400">
+              Configure watcher-side hook behavior
             </span>
-          )}
-          <span className="text-xs text-gray-400">
-            Configure watcher-side hook behavior
-          </span>
-        </div>
-        <span className="text-gray-400">{expanded ? "▼" : "▶"}</span>
-      </button>
-
-      {expanded && (
-        <div className="border-t border-gray-700 p-4 space-y-4">
-          {loading && (
-            <div className="text-xs text-gray-500">
-              Loading hook settings...
-            </div>
-          )}
-
-          {/* Feature Toggles Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <FeatureCard
-              label="Cost Controls"
-              enabled={costControls?.enabled}
-              description="Budget thresholds and warnings"
-            />
-            <FeatureCard
-              label="Rules"
-              enabled={rulesConfig?.enabled}
-              description="Policy checks for hooks"
-              detail={rulesConfig?.rules_file}
-            />
-            <FeatureCard
-              label="Notifications"
-              enabled={notificationHub?.enabled}
-              description="Desktop or webhook alerts"
-            />
-            <FeatureCard
-              label="Token Tracking"
-              enabled={tokenTracking?.enabled}
-              description="Warn on cost thresholds"
-            />
-            <FeatureCard
-              label="Auto Continue"
-              enabled={autoContinue?.enabled}
-              description="Auto-continue on failures"
-            />
-            <FeatureCard
-              label="Stop Blocking"
-              enabled={stopBlocking?.enabled}
-              description="Require passing checks"
-            />
           </div>
+          <span className="text-gray-400">{expanded ? "▼" : "▶"}</span>
+        </button>
 
-          {/* Cost Controls */}
-          {costControls?.enabled && (
-            <div className="bg-gray-750 rounded p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-300">
-                  Cost Controls
-                </span>
+        {expanded && (
+          <div className="border-t border-gray-700 p-4 space-y-4">
+            {loading && (
+              <div className="text-xs text-gray-500">
+                Loading hook settings...
               </div>
-              <div className="flex gap-4 text-xs">
-                <div>
-                  <span className="text-gray-400">Today:</span>{" "}
-                  <span className="text-white">
-                    ${costControls.daily_limit_usd.toFixed(2)}
+            )}
+
+            {/* Feature Toggles Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <FeatureCard
+                label="Cost Controls"
+                enabled={costControls?.enabled}
+                description="Budget thresholds and warnings"
+              />
+              <FeatureCard
+                label="Rules"
+                enabled={rulesConfig?.enabled}
+                description="Policy checks for hooks"
+                detail={rulesConfig?.rules_file}
+              />
+              <FeatureCard
+                label="Notifications"
+                enabled={notificationHub?.enabled}
+                description="Desktop or webhook alerts"
+              />
+              <FeatureCard
+                label="Token Tracking"
+                enabled={tokenTracking?.enabled}
+                description="Warn on cost thresholds"
+              />
+              <FeatureCard
+                label="Auto Continue"
+                enabled={autoContinue?.enabled}
+                description="Auto-continue on failures"
+              />
+              <FeatureCard
+                label="Stop Blocking"
+                enabled={stopBlocking?.enabled}
+                description="Require passing checks"
+              />
+            </div>
+
+            {/* Cost Controls */}
+            {costControls?.enabled && (
+              <div className="bg-gray-750 rounded p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-300">
+                    Cost Controls
                   </span>
                 </div>
-                <div>
-                  <span className="text-gray-400">Session:</span>{" "}
-                  <span className="text-white">
-                    ${costControls.session_limit_usd.toFixed(2)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Warn at:</span>{" "}
-                  <span className="text-white">
-                    {(costControls.warning_threshold * 100).toFixed(0)}%
-                  </span>
+                <div className="flex gap-4 text-xs">
+                  <div>
+                    <span className="text-gray-400">Today:</span>{" "}
+                    <span className="text-white">
+                      ${costControls.daily_limit_usd.toFixed(2)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Session:</span>{" "}
+                    <span className="text-white">
+                      ${costControls.session_limit_usd.toFixed(2)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Warn at:</span>{" "}
+                    <span className="text-white">
+                      {(costControls.warning_threshold * 100).toFixed(0)}%
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Link to Settings */}
-          <div className="text-xs text-gray-400">
-            Configure these values in the watcher settings file below.
+            {/* Link to Settings */}
+            <div className="text-xs text-gray-400">
+              Configure these values in the watcher settings file below.
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </SelfDocumentingSection>
   );
 }
 

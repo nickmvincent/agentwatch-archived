@@ -61,7 +61,7 @@ export class EventBus {
   private emitter: EventEmitter;
   private buffer: AgentWatchEvent[];
   private bufferSize: number;
-  private started: boolean = false;
+  private started = false;
 
   constructor(options: { bufferSize?: number } = {}) {
     this.emitter = new EventEmitter();
@@ -153,7 +153,12 @@ export class EventBus {
   /**
    * Get buffer statistics.
    */
-  getStats(): { bufferSize: number; eventCount: number; oldestEvent?: string; newestEvent?: string } {
+  getStats(): {
+    bufferSize: number;
+    eventCount: number;
+    oldestEvent?: string;
+    newestEvent?: string;
+  } {
     const stats = {
       bufferSize: this.bufferSize,
       eventCount: this.buffer.length,

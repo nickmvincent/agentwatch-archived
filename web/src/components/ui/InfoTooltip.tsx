@@ -1,4 +1,8 @@
 import { useState } from "react";
+import {
+  SelfDocumentingSection,
+  useSelfDocumentingVisible
+} from "./SelfDocumentingSection";
 
 interface InfoTooltipProps {
   /** The tooltip content */
@@ -18,6 +22,7 @@ export function InfoTooltip({
   icon = "?"
 }: InfoTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const showSelfDocs = useSelfDocumentingVisible();
 
   const positionClasses = {
     left: "right-full mr-2 top-1/2 -translate-y-1/2",
@@ -27,22 +32,31 @@ export function InfoTooltip({
   };
 
   return (
-    <span
-      className="relative inline-flex items-center justify-center"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
+    <SelfDocumentingSection
+      title="Info tooltip"
+      componentId="analyzer.settings.info-tooltip"
+      notes={["Hover to reveal inline documentation."]}
+      visible={showSelfDocs}
+      compact
+      inline
     >
-      <span className="w-4 h-4 rounded-full bg-gray-600 text-gray-300 text-[10px] flex items-center justify-center cursor-help hover:bg-gray-500">
-        {icon}
-      </span>
-      {isVisible && (
-        <span
-          className={`absolute z-50 w-64 p-2 text-xs bg-gray-900 border border-gray-600 rounded shadow-lg text-gray-200 ${positionClasses[position]}`}
-        >
-          {content}
+      <span
+        className="relative inline-flex items-center justify-center"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        <span className="w-4 h-4 rounded-full bg-gray-600 text-gray-300 text-[10px] flex items-center justify-center cursor-help hover:bg-gray-500">
+          {icon}
         </span>
-      )}
-    </span>
+        {isVisible && (
+          <span
+            className={`absolute z-50 w-64 p-2 text-xs bg-gray-900 border border-gray-600 rounded shadow-lg text-gray-200 ${positionClasses[position]}`}
+          >
+            {content}
+          </span>
+        )}
+      </span>
+    </SelfDocumentingSection>
   );
 }
 
@@ -63,20 +77,38 @@ export function StorageInfo({
   description,
   compact = false
 }: StorageInfoProps) {
+  const showSelfDocs = useSelfDocumentingVisible();
+  const selfDocs = {
+    title: "Storage path",
+    componentId: "analyzer.settings.storage-info",
+    notes: ["Documents where local data is stored on disk."]
+  };
+
   if (compact) {
     return (
-      <span className="text-xs text-gray-500">
-        Data: <code className="bg-gray-700/50 px-1 rounded">{path}</code>
-      </span>
+      <SelfDocumentingSection
+        {...selfDocs}
+        visible={showSelfDocs}
+        compact
+        inline
+      >
+        <span className="text-xs text-gray-500">
+          Data: <code className="bg-gray-700/50 px-1 rounded">{path}</code>
+        </span>
+      </SelfDocumentingSection>
     );
   }
 
   return (
-    <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-500">
-      <span className="text-gray-400">Data stored in: </span>
-      <code className="bg-gray-700 px-1.5 py-0.5 rounded">{path}</code>
-      {description && <span className="ml-2 text-gray-600">{description}</span>}
-    </div>
+    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+      <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-500">
+        <span className="text-gray-400">Data stored in: </span>
+        <code className="bg-gray-700 px-1.5 py-0.5 rounded">{path}</code>
+        {description && (
+          <span className="ml-2 text-gray-600">{description}</span>
+        )}
+      </div>
+    </SelfDocumentingSection>
   );
 }
 
