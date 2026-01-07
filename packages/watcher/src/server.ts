@@ -58,6 +58,10 @@ export class WatcherServer {
   private started = false;
   private startedAt = 0;
 
+  // State tracking for change detection
+  private previousAgentPids: Set<number> = new Set();
+  private previousPorts: Set<number> = new Set();
+
   constructor(options: WatcherServerOptions = {}) {
     this.config = options.config ?? loadConfig();
     this.store = new DataStore();
@@ -78,54 +82,184 @@ export class WatcherServer {
     });
 
     this.sessionStore.setCallback((session) => {
+      // Legacy broadcast
       this.connectionManager.broadcast({
         type: "managed_session_update",
         session: managedSessionToDict(session)
+      });
+
+      // Emit unified event
+      const action =
+        session.status === "running"
+          ? "start"
+          : session.status === "completed" || session.status === "failed"
+            ? "end"
+            : "update";
+      this.eventBus.emit({
+        category: "managed_session",
+        action,
+        entityId: session.id,
+        description: `Managed session ${action}: ${session.prompt.slice(0, 50)}${session.prompt.length > 50 ? "..." : ""}`,
+        details: {
+          status: session.status,
+          agent: session.agent,
+          cwd: session.cwd
+        },
+        source: "watcher"
       });
     });
 
     // Set up store callbacks for broadcasts
     this.store.setCallbacks({
       onReposChange: (repos) => {
+        // Legacy broadcast
         this.connectionManager.broadcast({
           type: "repos_update",
           repos: repos.map((r) => repoToDict(r))
         });
+        // Note: Repo events are high-frequency; emit sparingly (e.g., on dirty→clean transitions)
+        // For now, skip per-update events for repos to avoid noise
       },
       onAgentsChange: (agents) => {
+        // Legacy broadcast
         this.connectionManager.broadcast({
           type: "agents_update",
           agents: agents.map((a) => agentToDict(a))
         });
 
+        // Detect new and ended agents
+        const currentPids = new Set(agents.map((a) => a.pid));
+        const agentMap = new Map(agents.map((a) => [a.pid, a]));
+
+        // Emit events for newly discovered agents
+        for (const agent of agents) {
+          if (!this.previousAgentPids.has(agent.pid)) {
+            this.eventBus.emit({
+              category: "process",
+              action: "discover",
+              entityId: String(agent.pid),
+              description: `Agent discovered: ${agent.label}`,
+              details: {
+                label: agent.label,
+                cwd: agent.cwd,
+                exe: agent.exe
+              },
+              source: "scanner"
+            });
+          }
+        }
+
+        // Emit events for ended agents
+        for (const pid of this.previousAgentPids) {
+          if (!currentPids.has(pid)) {
+            this.eventBus.emit({
+              category: "process",
+              action: "end",
+              entityId: String(pid),
+              description: `Agent ended: PID ${pid}`,
+              source: "scanner"
+            });
+          }
+        }
+
+        this.previousAgentPids = currentPids;
+
         // Align managed sessions with live PIDs
-        // Always call this - when agents is empty, all running sessions become stale
-        this.sessionStore.markStaleSessions(new Set(agents.map((a) => a.pid)));
+        this.sessionStore.markStaleSessions(currentPids);
 
         // Log process snapshots
-        const agentMap = new Map(agents.map((a) => [a.pid, a]));
         this.processLogger.logProcesses(agentMap);
       },
       onPortsChange: (ports) => {
+        // Legacy broadcast
         this.connectionManager.broadcast({
           type: "ports_update",
           ports: ports.map((p) => portToDict(p))
         });
+
+        // Detect new and closed ports
+        const currentPorts = new Set(ports.map((p) => p.port));
+
+        // Emit events for newly opened ports
+        for (const port of ports) {
+          if (!this.previousPorts.has(port.port)) {
+            this.eventBus.emit({
+              category: "port",
+              action: "start",
+              entityId: String(port.port),
+              description: `Port opened: ${port.port} (${port.protocol || "unknown"})`,
+              details: {
+                port: port.port,
+                protocol: port.protocol,
+                agentPid: port.agentPid
+              },
+              source: "scanner"
+            });
+          }
+        }
+
+        // Emit events for closed ports
+        for (const port of this.previousPorts) {
+          if (!currentPorts.has(port)) {
+            this.eventBus.emit({
+              category: "port",
+              action: "end",
+              entityId: String(port),
+              description: `Port closed: ${port}`,
+              source: "scanner"
+            });
+          }
+        }
+
+        this.previousPorts = currentPorts;
       }
     });
 
     // Set up hook store callbacks
     this.hookStore.setCallbacks({
       onSessionChange: (session) => {
+        // Legacy broadcast
         this.connectionManager.broadcast({
           type: "hook_session_update",
           session: hookSessionToDict(session)
         });
+
+        // Emit unified event
+        const action = session.endTime ? "end" : "start";
+        this.eventBus.emit({
+          category: "hook_session",
+          action,
+          entityId: session.sessionId,
+          description: `Hook session ${action}: ${session.cwd}`,
+          details: {
+            cwd: session.cwd,
+            toolCount: session.toolCount,
+            permissionMode: session.permissionMode
+          },
+          source: "hook"
+        });
       },
       onToolUsage: (usage) => {
+        // Legacy broadcast
         this.connectionManager.broadcast({
           type: "hook_tool_complete",
           usage: toolUsageToDict(usage)
+        });
+
+        // Emit unified event
+        this.eventBus.emit({
+          category: "tool_usage",
+          action: usage.error ? "update" : "create",
+          entityId: usage.toolUseId,
+          description: `Tool ${usage.toolName}: ${usage.error ? "failed" : "completed"}`,
+          details: {
+            sessionId: usage.sessionId,
+            toolName: usage.toolName,
+            durationMs: usage.durationMs,
+            success: usage.success,
+            error: usage.error
+          },
+          source: "hook"
         });
       }
     });
