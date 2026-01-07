@@ -266,7 +266,8 @@ export function createWatcherApp(state: WatcherAppState): Hono {
     state.hookStore,
     state.connectionManager,
     notifier,
-    state.config.notifications
+    state.config.notifications,
+    state.eventBus
   );
 
   // =========== Recent Events (from EventBus buffer) ===========

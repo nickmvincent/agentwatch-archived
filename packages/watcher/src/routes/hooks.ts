@@ -15,6 +15,7 @@
 
 import type { Hono } from "hono";
 import type { HookStore } from "@agentwatch/monitor";
+import type { EventBus } from "@agentwatch/core";
 import type { ConnectionManager } from "../connection-manager";
 import type { HookNotifier } from "../notifications";
 import type { NotificationsConfig } from "../config";
@@ -201,7 +202,8 @@ export function registerHookEventRoutes(
   hookStore: HookStore,
   connectionManager: ConnectionManager,
   notifier?: HookNotifier,
-  notifyConfig?: NotificationsConfig
+  notifyConfig?: NotificationsConfig,
+  eventBus?: EventBus
 ): void {
   /**
    * POST /api/hooks/session-start
@@ -237,6 +239,16 @@ export function registerHookEventRoutes(
       source
     );
 
+    // Emit to EventBus
+    eventBus?.emit({
+      category: "hook_session",
+      action: "start",
+      entityId: sessionId,
+      description: `Hook session started in ${cwd}`,
+      details: { cwd, permissionMode, source, transcriptPath },
+      source: "hook"
+    });
+
     // Desktop notification for session start (if enabled)
     if (notifier && notifyConfig?.hookSessionStart) {
       notifier.notifySessionStart(sessionId, cwd);
@@ -262,6 +274,16 @@ export function registerHookEventRoutes(
     }
 
     hookStore.sessionEnd(sessionId);
+
+    // Emit to EventBus
+    eventBus?.emit({
+      category: "hook_session",
+      action: "end",
+      entityId: sessionId,
+      description: `Hook session ended`,
+      details: { cwd },
+      source: "hook"
+    });
 
     // Desktop notification for session end
     if (notifier && notifyConfig?.hookSessionEnd) {
@@ -371,6 +393,24 @@ export function registerHookEventRoutes(
     if (notifier) {
       notifier.clearLongRunningTimer(sessionId);
     }
+
+    // Emit to EventBus
+    eventBus?.emit({
+      category: "tool_usage",
+      action: error ? "end" : "end",
+      entityId: toolUseId ?? `${sessionId}-recent`,
+      description: error
+        ? `Tool ${toolName} failed: ${error.slice(0, 100)}`
+        : `Tool ${toolName} completed`,
+      details: {
+        sessionId,
+        toolName,
+        success: !error,
+        inputTokens,
+        outputTokens
+      },
+      source: "hook"
+    });
 
     // Notify on tool failure
     if (notifier && notifyConfig?.hookToolFailure && error) {
