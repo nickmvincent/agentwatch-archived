@@ -33,9 +33,7 @@ export function InfoTooltip({
 
   return (
     <SelfDocumentingSection
-      title="Info tooltip"
       componentId="analyzer.settings.info-tooltip"
-      notes={["Hover to reveal inline documentation."]}
       visible={showSelfDocs}
       compact
       inline
@@ -78,16 +76,11 @@ export function StorageInfo({
   compact = false
 }: StorageInfoProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const selfDocs = {
-    title: "Storage path",
-    componentId: "analyzer.settings.storage-info",
-    notes: ["Documents where local data is stored on disk."]
-  };
 
   if (compact) {
     return (
       <SelfDocumentingSection
-        {...selfDocs}
+        componentId="analyzer.settings.storage-info"
         visible={showSelfDocs}
         compact
         inline
@@ -100,7 +93,10 @@ export function StorageInfo({
   }
 
   return (
-    <SelfDocumentingSection {...selfDocs} visible={showSelfDocs}>
+    <SelfDocumentingSection
+      componentId="analyzer.settings.storage-info"
+      visible={showSelfDocs}
+    >
       <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-500">
         <span className="text-gray-400">Data stored in: </span>
         <code className="bg-gray-700 px-1.5 py-0.5 rounded">{path}</code>
