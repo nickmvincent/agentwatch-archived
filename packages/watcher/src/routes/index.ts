@@ -51,3 +51,4 @@ export { registerAgentMetadataRoutes } from "./agent-metadata";
 export { registerConversationMetadataRoutes } from "./conversation-metadata";
 export { registerEnrichmentRoutes } from "./enrichments";
 export { registerManagedSessionRoutes } from "./managed-sessions";
+export { registerPredictionRoutes } from "./predictions";

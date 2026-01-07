@@ -81,7 +81,12 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { createBunWebSocket, serveStatic } from "hono/bun";
 
-import type { DataStore, HookStore, SessionStore } from "@agentwatch/monitor";
+import {
+  type DataStore,
+  type HookStore,
+  type SessionStore,
+  PredictionStore
+} from "@agentwatch/monitor";
 import {
   repoToDict,
   agentToDict,
@@ -107,7 +112,8 @@ import {
   registerProjectRoutes,
   registerManagedSessionRoutes,
   registerConversationMetadataRoutes,
-  registerEnrichmentRoutes
+  registerEnrichmentRoutes,
+  registerPredictionRoutes
 } from "./routes";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket();
@@ -233,6 +239,10 @@ export function createWatcherApp(state: WatcherAppState): Hono {
 
   // Managed sessions (aw run)
   registerManagedSessionRoutes(app, state.sessionStore);
+
+  // Predictions and calibration (Command Center)
+  const predictionStore = new PredictionStore();
+  registerPredictionRoutes(app, predictionStore);
 
   // Hook event handlers (called by Claude Code)
   registerHookEventRoutes(app, state.hookStore, state.connectionManager);
