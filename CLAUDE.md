@@ -150,4 +150,6 @@ Build order matters:
 
 ## Status & Roadmap
 
-See `docs/internal/roadmap-todos.md` for current status, TODOs, and known issues.
+See [STATUS.md](./STATUS.md) for current status, feature checklist, and implementation roadmap.
+
+See [PRINCIPLES.md](./PRINCIPLES.md) for design principles guiding development.
