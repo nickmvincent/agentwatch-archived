@@ -1,77 +1,95 @@
 /**
  * Activity Feed Pane - Unified real-time event stream.
  *
- * Consolidates all watcher events into one live stream:
- * - Agent sessions start/end
- * - Tool executions
- * - Notifications
- * - Permission requests
- * - User prompts
- * - Agent responses
+ * Shows all AgentWatch events from the EventBus:
+ * - Agent processes (discovered, ended)
+ * - Port changes (opened, closed)
+ * - Hook sessions (start, end)
+ * - Tool usage (completed, failed)
+ * - Managed sessions (start, end)
+ * - System events
  *
  * @module components/ActivityFeedPane
  */
 
-import { useState, useMemo } from "react";
-import type { ActivityEvent } from "../api/types";
+import { useState, useMemo, useEffect } from "react";
+import type { AgentWatchEvent, AuditCategory, AuditAction } from "../api/types";
 import {
   SelfDocumentingSection,
   useSelfDocumentingVisible
 } from "./ui/SelfDocumentingSection";
 
-// Event type colors
-const EVENT_COLORS: Record<string, string> = {
-  session_start: "bg-green-500",
-  session_end: "bg-gray-500",
-  tool_start: "bg-blue-500",
-  tool_end: "bg-blue-600",
-  notification: "bg-yellow-500",
-  notification_sent: "bg-yellow-600",
-  permission: "bg-orange-500",
-  prompt: "bg-purple-500",
-  response: "bg-cyan-500",
-  subagent: "bg-indigo-500",
-  compact: "bg-pink-500"
+// Category colors
+const CATEGORY_COLORS: Record<string, string> = {
+  process: "bg-blue-500",
+  port: "bg-cyan-500",
+  hook_session: "bg-green-500",
+  tool_usage: "bg-purple-500",
+  managed_session: "bg-yellow-500",
+  repo: "bg-orange-500",
+  enrichment: "bg-pink-500",
+  annotation: "bg-indigo-500",
+  config: "bg-gray-500",
+  watcher: "bg-emerald-500",
+  analyzer: "bg-teal-500",
+  system: "bg-slate-500"
 };
 
-// Event type icons
-const EVENT_ICONS: Record<string, string> = {
-  session_start: "▶",
-  session_end: "■",
-  tool_start: "⚙",
-  tool_end: "✓",
-  notification: "🔔",
-  notification_sent: "📢",
-  permission: "🔐",
-  prompt: "💬",
-  response: "🤖",
-  subagent: "🔀",
-  compact: "📦"
+// Category icons
+const CATEGORY_ICONS: Record<string, string> = {
+  process: "🤖",
+  port: "🔌",
+  hook_session: "🪝",
+  tool_usage: "🛠",
+  managed_session: "▶",
+  repo: "📁",
+  enrichment: "✨",
+  annotation: "📝",
+  config: "⚙",
+  watcher: "👁",
+  analyzer: "📊",
+  system: "💻"
 };
 
-// Event type labels
-const EVENT_LABELS: Record<string, string> = {
-  session_start: "Session Started",
-  session_end: "Session Ended",
-  tool_start: "Tool Started",
-  tool_end: "Tool Completed",
-  notification: "Notification",
-  notification_sent: "Notification Sent",
-  permission: "Permission Request",
-  prompt: "User Prompt",
-  response: "Agent Response",
-  subagent: "Sub-agent Completed",
-  compact: "Context Compacted"
+// Category labels
+const CATEGORY_LABELS: Record<string, string> = {
+  process: "Process",
+  port: "Port",
+  hook_session: "Hook Session",
+  tool_usage: "Tool Usage",
+  managed_session: "Managed Session",
+  repo: "Repository",
+  enrichment: "Enrichment",
+  annotation: "Annotation",
+  config: "Config",
+  watcher: "Watcher",
+  analyzer: "Analyzer",
+  system: "System"
+};
+
+// Action icons
+const ACTION_ICONS: Record<string, string> = {
+  start: "▶",
+  end: "■",
+  discover: "🔍",
+  create: "+",
+  update: "↻",
+  delete: "×"
 };
 
 interface ActivityFeedPaneProps {
-  activityEvents: ActivityEvent[];
+  /** Unified events from EventBus */
+  unifiedEvents: AgentWatchEvent[];
+  /** Callback to fetch more events */
+  onFetchMore?: () => Promise<void>;
+  /** Compact mode for smaller display */
   compact?: boolean;
 }
 
-function formatRelativeTime(timestamp: number): string {
+function formatRelativeTime(timestamp: string): string {
+  const ts = new Date(timestamp).getTime();
   const now = Date.now();
-  const diffMs = now - timestamp;
+  const diffMs = now - ts;
   const diffSecs = Math.floor(diffMs / 1000);
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
@@ -80,57 +98,21 @@ function formatRelativeTime(timestamp: number): string {
   if (diffSecs < 60) return `${diffSecs}s ago`;
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
-  return new Date(timestamp).toLocaleTimeString();
-}
-
-function formatEventDescription(event: ActivityEvent): string {
-  const data = event.data;
-
-  switch (event.type) {
-    case "session_start":
-      return `Started in ${data.cwd || "unknown directory"}`;
-    case "session_end":
-      return `Session ended (${data.tool_count || 0} tools used)`;
-    case "tool_start":
-      return `${data.tool_name || "Unknown tool"}`;
-    case "tool_end": {
-      const status = data.success ? "completed" : "failed";
-      const duration = data.duration_ms ? ` (${data.duration_ms}ms)` : "";
-      return `${data.tool_name || "Unknown tool"} ${status}${duration}`;
-    }
-    case "notification":
-      return `Type: ${data.notification_type || "unknown"}`;
-    case "notification_sent":
-      return `${data.title || "Notification"}`;
-    case "permission":
-      return `${data.tool_name || "Tool"}: ${data.action || "unknown action"}`;
-    case "prompt":
-      return `${data.prompt_length || 0} characters`;
-    case "response": {
-      const inputTokens = Number(data.input_tokens) || 0;
-      const outputTokens = Number(data.output_tokens) || 0;
-      return `${data.stop_reason || "completed"} (${inputTokens + outputTokens} tokens)`;
-    }
-    case "subagent":
-      return `${data.subagent_id || "Unknown"} - ${data.stop_reason || "completed"}`;
-    case "compact":
-      return `${data.compact_type || "standard"} compaction`;
-    default:
-      return JSON.stringify(data).slice(0, 50);
-  }
+  return new Date(ts).toLocaleTimeString();
 }
 
 function EventItem({
   event,
   showDetails
 }: {
-  event: ActivityEvent;
+  event: AgentWatchEvent;
   showDetails: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const colorClass = EVENT_COLORS[event.type] || "bg-gray-500";
-  const icon = EVENT_ICONS[event.type] || "•";
-  const label = EVENT_LABELS[event.type] || event.type;
+  const colorClass = CATEGORY_COLORS[event.category] || "bg-gray-500";
+  const icon = CATEGORY_ICONS[event.category] || "•";
+  const actionIcon = ACTION_ICONS[event.action] || "";
+  const categoryLabel = CATEGORY_LABELS[event.category] || event.category;
 
   return (
     <div
@@ -149,28 +131,33 @@ function EventItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-gray-200 font-medium">{label}</span>
+          <span className="text-gray-200 font-medium">
+            {actionIcon} {categoryLabel}
+          </span>
+          <span className="text-gray-600 text-xs">{event.action}</span>
           <span className="text-gray-500 text-xs">
             {formatRelativeTime(event.timestamp)}
           </span>
-          {event.session_id && showDetails && (
+          {showDetails && event.entityId && (
             <span
               className="text-gray-600 text-xs font-mono truncate max-w-[120px]"
-              title={event.session_id}
+              title={event.entityId}
             >
-              {event.session_id.slice(0, 8)}...
+              {event.entityId.slice(0, 12)}
+              {event.entityId.length > 12 ? "..." : ""}
             </span>
           )}
         </div>
-        <p className="text-gray-400 text-sm truncate">
-          {formatEventDescription(event)}
-        </p>
+        <p className="text-gray-400 text-sm truncate">{event.description}</p>
 
         {/* Expanded details */}
-        {expanded && Object.keys(event.data).length > 0 && (
+        {expanded && event.details && Object.keys(event.details).length > 0 && (
           <div className="mt-2 p-2 bg-gray-800 rounded text-xs">
+            <div className="text-gray-500 mb-1">
+              Source: {event.source} | Entity: {event.entityId}
+            </div>
             <pre className="text-gray-400 overflow-x-auto whitespace-pre-wrap">
-              {JSON.stringify(event.data, null, 2)}
+              {JSON.stringify(event.details, null, 2)}
             </pre>
           </div>
         )}
@@ -180,41 +167,67 @@ function EventItem({
 }
 
 export function ActivityFeedPane({
-  activityEvents,
+  unifiedEvents,
+  onFetchMore,
   compact = false
 }: ActivityFeedPaneProps) {
   const showSelfDocs = useSelfDocumentingVisible();
-  const [filterType, setFilterType] = useState<string>("");
-  const [showSessionIds, setShowSessionIds] = useState(false);
+  const [filterCategory, setFilterCategory] = useState<AuditCategory | "">("");
+  const [filterAction, setFilterAction] = useState<AuditAction | "">("");
+  const [showEntityIds, setShowEntityIds] = useState(false);
   const [limit, setLimit] = useState(50);
+
+  // Fetch initial events on mount
+  useEffect(() => {
+    if (onFetchMore && unifiedEvents.length === 0) {
+      onFetchMore();
+    }
+  }, [onFetchMore, unifiedEvents.length]);
 
   // Filter events
   const filteredEvents = useMemo(() => {
-    let events = activityEvents;
-    if (filterType) {
-      events = events.filter((e) => e.type === filterType);
+    let events = unifiedEvents;
+    if (filterCategory) {
+      events = events.filter((e) => e.category === filterCategory);
+    }
+    if (filterAction) {
+      events = events.filter((e) => e.action === filterAction);
     }
     return events.slice(0, limit);
-  }, [activityEvents, filterType, limit]);
+  }, [unifiedEvents, filterCategory, filterAction, limit]);
 
-  // Count events by type
-  const eventCounts = useMemo(() => {
+  // Count events by category
+  const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const event of activityEvents) {
-      counts[event.type] = (counts[event.type] || 0) + 1;
+    for (const event of unifiedEvents) {
+      counts[event.category] = (counts[event.category] || 0) + 1;
     }
     return counts;
-  }, [activityEvents]);
+  }, [unifiedEvents]);
 
-  // Get unique event types for filter
-  const eventTypes = Object.keys(eventCounts).sort();
+  // Count events by action
+  const actionCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const event of unifiedEvents) {
+      counts[event.action] = (counts[event.action] || 0) + 1;
+    }
+    return counts;
+  }, [unifiedEvents]);
+
+  // Get unique categories and actions for filters
+  const categories = Object.keys(categoryCounts).sort() as AuditCategory[];
+  const actions = Object.keys(actionCounts).sort() as AuditAction[];
 
   if (compact) {
     // Compact mode - just show recent events in a small list
     return (
       <div className="space-y-1">
-        {filteredEvents.slice(0, 10).map((event) => (
-          <EventItem key={event.id} event={event} showDetails={false} />
+        {filteredEvents.slice(0, 10).map((event, idx) => (
+          <EventItem
+            key={event.id || `${event.timestamp}-${idx}`}
+            event={event}
+            showDetails={false}
+          />
         ))}
         {filteredEvents.length === 0 && (
           <div className="text-gray-500 text-sm text-center py-4">
@@ -231,13 +244,24 @@ export function ActivityFeedPane({
       componentId="watcher.activity.pane"
       reads={[
         {
-          path: "WebSocket /ws",
-          description: "Real-time events from watcher daemon"
+          path: "WebSocket /ws (agentwatch_event)",
+          description: "Real-time unified events from EventBus"
+        },
+        {
+          path: "GET /api/events/recent",
+          description: "Historical events from EventBus buffer"
+        }
+      ]}
+      writes={[
+        {
+          path: "~/.agentwatch/events.jsonl",
+          description: "Persistent audit log of all events"
         }
       ]}
       notes={[
-        "Events are kept in memory (last 200 events)",
-        "Events include sessions, tools, prompts, responses",
+        "Shows all AgentWatch events from the unified EventBus",
+        "Events include: processes, ports, sessions, tools, system",
+        "Filter by category (process, tool_usage, etc.) or action (start, end, etc.)",
         "Click any event to see full details"
       ]}
       visible={showSelfDocs}
@@ -251,21 +275,42 @@ export function ActivityFeedPane({
                 Activity Feed
               </h2>
               <p className="text-xs text-gray-400">
-                Real-time stream of all watcher events
+                Unified stream of all AgentWatch events
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Category filter */}
               <div className="flex items-center gap-2">
-                <label className="text-gray-400 text-sm">Filter:</label>
+                <label className="text-gray-400 text-sm">Category:</label>
                 <select
                   className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
+                  value={filterCategory}
+                  onChange={(e) =>
+                    setFilterCategory(e.target.value as AuditCategory | "")
+                  }
                 >
-                  <option value="">All ({activityEvents.length})</option>
-                  {eventTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {EVENT_LABELS[type] || type} ({eventCounts[type]})
+                  <option value="">All ({unifiedEvents.length})</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {CATEGORY_LABELS[cat] || cat} ({categoryCounts[cat]})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Action filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-gray-400 text-sm">Action:</label>
+                <select
+                  className="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm"
+                  value={filterAction}
+                  onChange={(e) =>
+                    setFilterAction(e.target.value as AuditAction | "")
+                  }
+                >
+                  <option value="">All</option>
+                  {actions.map((action) => (
+                    <option key={action} value={action}>
+                      {action} ({actionCounts[action]})
                     </option>
                   ))}
                 </select>
@@ -273,8 +318,8 @@ export function ActivityFeedPane({
               <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={showSessionIds}
-                  onChange={(e) => setShowSessionIds(e.target.checked)}
+                  checked={showEntityIds}
+                  onChange={(e) => setShowEntityIds(e.target.checked)}
                   className="rounded bg-gray-700 border-gray-600"
                 />
                 Show IDs
@@ -283,17 +328,19 @@ export function ActivityFeedPane({
           </div>
         </div>
 
-        {/* Event type summary */}
+        {/* Category summary chips */}
         <div className="flex flex-wrap gap-2">
-          {eventTypes.map((type) => (
+          {categories.map((cat) => (
             <button
-              key={type}
-              onClick={() => setFilterType(filterType === type ? "" : type)}
+              key={cat}
+              onClick={() =>
+                setFilterCategory(filterCategory === cat ? "" : cat)
+              }
               className={`px-2 py-1 rounded text-xs text-white transition-colors ${
-                EVENT_COLORS[type] || "bg-gray-500"
-              } ${filterType === type ? "ring-2 ring-white ring-opacity-50" : "opacity-70 hover:opacity-100"}`}
+                CATEGORY_COLORS[cat] || "bg-gray-500"
+              } ${filterCategory === cat ? "ring-2 ring-white ring-opacity-50" : "opacity-70 hover:opacity-100"}`}
             >
-              {EVENT_ICONS[type]} {eventCounts[type]}
+              {CATEGORY_ICONS[cat]} {categoryCounts[cat]}
             </button>
           ))}
         </div>
@@ -302,30 +349,30 @@ export function ActivityFeedPane({
         <div className="bg-gray-800 rounded-lg border border-gray-700">
           {filteredEvents.length === 0 ? (
             <div className="text-gray-500 text-sm text-center py-8">
-              {filterType
-                ? `No ${EVENT_LABELS[filterType] || filterType} events`
+              {filterCategory || filterAction
+                ? `No events matching filters`
                 : "No activity yet. Events will appear as agents run."}
             </div>
           ) : (
             <div className="divide-y divide-gray-700/50">
-              {filteredEvents.map((event) => (
+              {filteredEvents.map((event, idx) => (
                 <EventItem
-                  key={event.id}
+                  key={event.id || `${event.timestamp}-${idx}`}
                   event={event}
-                  showDetails={showSessionIds}
+                  showDetails={showEntityIds}
                 />
               ))}
             </div>
           )}
 
           {/* Load more */}
-          {activityEvents.length > limit && (
+          {unifiedEvents.length > limit && (
             <div className="p-3 border-t border-gray-700 text-center">
               <button
                 className="px-4 py-1.5 text-sm bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
                 onClick={() => setLimit(limit + 50)}
               >
-                Load more ({activityEvents.length - limit} remaining)
+                Load more ({unifiedEvents.length - limit} remaining)
               </button>
             </div>
           )}
@@ -333,8 +380,8 @@ export function ActivityFeedPane({
 
         {/* Stats footer */}
         <div className="text-xs text-gray-500 text-center">
-          Showing {filteredEvents.length} of {activityEvents.length} events
-          {activityEvents.length >= 200 && " (max 200 in memory)"}
+          Showing {filteredEvents.length} of {unifiedEvents.length} events
+          {unifiedEvents.length >= 500 && " (max 500 in memory)"}
         </div>
       </div>
     </SelfDocumentingSection>

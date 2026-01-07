@@ -209,6 +209,7 @@ export type WebSocketMessage =
       message: string;
       timestamp: number;
     }
+  | { type: "agentwatch_event"; event: AgentWatchEvent }
   | { type: "ping" }
   | { type: "pong" };
 
@@ -1492,6 +1493,18 @@ export interface AnalyticsCombinedResult {
 
 // Audit Log Types
 
+// Unified AgentWatch Event (from EventBus)
+export interface AgentWatchEvent {
+  id?: string;
+  timestamp: string;
+  category: AuditCategory;
+  action: AuditAction;
+  entityId: string;
+  description: string;
+  details?: Record<string, unknown>;
+  source: "hook" | "api" | "scanner" | "inferred" | "daemon" | "watcher" | "analyzer" | "user";
+}
+
 export type AuditCategory =
   | "transcript"
   | "hook_session"
@@ -1502,9 +1515,13 @@ export type AuditCategory =
   | "agent"
   | "managed_session"
   | "process"
+  | "repo"
+  | "port"
   | "config"
   | "contributor"
   | "daemon"
+  | "watcher"
+  | "analyzer"
   | "system";
 
 export type AuditAction =

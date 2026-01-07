@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ActivityEvent,
   AgentProcess,
+  AgentWatchEvent,
   HookSession,
   ListeningPort,
   ManagedSession,
@@ -28,10 +29,14 @@ interface UseWebSocketResult {
   managedSessions: ManagedSession[];
   recentToolUsages: ToolUsage[];
   activityEvents: ActivityEvent[];
+  /** Unified events from EventBus (processes, ports, sessions, tools, etc.) */
+  unifiedEvents: AgentWatchEvent[];
   sessionTokens: Record<string, SessionTokens>;
   totalToolCalls: number;
   setPaused: (paused: boolean) => void;
   refresh: () => void;
+  /** Fetch recent unified events from API */
+  fetchUnifiedEvents: () => Promise<void>;
 }
 
 export function useWebSocket(
@@ -47,6 +52,7 @@ export function useWebSocket(
   const [managedSessions, setManagedSessions] = useState<ManagedSession[]>([]);
   const [recentToolUsages, setRecentToolUsages] = useState<ToolUsage[]>([]);
   const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
+  const [unifiedEvents, setUnifiedEvents] = useState<AgentWatchEvent[]>([]);
   const [sessionTokens, setSessionTokens] = useState<
     Record<string, SessionTokens>
   >({});
@@ -418,6 +424,13 @@ export function useWebSocket(
             });
             break;
 
+          case "agentwatch_event":
+            // Add unified event to the list (newest first)
+            setUnifiedEvents((prev) =>
+              [message.event, ...prev].slice(0, 500)
+            );
+            break;
+
           case "ping":
             ws.send(JSON.stringify({ type: "pong" }));
             break;
@@ -488,6 +501,18 @@ export function useWebSocket(
       // Ignore fetch errors
     }
   };
+
+  const fetchUnifiedEvents = useCallback(async () => {
+    try {
+      const res = await fetch("/api/events/recent?limit=100");
+      if (res.ok) {
+        const data = await res.json();
+        setUnifiedEvents(data.events || []);
+      }
+    } catch {
+      // Ignore fetch errors
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     // Fetch all data immediately (respecting hidden tabs)
@@ -570,9 +595,11 @@ export function useWebSocket(
     managedSessions,
     recentToolUsages,
     activityEvents,
+    unifiedEvents,
     sessionTokens,
     totalToolCalls,
     setPaused,
-    refresh
+    refresh,
+    fetchUnifiedEvents
   };
 }

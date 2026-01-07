@@ -35,6 +35,8 @@ function WatcherApp() {
     managedSessions,
     recentToolUsages,
     activityEvents,
+    unifiedEvents,
+    fetchUnifiedEvents,
     sessionTokens,
     setPaused,
     refresh
@@ -89,7 +91,7 @@ function WatcherApp() {
     { id: "agents", label: "Agents", count: agents.length },
     { id: "repos", label: "Repos", count: repos.length },
     { id: "ports", label: "Ports", count: ports.length },
-    { id: "activity", label: "Activity", count: activityEvents.length },
+    { id: "activity", label: "Activity", count: unifiedEvents.length },
     { id: "command", label: "Command", count: managedSessions.length },
     { id: "settings", label: "Settings" }
   ];
@@ -161,7 +163,10 @@ function WatcherApp() {
           />
         )}
         {activeTab === "activity" && (
-          <ActivityFeedPane activityEvents={activityEvents} />
+          <ActivityFeedPane
+            unifiedEvents={unifiedEvents}
+            onFetchMore={fetchUnifiedEvents}
+          />
         )}
         {activeTab === "command" && (
           <CommandCenterPane managedSessions={managedSessions} />
