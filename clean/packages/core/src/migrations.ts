@@ -47,8 +47,8 @@ export async function runMigrations(options: {
   logger?: (message: string) => void;
 }): Promise<DataManifest> {
   const log = options.logger ?? (() => {});
-  const manifestPath = options.manifestPath ??
-    join(options.dataDir, "manifest.json");
+  const manifestPath =
+    options.manifestPath ?? join(options.dataDir, "manifest.json");
   const existing = await loadManifest(manifestPath);
   if (!existing) {
     const initialized: DataManifest = {
@@ -67,7 +67,9 @@ export async function runMigrations(options: {
   let current = existing.schema_version;
   for (const migration of options.migrations) {
     if (migration.from === current) {
-      log(`Running migration ${migration.id} (${migration.from} -> ${migration.to})`);
+      log(
+        `Running migration ${migration.id} (${migration.from} -> ${migration.to})`
+      );
       await migration.run({ dataDir: options.dataDir, log });
       current = migration.to;
       existing.schema_version = current;

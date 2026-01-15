@@ -1,8 +1,18 @@
-import { createServiceLogger, registerSettingsReloadEndpoint, startService } from "@aw-clean/core";
+import {
+  createServiceLogger,
+  registerSettingsReloadEndpoint,
+  startService
+} from "@aw-clean/core";
 import { SERVICE_NAME, clearRegexCache, createHooksApp } from "./service";
 
 await startService(SERVICE_NAME, {
-  createApp: ({ settings, logger, enableHttpLogs, settingsPaths, defaultSettings }) => {
+  createApp: ({
+    settings,
+    logger,
+    enableHttpLogs,
+    settingsPaths,
+    defaultSettings
+  }) => {
     const { logger: responderLogger, logPath: responderLogPath } =
       createServiceLogger(settings, SERVICE_NAME, "responder");
 

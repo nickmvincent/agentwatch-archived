@@ -5,11 +5,7 @@
   "license": "MIT",
   "private": false,
   "type": "module",
-  "workspaces": [
-    "packages/*",
-    "services/*",
-    "apps/*"
-  ],
+  "workspaces": ["packages/*", "services/*", "apps/*"],
   "scripts": {
     "dev:scanner": "bun --hot services/scanner/src/index.ts",
     "dev:hooks": "bun --hot services/hooks/src/index.ts",

@@ -1,7 +1,14 @@
 import { appendJsonl } from "./jsonl";
-import { createRotatingJsonlWriter, type LogRotationOptions } from "./log-rotation";
+import {
+  createRotatingJsonlWriter,
+  type LogRotationOptions
+} from "./log-rotation";
 import { createId } from "./ids";
-import { SCHEMA_VERSION, type SignificantEvent, type VerboseLogEntry } from "./types";
+import {
+  SCHEMA_VERSION,
+  type SignificantEvent,
+  type VerboseLogEntry
+} from "./types";
 
 export type VerboseLogger = {
   log: (
@@ -19,9 +26,10 @@ export function createVerboseLogger(options: {
   enabled?: boolean;
 }): VerboseLogger {
   const enabled = options.enabled ?? true;
-  const writer = enabled && options.rotation
-    ? createRotatingJsonlWriter(options.logPath, options.rotation)
-    : null;
+  const writer =
+    enabled && options.rotation
+      ? createRotatingJsonlWriter(options.logPath, options.rotation)
+      : null;
 
   return {
     async log(kind, payload, trace) {
@@ -52,7 +60,8 @@ export function deriveSignificantEvent(
   entry: VerboseLogEntry,
   summaryOverrides: Record<string, string> = {}
 ): SignificantEvent {
-  const summary = summaryOverrides[entry.kind] ?? entry.kind.replace(/[._]/g, " ");
+  const summary =
+    summaryOverrides[entry.kind] ?? entry.kind.replace(/[._]/g, " ");
   return {
     schema_version: SCHEMA_VERSION,
     id: createId("event"),

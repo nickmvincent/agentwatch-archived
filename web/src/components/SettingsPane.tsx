@@ -57,8 +57,9 @@ export function SettingsPane({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [indexStatus, setIndexStatus] =
-    useState<TranscriptIndexStatus | null>(null);
+  const [indexStatus, setIndexStatus] = useState<TranscriptIndexStatus | null>(
+    null
+  );
   const [indexLoading, setIndexLoading] = useState(false);
   const [indexError, setIndexError] = useState<string | null>(null);
   const [indexSaving, setIndexSaving] = useState(false);

@@ -74,7 +74,8 @@
       "packages/*/dist",
       "e2e/test-results",
       "bun.lock",
-      "pages/public/workers"
+      "pages/public/workers",
+      "**/vendor/**"
     ]
   }
 }

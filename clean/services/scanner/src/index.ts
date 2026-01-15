@@ -58,7 +58,11 @@ async function scanAndLog() {
   const scannedAt = new Date().toISOString();
   try {
     const agents = enrichAgents(
-      await scanAgentProcesses(matchers, Bun.spawn, settingsRef.scanner.resolveCwd),
+      await scanAgentProcesses(
+        matchers,
+        Bun.spawn,
+        settingsRef.scanner.resolveCwd
+      ),
       seen,
       scannedAt
     );
