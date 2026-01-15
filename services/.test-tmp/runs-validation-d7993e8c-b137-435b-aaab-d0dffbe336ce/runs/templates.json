@@ -1,0 +1,35 @@
+[
+  {
+    "id": "default_claude",
+    "name": "Claude Code",
+    "description": "Launch Claude Code in tmux session",
+    "agent": "claude",
+    "command": "claude",
+    "args": [],
+    "mode": "tmux",
+    "createdAt": "2026-01-15T03:52:00.491Z",
+    "updatedAt": "2026-01-15T03:52:00.491Z"
+  },
+  {
+    "id": "default_codex",
+    "name": "Codex CLI",
+    "description": "Launch Codex CLI in tmux session",
+    "agent": "codex",
+    "command": "codex",
+    "args": [],
+    "mode": "tmux",
+    "createdAt": "2026-01-15T03:52:00.491Z",
+    "updatedAt": "2026-01-15T03:52:00.491Z"
+  },
+  {
+    "id": "default_gemini",
+    "name": "Gemini CLI",
+    "description": "Launch Gemini CLI in tmux session",
+    "agent": "gemini",
+    "command": "gemini",
+    "args": [],
+    "mode": "tmux",
+    "createdAt": "2026-01-15T03:52:00.491Z",
+    "updatedAt": "2026-01-15T03:52:00.491Z"
+  }
+]

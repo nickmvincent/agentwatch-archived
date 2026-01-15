@@ -228,16 +228,6 @@ function parseAnalyzerConfig(content: string): AnalyzerConfig {
     config.transcripts.indexingMode = indexingMode;
   }
 
-  // Parse [transcripts] section
-  const indexingMode = parseStringField(
-    content,
-    "transcripts",
-    "indexing_mode"
-  );
-  if (indexingMode === "auto" || indexingMode === "manual") {
-    config.transcripts.indexingMode = indexingMode;
-  }
-
   // Parse [ui] section
   const hiddenTabs = parseArrayField(content, "ui", "hidden_tabs");
   if (hiddenTabs) config.ui.hiddenTabs = hiddenTabs;
